@@ -9,9 +9,14 @@
   "author": "Remy Sharp (https://remysharp.com)",
   "license": "MIT",
   "dependencies": {
+    "@codemirror/next": "^0.4.0",
     "@remy/unpack": "^2.1.0",
+    "codemirror": "^5.52.0",
     "esm": "^3.2.25"
   },
   "devDependencies": {},
-  "description": ""
+  "description": "",
+  "webDependencies": [
+    "codemirror"
+  ]
 }

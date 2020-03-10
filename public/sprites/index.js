@@ -1,6 +1,6 @@
-import drop from './lib/dnd.js';
+import drop from '../lib/dnd.js';
 import { rgbFromIndex } from './lib/colour.js';
-import save from './lib/save.js';
+import save from '../lib/save.js';
 import { decode } from './lib/parser.js';
 
 const container = document.querySelector('#container');
