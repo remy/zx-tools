@@ -1,0 +1,71 @@
+* {
+  font-family: sans-serif;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  --scale: 16px;
+  --size: calc(16 * var(--scale));
+  background: #222;
+}
+
+body {
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: center;
+  margin: 20px 40px;
+}
+
+section {
+  width: var(--size);
+  color: white;
+  font-family: "ubuntu mono", monospace;
+  text-align: center;
+  margin: 0 auto;
+}
+
+#container {
+  --block-size: calc(var(--size) + 32px);
+  display: flex;
+  flex-wrap: wrap;
+  width: var(--block-size);
+  height: var(--block-size);
+  /* add a block grid */
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18'><rect fill='hotpink' stroke='black' x='0' y='0' width='100%' height='100%'/></svg>");
+}
+
+#container div {
+  height: var(--scale);
+  width: var(--scale);
+  margin: 1px;
+}
+
+#sprites {
+  /* width: calc(var(--scale) * 16); */
+  --scale: 32px;
+  display: flex;
+  flex-wrap: wrap;
+  margin: 40px auto;
+}
+
+#sprites > div {
+  width: var(--scale);
+  height: var(--scale);
+  display: flex;
+  flex-wrap: wrap;
+}
+
+#sprites > div.focus {
+  outline: 1px dashed rgb(255, 255, 0);
+  z-index: 1;
+}
+
+#sprites > div > div {
+  height: calc(var(--scale) / 16);
+  width: calc(var(--scale) / 16);
+}

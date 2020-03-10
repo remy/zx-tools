@@ -1,0 +1,17 @@
+{
+  "name": "zxnext",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Remy Sharp (https://remysharp.com)",
+  "license": "MIT",
+  "dependencies": {
+    "@remy/unpack": "^2.1.0",
+    "esm": "^3.2.25"
+  },
+  "devDependencies": {},
+  "description": ""
+}
