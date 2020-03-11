@@ -1,3 +1,4 @@
+// https://en.wikipedia.org/wiki/ZX_Spectrum_character_set
 export default {
   0x3a: ':',
   0x2a: '*',
@@ -102,8 +103,8 @@ export default {
   0xe9: 'DIM',
   0xea: 'REM',
   0xeb: 'FOR',
-  0xec: 'GO SUB',
-  0xed: 'GO TO',
+  0xec: 'GO TO',
+  0xed: 'GO SUB',
   0xee: 'INPUT',
   0xef: 'LOAD',
   0xf0: 'LIST',

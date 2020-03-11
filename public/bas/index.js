@@ -1,10 +1,12 @@
 import dnd from '../lib/dnd.js';
 import { $ } from '../lib/$.js';
-import { Unpack, default as unpacker } from '../lib/unpack/unpack.js';
-import BASIC from './codes.js';
-import Lexer from './Lexer.js';
+import Lexer, { header } from './txt2bas.js';
 import CodeMirror from './lib/cm.js';
+import { bas2txt, bas2txtLines } from './bas2txt.js';
 import './basic-syntax.js';
+import save from '../lib/save.js';
+import { toHex } from '../lib/to.js';
+import { decode } from '../lib/unpack/lib.js';
 
 const lexer = new Lexer();
 const ta = $('textarea')[0];
@@ -22,14 +24,23 @@ cm.on('keydown', (cm, event) => {
     }
 
     const data = lexer.line(line);
-    try {
-      const line = bas2txtLines(data.basic).trim();
-      console.log(line);
 
+    try {
+      const processedLine = bas2txtLines(data.basic).trim();
+      console.log(processedLine);
+
+      // first remove the line
       cm.replaceRange(
-        line,
+        '',
         { line: cursor.line, ch: 0 },
         { line: cursor.line, ch: line.length }
+      );
+
+      // then add it back
+      cm.replaceRange(
+        processedLine,
+        { line: cursor.line, ch: 0 },
+        { line: cursor.line, ch: processedLine.length }
       );
       // event.preventDefault();
     } catch (e) {
@@ -38,82 +49,53 @@ cm.on('keydown', (cm, event) => {
   }
 });
 
-dnd(document.body, bas2txt);
-
-window.$ = $;
-
-function bas2txt(data) {
-  const unpack = new Unpack(data);
-
-  let { length, ...header } = unpack.parse(
-    `<A8$sig
-    C$marker
-    C$issue
-    C$version
-    I$length
-    C$hType
-    S$hFileLength
-    n$hLine
-    S$hOffset
-    x
-    x104
-    C$checksum`
-  );
-
-  const string = bas2txtLines(data.slice(unpack.offset));
-
-  cm.setValue(string);
-  console.log(string);
-}
-
-function bas2txtLines(data) {
-  const unpack = new Unpack(data);
-  let next;
-  let string = '';
-  while ((next = unpack.parse('<n$line s$length'))) {
-    const { length, line: lineNumber } = next;
-    //console.log('A' + line.length + '$data', data, line.__offset);
-    const content = unpack.parse(`<C${length}$data`);
-    if (!content || !content.data) break;
-
-    string = string + lineNumber + ' ';
-
-    const data = Array.from(content.data);
-
-    while (data.length) {
-      let chr = data.shift();
-      if (BASIC[chr]) {
-        string += BASIC[chr] + ' ';
-      } else if (chr === 0x0e) {
-        // move forward 5 bits
-        chr = data.shift();
-        let value = null;
-        let neg = 1;
-        if (chr === 0x00) {
-          const n = unpacker('<C$sign s$value x', data.splice(0, 4));
-          value = n.value;
-          neg = n.sign === 0x00 ? 1 : -1;
-        } else if ((chr & 0b0110000) === 0b0110000) {
-          // one letter number
-          const exp = chr - 128; // 128 float adjust…weird
-          let mantissa = unpacker('I$m', data.splice(0, 4)).m; // 32bit
-          neg = mantissa > 0x7f000000 ? -1 : 1; // sign mask is on the mantissa
-
-          mantissa = mantissa <<= 1; // now shift it off
-          value = mantissa ** exp;
-        } else {
-          // array
-          console.log('TODO');
-        }
-        value *= neg;
-        // console.log({ value });
-      } else {
-        string += String.fromCharCode(chr);
+function download() {
+  const filename = prompt('Filename?', 'untitled.bas');
+  if (filename.trim().length > 0) {
+    const lines = [];
+    let length = 0;
+    cm.eachLine(({ text }) => {
+      if (text.trim().length > 0) {
+        const data = lexer.line(text);
+        lines.push(data.basic);
+        length += data.basic.length;
       }
-    }
+    });
 
-    string += '\n';
+    // console.log(length, lines);
+    const file = new Uint8Array(length + 128);
+    file.set(header(file)); // set the header (128)
+    let offset = 128;
+    lines.forEach(line => {
+      file.set(line, offset);
+      offset += line.length;
+    });
+
+    // save(file, filename);
+    console.log(file);
+
+    const res = bas2txt(file);
+    console.log(res);
+    cm.setValue(res);
+    save(file, filename);
   }
-
-  return string;
 }
+
+$('button').on('click', download);
+
+document.body.onkeydown = e => {
+  if (e.key === 'S') {
+    download();
+    return;
+  }
+};
+
+CodeMirror.commands.save = download;
+
+dnd(document.body, file => {
+  if (file[0] === 0x50) {
+    cm.setValue(bas2txt(file));
+  } else {
+    cm.setValue(decode(file));
+  }
+});

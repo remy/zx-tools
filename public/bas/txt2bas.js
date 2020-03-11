@@ -1,6 +1,7 @@
 import codes from './codes.js';
-
-console.clear();
+import { zxFloat } from '../lib/to.js';
+import pack from '../lib/unpack/pack.js';
+import { toHex } from '../lib/to.js';
 
 export const encode = a => new TextEncoder().encode(a);
 
@@ -10,11 +11,42 @@ const opTable = Object.entries(codes).reduce(
     return acc;
   },
   {
-    GOTO: 0xed,
+    GOTO: 0xec,
   }
 );
 
-// FIXME there's an alias for goto => go to, etc
+export const header = basic => {
+  console.log(basic.length);
+
+  const res = pack(
+    '< A8$sig C$eof C$issue C$version I$length C$hType S$hFileLength n$hLine S$hOffset',
+    {
+      sig: 'PLUS3DOS',
+      eof: 26,
+      issue: 1,
+      version: 0,
+      length: basic.length,
+      hType: 0,
+      hFileLength: basic.length - 128,
+      hLine: 30848,
+      hOffset: basic.length - 128,
+    }
+  );
+
+  const checksum = Array.from(res).reduce((acc, curr) => (acc += curr), 0); // ?
+
+  Array.from(res)
+    .map(_ => toHex(_))
+    .join(' '); //?
+
+  const result = new Uint8Array(128);
+  result.set(res, 0);
+  result[127] = checksum; // ?
+
+  return result;
+};
+
+header(Uint8Array.from({ length: 440 }));
 
 // Based on (with huge mods) https://eli.thegreenplace.net/2013/07/16/hand-written-lexer-in-javascript-compared-to-the-regex-based-ones
 export default class Lexer {
@@ -35,6 +67,7 @@ export default class Lexer {
   }
 
   line(line) {
+    line; // ?
     this.input(line);
     let lineNumber = null;
     let tokens = [];
@@ -51,9 +84,37 @@ export default class Lexer {
       if (name === 'KEYWORD') {
         length++;
         tokens.push(token);
+        if (codes[value] === 'REM') {
+          token = this._processComment();
+          length += token.value.length;
+          tokens.push(token);
+        }
+      } else if (name === 'NUMBER') {
+        length += value.toString().length;
+        tokens.push(token);
+
+        if ((value | 0) === value && value >= -65535 && value <= 65535) {
+          const view = new DataView(new ArrayBuffer(6));
+          view.setUint8(0, 0x0e);
+          view.setUint8(1, 0x00);
+          view.setUint8(2, value < 0 ? 0xff : 0x00);
+          view.setUint16(3, value, true);
+          tokens.push({
+            name: 'NUMBER_DATA',
+            value: new Uint8Array(view.buffer),
+          });
+          length += 6;
+        } else {
+          const res = zxFloat(value); // ?
+          tokens.push({
+            name: 'NUMBER_DATA',
+            value: new Uint8Array(res.value.buffer),
+          });
+          length += 6;
+        }
       } else {
         length += value.toString().length;
-        // TODO add the binary token value
+        // TODO test the binary token value
         tokens.push(token);
       }
     }
@@ -61,11 +122,7 @@ export default class Lexer {
     tokens.push({ name: 'KEYWORD', value: 0x0d });
     length++;
 
-    console.log('making buffer ' + (length + 4));
-
     const buffer = new DataView(new ArrayBuffer(length + 4));
-
-    console.log('len', buffer.byteLength);
 
     buffer.setUint16(0, lineNumber, false);
     buffer.setUint16(2, length, true);
@@ -73,14 +130,14 @@ export default class Lexer {
     let offset = 4;
 
     tokens.forEach(({ name, value }) => {
-      console.log(name, value, offset, buffer.buffer);
       if (name === 'KEYWORD') {
-        console.log(value, offset);
-
         buffer.setUint8(offset, value);
         offset++;
+      } else if (name === 'NUMBER_DATA') {
+        const view = new Uint8Array(buffer.buffer);
+        view.set(value, offset);
+        offset += value.length;
       } else {
-        // TODO handle numbers differently
         const v = value.toString();
         const view = new Uint8Array(buffer.buffer);
         view.set(encode(v), offset);
@@ -92,7 +149,7 @@ export default class Lexer {
       basic: new Uint8Array(buffer.buffer),
       lineNum: lineNumber,
       tokens,
-      len: length,
+      length,
     };
   }
 
@@ -113,33 +170,26 @@ export default class Lexer {
     // The char at this.pos is part of a real token. Figure out which.
     var c = this.buf.charAt(this.pos);
 
-    // comments are slurped
-    if (c.toUpperCase() === 'R') {
-      var next_c = this.buf.substr(this.pos, 3);
+    // comments are slurped elsewhere
 
-      if (next_c.toUpperCase() === 'REM') {
-        return this._processComment();
-      } else {
-        return { name: 'DIVIDE', value: '/', pos: this.pos++ };
-      }
+    // Look it up in the table of operators
+    var op = this.opTable[c];
+    if (op !== undefined) {
+      return { name: 'KEYWORD', value: op, pos: this.pos++ };
     } else {
-      // Look it up in the table of operators
-      var op = this.opTable[c];
-      if (op !== undefined) {
-        return { name: op, value: c, pos: this.pos++ };
+      // Not an operator - so it's the beginning of another token.
+      if (Lexer._isAlpha(c)) {
+        return this._processIdentifier();
+      } else if (c === '.' && Lexer._isDigit(this.buf.charAt(this.pos + 1))) {
+        return this._processNumber();
+      } else if (Lexer._isDigit(c)) {
+        return this._processNumber();
+      } else if (Lexer._isSymbol(c)) {
+        return { name: 'SYMBOL', value: c, pos: this.pos++ };
+      } else if (c === '"') {
+        return this._processQuote();
       } else {
-        // Not an operator - so it's the beginning of another token.
-        if (Lexer._isAlpha(c)) {
-          return this._processIdentifier();
-        } else if (Lexer._isDigit(c)) {
-          return this._processNumber();
-        } else if (Lexer._isSymbol(c)) {
-          return { name: 'SYMBOL', value: c, pos: this.pos++ };
-        } else if (c === '"') {
-          return this._processQuote();
-        } else {
-          throw Error(`Token error at ${this.pos} (${c})`);
-        }
+        throw Error(`Token error at ${this.pos} (${c})\n${this.buf}`);
       }
     }
   }
@@ -153,7 +203,7 @@ export default class Lexer {
   }
 
   static _isSymbol(c) {
-    return c === ',' || c === ';' || c === ':';
+    return ',;:=-+/*^()<>'.includes(c);
   }
 
   static _isAlpha(c) {
@@ -174,7 +224,11 @@ export default class Lexer {
 
   _processNumber() {
     var endPos = this.pos + 1;
-    while (endPos < this.bufLen && Lexer._isDigit(this.buf.charAt(endPos))) {
+    while (
+      endPos < this.bufLen &&
+      (Lexer._isDigit(this.buf.charAt(endPos)) ||
+        this.buf.charAt(endPos) === '.')
+    ) {
       endPos++;
     }
 
@@ -196,16 +250,16 @@ export default class Lexer {
   }
 
   _processComment() {
-    var endPos = this.pos + 2;
+    var endPos = this.pos;
     // Skip until the end of the line
-    var c = this.buf.charAt(this.pos + 2);
+    var c = this.buf.charAt(this.pos);
     while (endPos < this.bufLen && !Lexer._isNewLine(this.buf.charAt(endPos))) {
       endPos++;
     }
 
     var tok = {
       name: 'COMMENT',
-      value: this.buf.substring(this.pos + 3, endPos).trim(),
+      value: this.buf.substring(this.pos, endPos).trim(),
       pos: this.pos,
     };
     this.pos = endPos + 1;
@@ -213,12 +267,17 @@ export default class Lexer {
   }
 
   _isOpCode(endPos) {
-    const curr = this.buf.substring(this.pos, endPos).toUpperCase();
+    let curr = this.buf.substring(this.pos, endPos).toUpperCase();
 
     const _next = this.buf.charAt(endPos, endPos + 1);
 
-    if (_next && (curr === 'GO' || curr === 'IN')) {
-      return false;
+    if (_next == ' ' && curr === 'GO') {
+      // check if the next is "SUB" or "TO"
+      const next = this._peekToken(1).toUpperCase();
+      if (next === 'SUB' || next === 'TO') {
+        endPos = endPos + 1 + next.length;
+        curr = curr + ' ' + next;
+      }
     }
 
     if (this.opTable[curr] !== undefined) {
@@ -233,14 +292,26 @@ export default class Lexer {
     return false;
   }
 
+  _peekToken(offset = 0) {
+    const tmp = this.pos;
+    this.pos += offset + 1;
+    this._skipNonTokens();
+    let endPos = this.pos + 1;
+    while (endPos < this.bufLen && Lexer._isAlphaNum(this.buf.charAt(endPos))) {
+      endPos++;
+    }
+
+    const self = this;
+    const value = this.buf.substring(this.pos, endPos);
+
+    this.pos = tmp;
+
+    return value;
+  }
+
   _processIdentifier() {
     var endPos = this.pos + 1;
     while (endPos < this.bufLen && Lexer._isAlphaNum(this.buf.charAt(endPos))) {
-      const tok = this._isOpCode(endPos);
-
-      if (tok) {
-        return tok;
-      }
       endPos++;
     }
 
@@ -250,9 +321,17 @@ export default class Lexer {
       return tok;
     }
 
+    // special case for GO<space>[TO|SUB]
+    let value = this.buf.substring(this.pos, endPos);
+
+    if (this.buf.substring(endPos, endPos + 1) === ' ') {
+      value += ' ';
+      endPos++;
+    }
+
     tok = {
       name: 'IDENTIFIER',
-      value: this.buf.substring(this.pos, endPos),
+      value,
       pos: this.pos,
     };
     this.pos = endPos;
@@ -289,7 +368,52 @@ export default class Lexer {
 }
 
 // console.clear();
-const l = new Lexer(); // ?
-const line = l.line('20 INPUT "what is your name?", n$');
-console.log(line, line.basic.length);
-// console.log(l.line('20GOTO10'));
+// const l = new Lexer();
+// const line = l.line('40 BEEP .5');
+// line; // ?
+// // console.log(l.line('20GOTO10'));
+
+// const expect = [
+//   0x00,
+//   0x1e,
+//   0x1f,
+//   0x00,
+//   0xf5,
+//   0xac,
+//   0x30,
+//   0x0e,
+//   0x00,
+//   0x00,
+//   0x00,
+//   0x00,
+//   0x00,
+//   0x2c,
+//   0x30,
+//   0x0e,
+//   0x00,
+//   0x00,
+//   0x00,
+//   0x00,
+//   0x00,
+//   0x3b,
+//   0xbf,
+//   0x61,
+//   0x3a,
+//   0xec,
+//   0x33,
+//   0x30,
+//   0x0e,
+//   0x00,
+//   0x00,
+//   0x1e,
+//   0x00,
+//   0x00,
+//   0x0d,
+// ];
+
+// for (let i = 0; i < line.basic.length; i++) {
+//   if (line.basic[i] !== expect[i]) {
+//     const a = { i, basic: line.basic[i], expected: expect[i] }; //?
+//     break;
+//   }
+// }

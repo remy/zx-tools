@@ -11,7 +11,7 @@ CodeMirror.defineSimpleMode('basic', {
   start: [
     // The regex matches the token, the token property contains the type
     { regex: /"(?:[^\\]|\\.)*?(?:"|$)/, token: 'string' },
-    { regex: /\s*\d+\b/, token: 'variable-3', sol: true },
+    { regex: /\s*\d+\b/, token: 'variable-3 basic-line-number', sol: true },
     { regex: /(GO TO)(\s+)(\d+)\b/, token: ['keyword', null, 'variable-3'] },
     { regex: /BIN\s[01]+/, token: 'number-binary number' },
     {

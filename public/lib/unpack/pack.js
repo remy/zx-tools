@@ -1,4 +1,4 @@
-import { encode, pattern, typeMap } from './lib';
+import { encode, pattern, typeMap } from './lib.js';
 
 export default function pack(template, data, offset = 0) {
   if (ArrayBuffer.isView(data)) {

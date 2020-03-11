@@ -12,7 +12,7 @@
 
   <body>
     <te /textarea>
-      <textarea id="code">10 PRINT "my name is Tappy"
+      <textarea hidden id="code">10 PRINT "my name is Tappy"
 20 INPUT "what is your name?", n$
 30 PRINT "Hello ";n$;", that is a nice name"
 40 BEEP .5,5: BEEP .5,3: BEEP 2,0
@@ -25,13 +25,12 @@
 9055 INPUT a
 9060 NEXT c
 9070 PRINT AT 31-n,n;
-9080 LET sx=80* PI : REM a is an angle
-
-</textarea>
+9080 LET sx=80* PI : REM a is an angle</textarea>
       </div>
       <div>
-        <section id="container"></section>
-        <section id="debug"></section>
+        <section id="controls">
+          <button>Download .bas</button>
+        </section>
       </div>
       <script src="index.js" type="module"></script>
   </body>

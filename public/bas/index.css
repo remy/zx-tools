@@ -2,6 +2,10 @@
   box-sizing: border-box;
 }
 
+button {
+  cursor: pointer;
+}
+
 body,
 html {
   margin: 0;
@@ -57,4 +61,24 @@ body {
 
 .cm-s-default .cm-number {
   color: #90368a;
+}
+
+.cm-basic-line-number {
+  /* padding-left: 24px; */
+}
+
+button {
+  padding: 4px 16px;
+  margin: 20px 0;
+  background: #222;
+  color: white;
+  font-family: 'source code pro';
+  border: 0;
+  font-size: 16px;
+}
+
+button:hover {
+  background: #000;
+  /* box-shadow: 2px 2px 0px #999; */
+  outline: 2px solid #000;
 }
