@@ -1,7 +1,7 @@
 // https://en.wikipedia.org/wiki/ZX_Spectrum_character_set
 export default {
-  0x3a: ':',
-  0x2a: '*',
+  // 0x3a: ':',
+  // 0x2a: '*',
   0x87: 'PEEK$',
   0x88: 'REG',
   0x89: 'DPOKE',

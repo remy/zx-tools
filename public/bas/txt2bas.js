@@ -145,9 +145,11 @@ export default class Lexer {
       }
     });
 
+    console.log({ tokens });
+
     return {
       basic: new Uint8Array(buffer.buffer),
-      lineNum: lineNumber,
+      lineNumber,
       tokens,
       length,
     };
@@ -169,6 +171,7 @@ export default class Lexer {
 
     // The char at this.pos is part of a real token. Figure out which.
     var c = this.buf.charAt(this.pos);
+    const _next = this.buf.charAt(this.pos + 1);
 
     // comments are slurped elsewhere
 
@@ -185,6 +188,13 @@ export default class Lexer {
       } else if (Lexer._isDigit(c)) {
         return this._processNumber();
       } else if (Lexer._isSymbol(c)) {
+        if (c === '<' && _next === '>') {
+          return {
+            name: 'KEYWORD',
+            value: this.opTable['<>'],
+            pos: (this.pos += 2),
+          };
+        }
         return { name: 'SYMBOL', value: c, pos: this.pos++ };
       } else if (c === '"') {
         return this._processQuote();
@@ -312,6 +322,11 @@ export default class Lexer {
   _processIdentifier() {
     var endPos = this.pos + 1;
     while (endPos < this.bufLen && Lexer._isAlphaNum(this.buf.charAt(endPos))) {
+      let tok = this._isOpCode(endPos);
+
+      if (tok) {
+        return tok;
+      }
       endPos++;
     }
 
@@ -368,10 +383,9 @@ export default class Lexer {
 }
 
 // console.clear();
-// const l = new Lexer();
-// const line = l.line('40 BEEP .5');
+const l = new Lexer();
 // line; // ?
-// // console.log(l.line('20GOTO10'));
+console.log(l.line('20 plot0,0:draw f,175:plot 255,0:draw -f,175'));
 
 // const expect = [
 //   0x00,

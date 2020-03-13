@@ -36,12 +36,18 @@ export function bas2txtLines(data) {
 
     string = string + lineNumber + ' ';
 
+    let lastChr = null;
+
     const data = Array.from(content.data);
 
     while (data.length) {
       let chr = data.shift();
       if (BASIC[chr]) {
-        string += BASIC[chr] + ' ';
+        if (lastChr !== null && !BASIC[lastChr]) {
+          string += ' ' + BASIC[chr] + ' ';
+        } else {
+          string += BASIC[chr] + ' ';
+        }
       } else if (chr === 0x0e) {
         // move forward 5 bits
         chr = data.shift();
@@ -68,6 +74,8 @@ export function bas2txtLines(data) {
       } else {
         string += String.fromCharCode(chr);
       }
+
+      lastChr = chr;
     }
 
     string += '\n';
