@@ -8,6 +8,10 @@ import save from '../lib/save.js';
 import { toHex } from '../lib/to.js';
 import { decode } from '../lib/unpack/lib.js';
 
+function localSave() {
+  sessionStorage.setItem('code', cm.getValue());
+}
+
 const lexer = new Lexer();
 const ta = $('textarea')[0];
 const code = sessionStorage.getItem('code');
@@ -32,7 +36,6 @@ cm.on('keydown', (cm, event) => {
 
     try {
       const processedLine = bas2txtLines(data.basic).trim();
-      console.log(processedLine);
 
       // first remove the line
       cm.replaceRange(
@@ -52,7 +55,7 @@ cm.on('keydown', (cm, event) => {
       console.error(e);
     }
 
-    sessionStorage.setItem('code', cm.getValue());
+    localSave();
   }
 });
 
@@ -94,13 +97,6 @@ function download() {
 
 $('button').on('click', download);
 
-// document.body.onkeydown = e => {
-//   if (e.key === 's' && e.metaKey) {
-//     download();
-//     return;
-//   }
-// };
-
 CodeMirror.commands.save = download;
 
 dnd(document.body, file => {
@@ -109,4 +105,5 @@ dnd(document.body, file => {
   } else {
     cm.setValue(decode(file));
   }
+  localSave();
 });

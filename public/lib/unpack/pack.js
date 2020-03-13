@@ -8,6 +8,7 @@ export default function pack(template, data, offset = 0) {
   const re = new RegExp(pattern, 'g');
   let m = [];
   let bytePtr = 0;
+  let little = false;
 
   const firstChr = template[0];
   const defaultLittle = firstChr === '<' ? true : false;
@@ -117,8 +118,7 @@ export default function pack(template, data, offset = 0) {
         break;
       case 'a':
       case 'A':
-        const value = new Uint8Array(result.buffer, offset, end);
-        value.set(encode(data[index]));
+        new Uint8Array(result.buffer, offset, end).set(encode(data[index]));
         offset += end;
         break;
       default:

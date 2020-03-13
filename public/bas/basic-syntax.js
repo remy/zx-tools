@@ -2,9 +2,13 @@ import CodeMirror from '/web_modules/codemirror/src/codemirror.js';
 import '/web_modules/codemirror/addon/mode/simple.js';
 import codes from './codes.js';
 
-const keywords = Object.values(codes)
-  .filter(_ => !['*', 'REM'].includes(_))
-  .map(_ => _.replace(/\$/, '\\$(?:\\s)'));
+const keywords = Object.values(codes).filter(
+  _ => !['*', 'REM', '$'].includes(_)
+);
+
+const $keywords = Object.values(codes)
+  .filter(_ => _.includes('$'))
+  .map(_ => _.replace(/\$/, '\\$'));
 
 CodeMirror.defineSimpleMode('basic', {
   // The start state contains the rules that are intially used
@@ -20,6 +24,10 @@ CodeMirror.defineSimpleMode('basic', {
     },
     {
       regex: new RegExp(`\\b(?:${keywords.join('|')})\\b`),
+      token: 'keyword',
+    },
+    {
+      regex: new RegExp(`\\b(?:${$keywords.join('|')})(?:[\\b|\\s|]|$)`),
       token: 'keyword',
     },
     { regex: /'.*/, token: 'comment' },

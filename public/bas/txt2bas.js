@@ -2,6 +2,7 @@ import codes from './codes.js';
 import { zxFloat } from '../lib/to.js';
 import pack from '../lib/unpack/pack.js';
 import { toHex } from '../lib/to.js';
+import { bas2txtLines } from './bas2txt.js';
 
 export const encode = a => new TextEncoder().encode(a);
 
@@ -16,8 +17,6 @@ const opTable = Object.entries(codes).reduce(
 );
 
 export const header = basic => {
-  console.log(basic.length);
-
   const res = pack(
     '< A8$sig C$eof C$issue C$version I$length C$hType S$hFileLength n$hLine S$hOffset',
     {
@@ -33,15 +32,15 @@ export const header = basic => {
     }
   );
 
-  const checksum = Array.from(res).reduce((acc, curr) => (acc += curr), 0); // ?
+  const checksum = Array.from(res).reduce((acc, curr) => (acc += curr), 0);
 
-  Array.from(res)
-    .map(_ => toHex(_))
-    .join(' '); //?
+  // Array.from(res)
+  //   .map(_ => toHex(_))
+  //   .join(' '); //?
 
   const result = new Uint8Array(128);
   result.set(res, 0);
-  result[127] = checksum; // ?
+  result[127] = checksum;
 
   return result;
 };
@@ -67,7 +66,6 @@ export default class Lexer {
   }
 
   line(line) {
-    line; // ?
     this.input(line);
     let lineNumber = null;
     let tokens = [];
@@ -105,7 +103,7 @@ export default class Lexer {
           });
           length += 6;
         } else {
-          const res = zxFloat(value); // ?
+          const res = zxFloat(value);
           tokens.push({
             name: 'NUMBER_DATA',
             value: new Uint8Array(res.value.buffer),
@@ -281,16 +279,22 @@ export default class Lexer {
 
     const _next = this.buf.charAt(endPos, endPos + 1);
 
+    let ignorePeek = false;
     if (_next == ' ' && curr === 'GO') {
       // check if the next is "SUB" or "TO"
-      const next = this._peekToken(1).toUpperCase();
+      const next = this._peekToken(1).toUpperCase(); // ?
       if (next === 'SUB' || next === 'TO') {
         endPos = endPos + 1 + next.length;
         curr = curr + ' ' + next;
+        ignorePeek = true;
       }
     }
 
     if (this.opTable[curr] !== undefined) {
+      const peeked = this._peekToken(-1); // ?
+      if (ignorePeek === false && curr !== peeked) {
+        return false;
+      } // ? [$,curr]
       this.pos = endPos;
 
       return {
@@ -333,16 +337,16 @@ export default class Lexer {
     let tok = this._isOpCode(endPos);
 
     if (tok) {
-      return tok;
+      return tok; // ?
     }
 
     // special case for GO<space>[TO|SUB]
     let value = this.buf.substring(this.pos, endPos);
 
-    if (this.buf.substring(endPos, endPos + 1) === ' ') {
-      value += ' ';
-      endPos++;
-    }
+    // if (this.buf.substring(endPos, endPos + 1) === ' ') {
+    //   value += ' '; // ?
+    //   endPos++;
+    // }
 
     tok = {
       name: 'IDENTIFIER',
@@ -383,51 +387,7 @@ export default class Lexer {
 }
 
 // console.clear();
-const l = new Lexer();
-// line; // ?
-console.log(l.line('20 plot0,0:draw f,175:plot 255,0:draw -f,175'));
+// const l = new Lexer();
+// const res = l.line('2010 LET p$ = INKEY$ INKEY$IN    PRINT GOTO GO SUB').basic; // ?
 
-// const expect = [
-//   0x00,
-//   0x1e,
-//   0x1f,
-//   0x00,
-//   0xf5,
-//   0xac,
-//   0x30,
-//   0x0e,
-//   0x00,
-//   0x00,
-//   0x00,
-//   0x00,
-//   0x00,
-//   0x2c,
-//   0x30,
-//   0x0e,
-//   0x00,
-//   0x00,
-//   0x00,
-//   0x00,
-//   0x00,
-//   0x3b,
-//   0xbf,
-//   0x61,
-//   0x3a,
-//   0xec,
-//   0x33,
-//   0x30,
-//   0x0e,
-//   0x00,
-//   0x00,
-//   0x1e,
-//   0x00,
-//   0x00,
-//   0x0d,
-// ];
-
-// for (let i = 0; i < line.basic.length; i++) {
-//   if (line.basic[i] !== expect[i]) {
-//     const a = { i, basic: line.basic[i], expected: expect[i] }; //?
-//     break;
-//   }
-// }
+// bas2txtLines(res); // ?
