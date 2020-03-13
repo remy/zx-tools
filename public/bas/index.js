@@ -10,6 +10,11 @@ import { decode } from '../lib/unpack/lib.js';
 
 const lexer = new Lexer();
 const ta = $('textarea')[0];
+const code = sessionStorage.getItem('code');
+if (code) {
+  ta.value = code;
+}
+
 const cm = CodeMirror.fromTextArea(ta, {
   mode: 'text/x-basic',
 });
@@ -46,29 +51,35 @@ cm.on('keydown', (cm, event) => {
     } catch (e) {
       console.error(e);
     }
+
+    sessionStorage.setItem('code', cm.getValue());
   }
 });
 
 function download() {
   const filename = prompt('Filename?', 'untitled.bas');
-  if (filename.trim().length > 0) {
+  if (filename && filename.trim().length > 0) {
     const lines = [];
     let length = 0;
     cm.eachLine(({ text }) => {
       if (text.trim().length > 0) {
         const data = lexer.line(text);
-        lines.push(data.basic);
+        lines.push(data);
         length += data.basic.length;
       }
     });
 
-    // console.log(length, lines);
+    lines.sort((a, b) => {
+      return a.lineNumber < b.lineNumber ? -1 : 1;
+    });
+
+    console.log(length, lines);
     const file = new Uint8Array(length + 128);
     file.set(header(file)); // set the header (128)
     let offset = 128;
     lines.forEach(line => {
-      file.set(line, offset);
-      offset += line.length;
+      file.set(line.basic, offset);
+      offset += line.basic.length;
     });
 
     // save(file, filename);
@@ -83,12 +94,12 @@ function download() {
 
 $('button').on('click', download);
 
-document.body.onkeydown = e => {
-  if (e.key === 'S') {
-    download();
-    return;
-  }
-};
+// document.body.onkeydown = e => {
+//   if (e.key === 's' && e.metaKey) {
+//     download();
+//     return;
+//   }
+// };
 
 CodeMirror.commands.save = download;
 
