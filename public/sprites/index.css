@@ -33,7 +33,8 @@ section {
   font-family: 'source code pro', 'ubuntu Mono', monospace;
 }
 
-button {
+button,
+.button {
   background: black;
 }
 
@@ -151,7 +152,8 @@ button {
   width: calc(var(--scale) / 16);
 }
 
-button {
+button,
+.button {
   margin: 0;
   display: block;
   width: 100%;

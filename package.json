@@ -3,8 +3,12 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "NODE_ENV=production parcel build public/index.html public/**/index.html -d dist ",
+    "serve-dist": "serve dist -p 8080"
   },
+  "browserslist": [
+    "last 1 Chrome versions"
+  ],
   "keywords": [],
   "author": "Remy Sharp (https://remysharp.com)",
   "license": "MIT",
@@ -15,8 +19,14 @@
     "esm": "^3.2.25"
   },
   "devDependencies": {
+    "@babel/core": "^7.0.0-0",
+    "@babel/plugin-proposal-class-properties": "^7.8.3",
+    "babel-core": "^6.26.3",
     "babel-eslint": "^10.1.0",
-    "eslint": "^6.8.0"
+    "babel-preset-env": "^1.7.0",
+    "cssnano": "^4.1.10",
+    "eslint": "^6.8.0",
+    "parcel-bundler": "^1.12.4"
   },
   "description": "",
   "webDependencies": [

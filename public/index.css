@@ -14,7 +14,8 @@ code {
   border-radius: 2px;
 }
 
-button {
+button,
+.button {
   cursor: pointer;
   padding: 4px 16px;
   margin: 4px 0;
@@ -26,7 +27,8 @@ button {
   font-size: 16px;
 }
 
-button:hover {
+button:hover,
+.button:hover {
   background: #000;
   outline: 2px solid #000;
 }
