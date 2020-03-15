@@ -1,0 +1,9 @@
+main {
+  max-width: 720px;
+  padding-bottom: 80vh;
+  line-height: 1.6;
+}
+
+ul ul {
+  padding-left: 16px;
+}

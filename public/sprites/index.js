@@ -55,6 +55,7 @@ class ColourPicker {
 
     this.container = target;
     this.history = [0, 255, this.transparent];
+    this.index = 0;
   }
 
   set value(index) {
@@ -239,27 +240,25 @@ function render(data, into = container) {
   into.innerHTML = '';
   for (let i = 0; i < data.length; i++) {
     let index = data[i];
-    into.appendChild(makePixel(rgbFromIndex(index), index, i));
+    into.appendChild(makePixel(index, i));
   }
 }
 
-function makePixel({ r, g, b, a }, index, dataIndex) {
+function makePixel(index, dataIndex) {
   const d = document.createElement('div');
-  // d.style = `background: rgba(${[r, g, b, a].join(', ')})`;
   d.className = 'c-' + index;
-  d.title = `${index} 0x${index.toString(16).padStart(2, '0')}`;
   d.dataset.value = index;
   d.dataset.index = dataIndex;
   return d;
 }
 
 container.onmousemove = e => {
-  const d = e.target.title;
-  if (!d) {
+  const value = e.target.dataset.value;
+  if (value === undefined) {
     return;
   }
 
-  debug.innerHTML = d;
+  debug.innerHTML = `${value} 0x${value.toString(16).padStart(2, '0')}`;
 };
 
 drop(document.documentElement, fileHandler);

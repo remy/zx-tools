@@ -16,6 +16,16 @@ button {
   font-size: 16px;
 }
 
+a {
+  color: rgb(0, 0, 215);
+}
+
+code {
+  background: #eee;
+  border: 2px solid #eee;
+  border-radius: 2px;
+}
+
 button:hover {
   background: #000;
   /* box-shadow: 2px 2px 0px #999; */
@@ -44,7 +54,7 @@ nav ul {
   margin: 0;
   padding: 0;
   list-style: none;
-  background: linear-gradient(#111,black);
+  background: linear-gradient(#111, black);
   color: white;
   margin-bottom: 20px;
   padding: 8px;

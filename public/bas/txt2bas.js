@@ -129,6 +129,7 @@ export default class Lexer {
     return res;
   }
 
+  // TODO arrays
   line(line) {
     this.input(line);
     let lineNumber = null;
@@ -176,17 +177,17 @@ export default class Lexer {
         }
       } else {
         length += value.toString().length;
-        // TODO test the binary token value
         tokens.push(token);
       }
     }
 
+    // add the end of carriage to the line
     tokens.push({ name: 'KEYWORD', value: 0x0d });
     length++;
 
     const buffer = new DataView(new ArrayBuffer(length + 4));
 
-    buffer.setUint16(0, lineNumber, false);
+    buffer.setUint16(0, lineNumber, false); // line number is stored as big endian
     buffer.setUint16(2, length, true);
 
     let offset = 4;
@@ -206,8 +207,6 @@ export default class Lexer {
         offset += v.length;
       }
     });
-
-    console.log({ tokens });
 
     return {
       basic: new Uint8Array(buffer.buffer),
@@ -324,7 +323,6 @@ export default class Lexer {
   _processComment() {
     var endPos = this.pos;
     // Skip until the end of the line
-    var c = this.buf.charAt(this.pos);
     while (endPos < this.bufLen && !Lexer._isNewLine(this.buf.charAt(endPos))) {
       endPos++;
     }
@@ -379,7 +377,6 @@ export default class Lexer {
       endPos++;
     }
 
-    const self = this;
     const value = this.buf.substring(this.pos, endPos);
 
     this.pos = tmp;

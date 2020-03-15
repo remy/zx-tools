@@ -8,6 +8,7 @@ import save from '../lib/save.js';
 import { decode } from '../lib/unpack/lib.js';
 import { generateBlock } from '../lib/audio/index.js';
 import { createWavFromBuffer } from '../lib/audio/make-wav.js';
+import { loadGist } from './lib/gist.js';
 
 function localSave() {
   sessionStorage.setItem('code', cm.getValue());
@@ -33,25 +34,70 @@ cm.on('keydown', (cm, event) => {
       return;
     }
 
-    const data = lexer.line(line);
+    const newLine = lexer.line(line);
 
     try {
-      const processedLine = bas2txtLines(data.basic).trim();
+      // then sort all the lines and put the cursor back in the right place
+      const lines = [];
+      let length = 0;
+      let inserted = false;
+      let removed = false;
+      cm.eachLine(({ text, line: lineNumber }) => {
+        if (lineNumber === line) {
+          return; // skip the newly inserted line
+        }
+        if (text.trim().length > 0) {
+          const data = lexer.line(text);
+          if (data.lineNumber === newLine.lineNumber) {
+            inserted = true;
+            // >1 because all lines include 0x0d
+            // allows us to replace and remove lines
+            if (newLine.length > 1) {
+              lines.push(newLine);
+              length += newLine.basic.length;
+            } else {
+              removed = true;
+            }
+          } else {
+            lines.push(data);
+            length += data.basic.length;
+          }
+        }
+      });
 
-      // first remove the line
-      cm.replaceRange(
-        '',
-        { line: cursor.line, ch: 0 },
-        { line: cursor.line, ch: line.length }
-      );
+      if (!inserted) {
+        lines.push(newLine);
+        length += newLine.basic.length;
+      }
 
-      // then add it back
-      cm.replaceRange(
-        processedLine,
-        { line: cursor.line, ch: 0 },
-        { line: cursor.line, ch: processedLine.length }
-      );
-      // event.preventDefault();
+      lines.sort((a, b) => {
+        return a.lineNumber < b.lineNumber ? -1 : 1;
+      });
+
+      // recompile the text
+      let offset = 0;
+      const basic = new Uint8Array(length);
+      let insertLine = 0;
+      lines.forEach((line, i) => {
+        basic.set(line.basic, offset);
+        if (line.lineNumber === newLine.lineNumber) {
+          insertLine = i;
+        }
+        offset += line.basic.length;
+      });
+
+      const res = bas2txtLines(basic);
+      cm.setValue(res);
+
+      // attempt to put the cursor back in the best spot
+      if (removed) {
+        cm.setCursor(cursor);
+      } else {
+        cm.replaceRange('\n', { line: insertLine + 1, ch: 0 });
+        cm.setCursor({ line: insertLine + 1, ch: 0 });
+      }
+
+      event.preventDefault();
     } catch (e) {
       console.error(e);
     }
@@ -140,3 +186,9 @@ dnd(document.body, file => {
   }
   localSave();
 });
+
+if (window.location.search) {
+  loadGist().then(file => {
+    if (file) cm.setValue(file);
+  });
+}

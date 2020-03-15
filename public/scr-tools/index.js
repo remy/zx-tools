@@ -1,14 +1,10 @@
 import drop from '../lib/dnd.js';
-import { load, pixelsForSCR, loadBlinkAttributes, download } from './scr.js';
+import { pixelsForSCR } from './scr.js';
 import { $ } from '../lib/$.js';
 
 function fileHandler(data) {
-  console.log(data);
-
   const canvas = $('#preview')[0];
-
   const ctx = canvas.getContext('2d');
-
   pixelsForSCR(data, ctx);
 }
 
