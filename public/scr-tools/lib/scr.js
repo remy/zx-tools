@@ -3,9 +3,9 @@ import {
   normalColours,
   normalColoursLookup,
   brightColoursLookup,
-} from './lib/zx-colour.js';
+} from './zx-colour.js';
 
-import Zoom from './lib/Zoom.js';
+import Zoom from './Zoom.js';
 
 let toBlink = [];
 let blinkOn = false;
@@ -230,7 +230,7 @@ function doBlink(ctx, buffer) {
   });
 }
 
-export async function loadURL(url) {
+export default async function main(url) {
   const buffer = await load(url || './screens/remy.scr');
 
   const canvas = document.createElement('canvas');

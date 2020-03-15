@@ -9,3 +9,14 @@ label {
 input {
   font-size: inherit;
 }
+
+#result {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+}

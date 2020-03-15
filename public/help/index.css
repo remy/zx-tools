@@ -8,7 +8,7 @@ ul {
   padding-left: 16px;
 }
 
-li a {
+main li a {
   overflow: hidden;
   text-overflow: ellipsis;
   display: list-item;
