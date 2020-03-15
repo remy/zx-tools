@@ -113,16 +113,16 @@ button {
 }
 
 #container {
-  --block-size: calc(var(--size) + 32px);
+  border-radius: 2px;
+  --block-size: calc(var(--size));
   /* add a block grid */
   /* background: hotpink; */
-  background: hotpink
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16'><rect stroke='black' width='16' height='16' x='0' y='0' width='100%' height='100%' /></svg>");
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16'><rect fill='lightgrey' width='16' height='16' x='0' y='0' /><rect fill='white' width='8' height='8' x='0' y='0' /><rect fill='white' width='8' height='8' x='8' y='8' /></svg>");
   cursor: crosshair;
 }
 
 #container div {
-  margin: 1px;
+  margin: 0px;
   cursor: crosshair;
 }
 

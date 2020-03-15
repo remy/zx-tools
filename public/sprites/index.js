@@ -47,11 +47,11 @@ class ColourPicker {
     }).join('');
     target.innerHTML = html;
 
-    target.onclick = e => {
+    target.addEventListener('mousedown', e => {
       if (e.target.dataset.id) {
         this.index = e.target.dataset.id;
       }
-    };
+    });
 
     this.container = target;
     this.history = [0, 255, this.transparent];
@@ -89,7 +89,7 @@ class ColourPicker {
   }
 }
 
-const colour = new ColourPicker(6, pickerColour.parentNode);
+const colour = new ColourPicker(8, pickerColour.parentNode);
 
 buttons.on('click', e => {
   const action = e.target.dataset.action;
@@ -111,9 +111,9 @@ buttons.on('click', e => {
   }
 });
 
-picker.onclick = e => {
+picker.addEventListener('mousedown', e => {
   colour.value = e.target.dataset.value;
-};
+});
 
 let down = false;
 container.addEventListener(
@@ -154,12 +154,21 @@ container.onclick = e => {
       const offset = 256 * currentSprite;
       const x = offset + parseInt(e.target.dataset.index, 10);
       sprites[x] = parseInt(target, 10);
+
+      // update preview
+      const div = document.querySelector(`#sprites .focus`);
+      render(
+        new Uint8Array(
+          sprites.slice(currentSprite * 256, currentSprite * 256 + 256)
+        ),
+        div
+      );
     }
   }
 };
 
 document.body.onkeydown = e => {
-  if (e.key >= '1' && e.key <= '6') {
+  if (e.key >= '1' && e.key <= '8') {
     colour.index = parseInt(e.key, 10) - 1;
     return;
   }
@@ -221,6 +230,10 @@ function renderSpritePreviews() {
       new Uint8Array(sprites.slice(offset * 256, offset * 256 + 256)),
       div
     );
+    div.addEventListener('mousedown', () => {
+      currentSprite = offset;
+      renderCurrentSprite();
+    });
     spritesContainer.appendChild(div);
   });
 }
