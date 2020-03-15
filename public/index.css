@@ -4,18 +4,6 @@
   box-sizing: border-box;
 }
 
-button {
-  cursor: pointer;
-  padding: 4px 16px;
-  margin: 20px 0;
-  background: #222;
-  color: white;
-  /* font-family: 'source code pro'; */
-  font-family: 'source code pro', 'ubuntu Mono', monospace;
-  border: 0;
-  font-size: 16px;
-}
-
 a {
   color: rgb(0, 0, 215);
 }
@@ -26,9 +14,20 @@ code {
   border-radius: 2px;
 }
 
+button {
+  cursor: pointer;
+  padding: 4px 16px;
+  margin: 4px 0;
+  background: #222;
+  color: white;
+  /* font-family: 'source code pro'; */
+  font-family: 'source code pro', 'ubuntu Mono', monospace;
+  border: 0;
+  font-size: 16px;
+}
+
 button:hover {
   background: #000;
-  /* box-shadow: 2px 2px 0px #999; */
   outline: 2px solid #000;
 }
 
@@ -51,6 +50,7 @@ body {
 
 nav ul {
   display: flex;
+  flex-wrap: wrap;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -81,4 +81,10 @@ nav a {
 
 nav a:hover {
   text-decoration: underline;
+}
+
+@media screen and (max-width: 480px) {
+  nav ul {
+    justify-content: space-between;
+  }
 }
