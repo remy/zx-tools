@@ -1,4 +1,3 @@
-import CodeMirror from '/web_modules/codemirror/src/codemirror.js';
-window.CodeMirror = CodeMirror;
+const CodeMirror = window.CodeMirror;
 
 export default CodeMirror;
