@@ -6,12 +6,21 @@
     <meta name="viewport" content="width=device-width">
     <title>specnext .bas decode and encoder</title>
     <link rel="stylesheet" href="/web_modules/codemirror/lib/codemirror.css">
-    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="../index.css">
     <link rel="stylesheet" href="index.css">
   </head>
 
   <body>
-    <te /textarea>
+    <nav>
+      <ul>
+        <li class="selected"><a href="/bas/">Text 2 BASIC</a></li>
+        <li><a href="/sprites/">Sprites</a></li>
+        <li><a href="/scr-tools/">.SCR tools</a></li>
+        <li><a href="https://remysharp.com" target="blank">Made by @rem</a></li>
+      </ul>
+    </nav>
+    <p>Drag and drop <code>.bas</code> and .txt files to view, edit and download .bas formatted files.</p>
+    <div>
       <textarea hidden id="code">10 PRINT "my name is Tappy"
 20 INPUT "what is your name?", n$
 30 PRINT "Hello ";n$;", that is a nice name"
@@ -26,13 +35,16 @@
 9060 NEXT c
 9070 PRINT AT 31-n,n;
 9080 LET sx=80* PI : REM a is an angle</textarea>
-      </div>
-      <div>
-        <section id="controls">
-          <button>Download .bas</button>
-        </section>
-      </div>
-      <script src="index.js" type="module"></script>
+    </div>
+    <div>
+      <section id="controls">
+        Download:
+        <button data-action="tap">.TAP</button>
+        <button data-action="3dos">+3DOS .BAS</button>
+        <button data-action="wav">.WAV (with pilot)</button>
+      </section>
+    </div>
+    <script src="index.js" type="module"></script>
   </body>
 
 </html>

@@ -1,12 +1,13 @@
 import dnd from '../lib/dnd.js';
 import { $ } from '../lib/$.js';
-import Lexer, { header } from './txt2bas.js';
+import Lexer, { asTap, plus3DOSHeader } from './txt2bas.js';
 import CodeMirror from './lib/cm.js';
 import { bas2txt, bas2txtLines } from './bas2txt.js';
 import './basic-syntax.js';
 import save from '../lib/save.js';
-import { toHex } from '../lib/to.js';
 import { decode } from '../lib/unpack/lib.js';
+import { generateBlock } from '../lib/audio/index.js';
+import { createWavFromBuffer } from '../lib/audio/make-wav.js';
 
 function localSave() {
   sessionStorage.setItem('code', cm.getValue());
@@ -59,45 +60,77 @@ cm.on('keydown', (cm, event) => {
   }
 });
 
-function download() {
-  const filename = prompt('Filename?', 'untitled.bas');
-  if (filename && filename.trim().length > 0) {
-    const lines = [];
-    let length = 0;
-    cm.eachLine(({ text }) => {
-      if (text.trim().length > 0) {
-        const data = lexer.line(text);
-        lines.push(data);
-        length += data.basic.length;
-      }
-    });
+$('button').on('click', e => {
+  const { action } = e.target.dataset;
+  download(action);
+});
 
-    lines.sort((a, b) => {
-      return a.lineNumber < b.lineNumber ? -1 : 1;
-    });
+function download(action) {
+  const filename = prompt('Program name?', 'untitled');
 
-    console.log(length, lines);
+  if (!filename || filename.trim().length === 0) {
+    return;
+  }
+
+  const lines = [];
+  let length = 0;
+  cm.eachLine(({ text }) => {
+    if (text.trim().length > 0) {
+      const data = lexer.line(text);
+      lines.push(data);
+      length += data.basic.length;
+    }
+  });
+
+  lines.sort((a, b) => {
+    return a.lineNumber < b.lineNumber ? -1 : 1;
+  });
+
+  let offset = 0;
+  const basic = new Uint8Array(length);
+  lines.forEach(line => {
+    basic.set(line.basic, offset);
+    offset += line.basic.length;
+  });
+
+  const res = bas2txtLines(basic);
+  cm.setValue(res);
+
+  if (action === '3dos') {
     const file = new Uint8Array(length + 128);
-    file.set(header(file)); // set the header (128)
-    let offset = 128;
-    lines.forEach(line => {
-      file.set(line.basic, offset);
-      offset += line.basic.length;
+    file.set(plus3DOSHeader(file)); // set the header (128)
+    file.set(basic, 128);
+
+    save(file, filename + '.bas');
+  }
+
+  if (action === 'tap') {
+    const file = asTap(basic, filename);
+    save(file, filename + '.tap');
+  }
+
+  if (action === 'wav') {
+    const param1 = new DataView(basic.buffer).getUint16(0, false); // ?
+    const res = generateBlock({
+      type: 'PROGRAM',
+      ctx: new window.AudioContext(),
+      data: basic,
+      param1,
+      filename,
     });
 
-    // save(file, filename);
-    console.log(file);
+    const wav = createWavFromBuffer(res.getChannelData(0), 44100);
 
-    const res = bas2txt(file);
-    console.log(res);
-    cm.setValue(res);
-    save(file, filename);
+    const bufferLists = [];
+    while (!wav.eof()) {
+      bufferLists.push(wav.getBuffer(1000));
+    }
+
+    save(bufferLists, filename + '.wav');
   }
 }
 
-$('button').on('click', download);
-
-CodeMirror.commands.save = download;
+CodeMirror.commands.save = () => download('tap');
 
 dnd(document.body, file => {
   if (file[0] === 0x50) {

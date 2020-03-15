@@ -14,7 +14,10 @@
     "codemirror": "^5.52.0",
     "esm": "^3.2.25"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "babel-eslint": "^10.1.0",
+    "eslint": "^6.8.0"
+  },
   "description": "",
   "webDependencies": [
     "codemirror"

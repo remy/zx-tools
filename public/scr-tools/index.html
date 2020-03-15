@@ -6,13 +6,29 @@
     <meta name="viewport" content="width=device-width">
     <title>specnext .scr tools</title>
     <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="../index.css">
   </head>
 
   <body>
-    <div>
-      <input type="file" id="upload">
-    </div>
-    <canvas height="192" width="256" id="preview"></canvas>
+    <nav>
+      <ul>
+        <li><a href="/bas/">Text 2 BASIC</a></li>
+        <li><a href="/sprites/">Sprites</a></li>
+        <li class="selected"><a href="/scr-tools/">.SCR tools</a></li class="selected">
+        <li><a href="https://remysharp.com" target="blank">Made by @rem</a></li>
+      </ul>
+    </nav>
+
+    <main>
+      <div>
+        <label for="upload">Upload a .scr file to convert to png: </label><input type="file" id="upload">
+      </div>
+      <div>
+        <label for="upload-convert">Convert jpg/png into 15 colour .SCR file: </label><input type="file"
+          id="upload-convert">
+      </div>
+      <canvas height="192" width="256" id="preview"></canvas>
+    </main>
     <script src="index.js" type="module"></script>
   </body>
 

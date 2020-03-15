@@ -1,10 +1,12 @@
 import codes from './codes.js';
 import { zxFloat } from '../lib/to.js';
 import pack from '../lib/unpack/pack.js';
-import { toHex } from '../lib/to.js';
-import { bas2txtLines } from './bas2txt.js';
+// import { bas2txtLines } from './bas2txt.js';
 
 export const encode = a => new TextEncoder().encode(a);
+
+export const calculateXORChecksum = array =>
+  Uint8Array.of(array.reduce((checksum, item) => checksum ^ item, 0))[0];
 
 const opTable = Object.entries(codes).reduce(
   (acc, [code, str]) => {
@@ -16,7 +18,63 @@ const opTable = Object.entries(codes).reduce(
   }
 );
 
-export const header = basic => {
+/*
+header unpack template:
+<S$headerLength
+C$flagByte
+C$type
+A10$filename
+S$length
+S$autostart
+S$varStart
+C$checksum
+
+S$nextBlockLength
+
+C$blockType
+C……$data
+C$blockChecksum
+*/
+
+export const tapHeader = (basic, filename = 'BASIC') => {
+  const autostart = new DataView(basic.buffer).getUint16(0, false); // ?
+  const res = pack(
+    '<S$headerLength C$flagByte C$type A10$filename S$length S$p1 S$p2 C$checksum',
+    {
+      headerLength: 19,
+      flagByte: 0x0, // header
+      type: 0x00, // program
+      filename: filename.slice(0, 10), // 10 chrs max
+      length: basic.length,
+      p1: autostart,
+      p2: basic.length,
+      checksum: 0, // solved later
+    }
+  );
+
+  const checksum = calculateXORChecksum(res.slice(2, 20));
+
+  res[res.length - 1] = checksum; // ?
+
+  return res;
+};
+
+export const asTap = (basic, filename = 'tap dot js') => {
+  const header = tapHeader(basic, filename);
+  const dataType = 0xff;
+  const checksum = calculateXORChecksum(Array.from([dataType, ...basic])); // ?
+  const tapData = new Uint8Array(header.length + basic.length + 2 + 2); // ? [header.length, basic.length]
+  tapData.set(header, 0); // put header in tap
+  new DataView(tapData.buffer).setUint16(header.length, basic.length + 2, true); // set follow block length (plus 2 for flag + checksum)
+
+  tapData[header.length + 2] = dataType; // data follows
+  tapData.set(basic, header.length + 3); // put basic binary in tap
+  tapData[tapData.length - 1] = checksum; // finish with 8bit checksum
+
+  return tapData;
+};
+
+export const plus3DOSHeader = basic => {
   const res = pack(
     '< A8$sig C$eof C$issue C$version I$length C$hType S$hFileLength n$hLine S$hOffset',
     {
@@ -34,18 +92,12 @@ export const header = basic => {
 
   const checksum = Array.from(res).reduce((acc, curr) => (acc += curr), 0);
 
-  // Array.from(res)
-  //   .map(_ => toHex(_))
-  //   .join(' '); //?
-
   const result = new Uint8Array(128);
   result.set(res, 0);
   result[127] = checksum;
 
   return result;
 };
-
-header(Uint8Array.from({ length: 440 }));
 
 // Based on (with huge mods) https://eli.thegreenplace.net/2013/07/16/hand-written-lexer-in-javascript-compared-to-the-regex-based-ones
 export default class Lexer {
@@ -63,6 +115,18 @@ export default class Lexer {
     this.pos = 0;
     this.buf = buf;
     this.bufLen = buf.length;
+  }
+
+  lines(lines) {
+    const data = lines.split('\n').map(line => this.line(line).basic);
+    const len = data.reduce((acc, curr) => (acc += curr.length), 0);
+    const res = new Uint8Array(len);
+    let offset = 0;
+    data.forEach(line => {
+      res.set(line, offset);
+      offset += line.length;
+    });
+    return res;
   }
 
   line(line) {
@@ -291,7 +355,7 @@ export default class Lexer {
     }
 
     if (this.opTable[curr] !== undefined) {
-      const peeked = this._peekToken(-1); // ?
+      const peeked = this._peekToken(-1).toUpperCase(); // ? curr
       if (ignorePeek === false && curr !== peeked) {
         return false;
       } // ? [$,curr]
@@ -387,7 +451,12 @@ export default class Lexer {
 }
 
 // console.clear();
-// const l = new Lexer();
-// const res = l.line('2010 LET p$ = INKEY$ INKEY$IN    PRINT GOTO GO SUB').basic; // ?
+const l = new Lexer();
+const res = l.lines(
+  `10 CLS
+20 LOAD "" SCREEN$
+30 PAUSE 0
+`.trim()
+);
 
-// bas2txtLines(res); // ?
+asTap(res, 'tap dot js'); // ?

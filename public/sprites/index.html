@@ -5,17 +5,42 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width">
     <title>specnext sprite tool</title>
+    <link rel="stylesheet" href="../index.css">
     <link rel="stylesheet" href="index.css">
   </head>
 
   <body>
-    <div id="sprites">
-    </div>
+    <nav>
+      <ul>
+        <li><a href="/bas/">Text 2 BASIC</a></li>
+        <li class="selected"><a href="/sprites/">Sprites</a></li class="selected">
+        <li><a href="/scr-tools/">.SCR tools</a></li class="selected">
+        <li><a href="https://remysharp.com" target="blank">Made by @rem</a></li>
+      </ul>
+    </nav>
+    <main>
+      <div>
+        <section class="sprite" id="container"></section>
+        <section id="debug">277 0xe3</section>
+      </div>
+      <div id="tools">
+        <h2>Tools</h2>
+        <div>
+          <button data-action="new">New sprite</button>
+          <button data-action="clear">Clear sprite</button>
+          <button data-action="download">Download spritesheet</button>
+          <button id="upload"><input type="file">Upload .png / .spr</button>
+        </div>
+        <div class="picker sprite"></div>
+        <div class="pickerColour">
+          <div></div>
+        </div>
+      </div>
+      <div id="sprites">
+      </div>
 
-    <div>
-      <section id="container"></section>
-      <section id="debug"></section>
-    </div>
+
+    </main>
     <script src="index.js" type="module"></script>
   </body>
 
