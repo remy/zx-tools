@@ -13,16 +13,29 @@ const pickerColour = document.querySelector('.pickerColour div');
 
 const buttons = $('#tools button[data-action]');
 
-let sprites = Array.from({ length: 256 }, (_, i) => i);
+let sprites = Uint8Array.from({ length: 256 }, (_, i) => i);
 let currentSprite = 0;
 let totalSprites = 1;
 
 const newSprite = () => {
   totalSprites++;
-  currentSprite++;
-  sprites = sprites.concat(
-    Array.from({ length: 256 }).fill(colour.transparent)
+  currentSprite = totalSprites - 1;
+  sprites = Uint8Array.from(
+    Array.from(sprites).concat(
+      Array.from({ length: 256 }).fill(colour.transparent)
+    )
   );
+  renderSpritePreviews();
+  renderCurrentSprite();
+};
+
+const dupeSprite = () => {
+  const offset = currentSprite;
+  console.log('dupe ' + offset);
+  const copy = Array.from(sprites.slice(offset * 256, offset * 256 + 256));
+  totalSprites++;
+  currentSprite = totalSprites - 1;
+  sprites = Uint8Array.from(Array.from(sprites).concat(copy));
   renderSpritePreviews();
   renderCurrentSprite();
 };
@@ -93,12 +106,48 @@ const colour = new ColourPicker(8, pickerColour.parentNode);
 
 buttons.on('click', e => {
   const action = e.target.dataset.action;
+  const offset = 256 * currentSprite;
+
   if (action === 'new') {
     newSprite();
   }
 
+  if (action === 'dupe') {
+    dupeSprite();
+  }
+
+  if (action.startsWith('ro')) {
+    const left = action === 'rol';
+    const right = action === 'ror';
+    if (
+      (right && currentSprite == totalSprites - 1) ||
+      (left && currentSprite === 0)
+    ) {
+      return;
+    }
+
+    const copy = sprites.slice(offset, offset + 256);
+    const next = (currentSprite + (left ? -1 : 1)) * 256;
+    sprites.set(sprites.slice(next, next + 256), offset);
+    sprites.set(copy, next);
+    currentSprite += left ? -1 : 1;
+    renderSpritePreviews();
+    renderCurrentSprite();
+  }
+
+  if (action === 'del') {
+    const copy = Array.from(sprites);
+    copy.splice(offset, 256);
+    sprites = Uint8Array.from(copy);
+    totalSprites--;
+    if (currentSprite !== 0) {
+      currentSprite--;
+    }
+    renderSpritePreviews();
+    renderCurrentSprite();
+  }
+
   if (action === 'clear') {
-    const offset = 256 * currentSprite;
     for (let i = offset; i < offset + 256; i++) {
       sprites[i] = colour.transparent;
     }

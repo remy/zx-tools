@@ -161,6 +161,23 @@ button,
   /*! margin-left: 8px; */
 }
 
+.button-group {
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 8px;
+}
+
+.button-group button {
+  width: auto;
+  flex: 1;
+  margin: 0;
+  margin-right: 8px;
+}
+
+.button-group button:last-child {
+  margin-right: 0;
+}
+
 #tools {
   display: flex;
   flex-wrap: wrap;
