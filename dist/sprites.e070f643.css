@@ -122,6 +122,12 @@ button,
   cursor: crosshair;
 }
 
+#container div:hover {
+  cursor: crosshair;
+  outline: 1px dashed yellow;
+  z-index: 10;
+}
+
 #container div {
   margin: 0px;
   cursor: crosshair;
