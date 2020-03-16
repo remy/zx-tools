@@ -1985,7 +1985,8 @@ function buildStyleSheet() {
 function renderCurrentSprite() {
   try {
     spritesContainer.querySelector('.focus').classList.remove('focus');
-  } catch (e) {}
+  } catch (e) {// noop
+  }
 
   document.querySelector(`#sprites > :nth-child(${currentSprite + 1})`).classList.add('focus');
   const offset = 256 * currentSprite;
@@ -2087,7 +2088,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "51887" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "63251" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

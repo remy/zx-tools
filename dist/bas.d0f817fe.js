@@ -905,7 +905,8 @@ class Lexer {
       };
     } else {
       // Not an operator - so it's the beginning of another token.
-      if (Lexer._isAlpha(c)) {
+      // if alpha or starts with 0 (which can only be binary)
+      if (Lexer._isAlpha(c) || c === '') {
         return this._processIdentifier();
       } else if (c === '.' && Lexer._isDigit(this.buf.charAt(this.pos + 1))) {
         return this._processNumber();
@@ -12517,7 +12518,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "51887" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "63251" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
