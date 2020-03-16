@@ -1,0 +1,216 @@
+/* sprites/index.css */
+
+html {
+  --scale: 16px;
+  --size: calc(16 * var(--scale));
+  background: #373737;
+}
+
+main {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  margin: 20px 40px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-evenly;
+}
+
+main * {
+  user-select: none !important;
+}
+
+section {
+  width: var(--size);
+  text-align: center;
+  margin: 0 auto;
+}
+
+*,
+*:before,
+*:after {
+  color: white;
+  font-family: 'source code pro', 'ubuntu Mono', monospace;
+}
+
+button,
+.button {
+  background: black;
+}
+
+.sprite {
+  display: flex;
+  flex-wrap: wrap;
+  width: var(--block-size);
+  height: var(--block-size);
+}
+
+.sprite > div {
+  height: var(--scale);
+  width: var(--scale);
+}
+
+#tools h1 {
+  background: black;
+  color: white;
+}
+
+.picker {
+  --scale: 12px;
+  width: calc(16 * var(--scale));
+  height: calc(16 * var(--scale));
+  position: relative;
+}
+
+.pickerColour {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.pickerColour[data-selected='1'] div:nth-child(1),
+.pickerColour[data-selected='2'] div:nth-child(2),
+.pickerColour[data-selected='3'] div:nth-child(3),
+.pickerColour[data-selected='4'] div:nth-child(4),
+.pickerColour[data-selected='5'] div:nth-child(5),
+.pickerColour[data-selected='6'] div:nth-child(6) {
+  outline: 2px dashed yellow;
+  z-index: 10;
+}
+
+.pickerColour div {
+  --scale: 24px;
+  /*! width: calc(16 * var(--scale) / 12); */
+  height: calc(16 * var(--scale) / 16);
+  position: relative;
+}
+
+#picker {
+  display: flex;
+  flex-direction: column;
+}
+
+#picker:before {
+  text-align: center;
+  width: 100%;
+  content: 'Colour Picker';
+  display: block;
+  color: white;
+  padding: 8px 4px;
+  background: black;
+  font-size: 80%;
+  /* position: absolute; */
+  top: 0;
+}
+
+.picker div {
+  cursor: crosshair;
+}
+
+.picker div:hover {
+  cursor: crosshair;
+  outline: 1px dashed yellow;
+  z-index: 10;
+}
+
+#container {
+  border-radius: 2px;
+  --block-size: calc(var(--size));
+  /* add a block grid */
+  /* background: hotpink; */
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16'><rect fill='lightgrey' width='16' height='16' x='0' y='0' /><rect fill='white' width='8' height='8' x='0' y='0' /><rect fill='white' width='8' height='8' x='8' y='8' /></svg>");
+  cursor: crosshair;
+}
+
+#container div {
+  margin: 0px;
+  cursor: crosshair;
+}
+
+#sprites {
+  --block-size: 32px;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  max-width: calc(32 * 16px);
+  margin: 8px auto;
+  width: 100%;
+}
+
+#sprites > div {
+  --scale: 32px;
+  margin: 0;
+}
+
+#sprites > div.focus {
+  outline: 1px dashed rgb(255, 255, 0);
+  z-index: 1;
+}
+
+#sprites > div > div {
+  height: calc(var(--scale) / 16);
+  width: calc(var(--scale) / 16);
+}
+
+button,
+.button {
+  margin: 0;
+  display: block;
+  width: 100%;
+  margin-bottom: 8px;
+  /*! margin-left: 8px; */
+}
+
+.button-group {
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 8px;
+}
+
+.button-group button {
+  width: auto;
+  flex: 1;
+  margin: 0;
+  margin-right: 8px;
+}
+
+.button-group button:last-child {
+  margin-right: 0;
+}
+
+#tools {
+  display: flex;
+  flex-wrap: wrap;
+  background: #303030;
+  padding: 20px;
+}
+
+#tools h2 {
+  width: 100%;
+  margin-top: 0;
+}
+
+#tools > div {
+  margin: 0 8px;
+}
+
+#upload {
+  display: flex;
+  position: relative;
+  cursor: pointer !important;
+}
+
+#upload input {
+  z-index: 10;
+  cursor: pointer !important;
+  opacity: 0;
+  display: block;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: 0;
+}
+
+
+/*# sourceMappingURL=/sprites.e070f643.css.map */
