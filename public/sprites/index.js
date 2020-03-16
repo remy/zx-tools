@@ -260,7 +260,9 @@ function buildStyleSheet() {
 function renderCurrentSprite() {
   try {
     spritesContainer.querySelector('.focus').classList.remove('focus');
-  } catch (e) {}
+  } catch (e) {
+    // noop
+  }
 
   document
     .querySelector(`#sprites > :nth-child(${currentSprite + 1})`)

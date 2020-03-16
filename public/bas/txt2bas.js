@@ -242,7 +242,8 @@ export default class Lexer {
       return { name: 'KEYWORD', value: op, pos: this.pos++ };
     } else {
       // Not an operator - so it's the beginning of another token.
-      if (Lexer._isAlpha(c)) {
+      // if alpha or starts with 0 (which can only be binary)
+      if (Lexer._isAlpha(c) || c === '') {
         return this._processIdentifier();
       } else if (c === '.' && Lexer._isDigit(this.buf.charAt(this.pos + 1))) {
         return this._processNumber();
