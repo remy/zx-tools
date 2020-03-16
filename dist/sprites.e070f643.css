@@ -118,7 +118,7 @@ button,
   --block-size: calc(var(--size));
   /* add a block grid */
   /* background: hotpink; */
-  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16'><rect fill='lightgrey' width='16' height='16' x='0' y='0' /><rect fill='white' width='8' height='8' x='0' y='0' /><rect fill='white' width='8' height='8' x='8' y='8' /></svg>");
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16'><rect stroke='black' stroke-width='0.2' stroke-opacity='100%' fill='lightgrey' width='16' height='16' x='0' y='0' /><rect fill='white' width='8' height='8' x='1' y='1' /><rect fill='white' width='7' height='7' x='8' y='8' /></svg>");
   cursor: crosshair;
 }
 
