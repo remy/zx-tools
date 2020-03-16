@@ -1,5 +1,5 @@
 import CodeMirror from './lib/cm.js';
-import './lib/simple.js';
+import 'CodeMirror/addon/mode/simple.js';
 import codes from './codes.js';
 
 const keywords = Object.values(codes).filter(

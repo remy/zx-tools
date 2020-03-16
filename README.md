@@ -7,3 +7,5 @@ Inspired by the return of Spectrum via the ZX Next, Remy learnt how loading scre
 The code is a little hacky (written over a few days), but has some semblance of organisation. It can be found here and is available under the [MIT license](https://rem.mit-license.org).
 
 This project is vanilla HTML + JS project (so yes, I'm currently repeating the navigation over and oer, and it's okay!) - however if you're looking for code, it should be organised well enough to extract the function you want, I just kindly ask that you credit me, ta.
+
+![screenshot](https://user-images.githubusercontent.com/13700/76740752-49297400-6766-11ea-89e6-c9c95dfbbfab.png)
