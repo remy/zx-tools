@@ -1,7 +1,7 @@
 import codes from './codes.js';
 import { zxFloat } from '../lib/to.js';
 import pack from '../lib/unpack/pack.js';
-// import { bas2txtLines } from './bas2txt.js';
+import { bas2txtLines } from './bas2txt.js';
 
 export const encode = a => new TextEncoder().encode(a);
 
@@ -85,7 +85,7 @@ export const plus3DOSHeader = basic => {
       length: basic.length,
       hType: 0,
       hFileLength: basic.length - 128,
-      hLine: 30848,
+      hLine: 128,
       hOffset: basic.length - 128,
     }
   );
@@ -152,23 +152,33 @@ export default class Lexer {
           length += token.value.length;
           tokens.push(token);
         }
+        if (codes[value] === 'BIN') {
+          token = this._processBinary();
+          length += token.value.length;
+          tokens.push(token);
+        }
       } else if (name === 'NUMBER') {
         length += value.toString().length;
+        const { numeric } = token;
         tokens.push(token);
 
-        if ((value | 0) === value && value >= -65535 && value <= 65535) {
+        if (
+          (numeric | 0) === numeric &&
+          numeric >= -65535 &&
+          numeric <= 65535
+        ) {
           const view = new DataView(new ArrayBuffer(6));
           view.setUint8(0, 0x0e);
           view.setUint8(1, 0x00);
-          view.setUint8(2, value < 0 ? 0xff : 0x00);
-          view.setUint16(3, value, true);
+          view.setUint8(2, numeric < 0 ? 0xff : 0x00);
+          view.setUint16(3, numeric, true);
           tokens.push({
             name: 'NUMBER_DATA',
             value: new Uint8Array(view.buffer),
           });
           length += 6;
         } else {
-          const res = zxFloat(value);
+          const res = zxFloat(numeric);
           tokens.push({
             name: 'NUMBER_DATA',
             value: new Uint8Array(res.value.buffer),
@@ -243,9 +253,13 @@ export default class Lexer {
     } else {
       // Not an operator - so it's the beginning of another token.
       // if alpha or starts with 0 (which can only be binary)
-      if (Lexer._isAlpha(c) || c === '') {
+      if (
+        Lexer._isAlpha(c) ||
+        c === '' ||
+        (c === '.' && Lexer._isAlpha(_next))
+      ) {
         return this._processIdentifier();
-      } else if (c === '.' && Lexer._isDigit(this.buf.charAt(this.pos + 1))) {
+      } else if (c === '.' && Lexer._isDigit(_next)) {
         return this._processNumber();
       } else if (Lexer._isDigit(c)) {
         return this._processNumber();
@@ -260,10 +274,20 @@ export default class Lexer {
         return { name: 'SYMBOL', value: c, pos: this.pos++ };
       } else if (c === '"') {
         return this._processQuote();
+      } else if (Lexer._isBinarySymbol(c)) {
+        return this._processBinary('@');
       } else {
         throw Error(`Token error at ${this.pos} (${c})\n${this.buf}`);
       }
     }
+  }
+
+  static _isBinarySymbol(c) {
+    return c === '@';
+  }
+
+  static _isBinary(c) {
+    return c === '1' || c === '0';
   }
 
   static _isNewLine(c) {
@@ -275,7 +299,7 @@ export default class Lexer {
   }
 
   static _isSymbol(c) {
-    return ',;:=-+/*^()<>'.includes(c);
+    return ',;:=-+/*^()<>#%$'.includes(c);
   }
 
   static _isAlpha(c) {
@@ -296,28 +320,55 @@ export default class Lexer {
 
   _processNumber() {
     var endPos = this.pos + 1;
+    let exp = false;
     while (
-      endPos < this.bufLen &&
-      (Lexer._isDigit(this.buf.charAt(endPos)) ||
-        this.buf.charAt(endPos) === '.')
+      (endPos < this.bufLen &&
+        (Lexer._isDigit(this.buf.charAt(endPos)) ||
+          this.buf.charAt(endPos) === '.' ||
+          this.buf.charAt(endPos) === 'e')) ||
+      (exp && this.buf.charAt(endPos) === '-')
     ) {
+      if (this.buf.charAt(endPos) === 'e') {
+        exp = true;
+      }
       endPos++;
     }
 
-    let value = this.buf.substring(this.pos, endPos);
+    const value = this.buf.substring(this.pos, endPos); // ?
+    let numeric = 0;
 
     if (value.includes('.')) {
-      value = parseFloat(value);
+      numeric = parseFloat(value);
     } else {
-      value = parseInt(value, 10);
+      numeric = parseInt(value, 10);
     }
 
     var tok = {
       name: 'NUMBER',
       value,
+      numeric,
       pos: this.pos,
     };
     this.pos = endPos;
+    return tok;
+  }
+
+  _processBinary(start = '') {
+    this._skipNonTokens();
+    this.pos++;
+    var endPos = this.pos;
+
+    this.buf.charAt(endPos); // ?
+    while (endPos < this.bufLen && Lexer._isBinary(this.buf.charAt(endPos))) {
+      endPos++;
+    }
+
+    var tok = {
+      name: 'BINARY',
+      value: start + this.buf.substring(this.pos, endPos).trim(),
+      pos: this.pos,
+    };
+    this.pos = endPos + 1;
     return tok;
   }
 
@@ -449,12 +500,12 @@ export default class Lexer {
 }
 
 // console.clear();
-const l = new Lexer();
-const res = l.lines(
-  `10 CLS
-20 LOAD "" SCREEN$
-30 PAUSE 0
-`.trim()
-);
+// const l = new Lexer();
+// const res = l.line(
+//   `
+//   30 PRINT %$E3,% BIN 11100011
 
-asTap(res, 'tap dot js'); // ?
+// `.trim()
+// ); // ?
+
+// bas2txtLines(res.basic); // ?

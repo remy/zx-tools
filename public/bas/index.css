@@ -6,7 +6,7 @@ code,
 }
 
 #code,
-.CodeMirror {
+body .CodeMirror {
   min-height: 200px;
   border: 1px solid #999;
   border-radius: 1px;
@@ -15,6 +15,10 @@ code,
   width: 100%;
   padding: 8px;
   white-space: pre-wrap;
+}
+
+.CodeMirror-scroll {
+  max-height: 60vh;
 }
 
 .cm-s-default .cm-keyword {

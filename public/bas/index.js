@@ -23,6 +23,7 @@ if (code) {
 
 const cm = CodeMirror.fromTextArea(ta, {
   mode: 'text/x-basic',
+  viewportMargin: Infinity,
 });
 
 cm.on('keydown', (cm, event) => {
