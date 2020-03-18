@@ -628,7 +628,322 @@ function pack(template, data, offset = 0) {
 
   return new Uint8Array(result.buffer);
 }
-},{"./lib.js":"lib/unpack/lib.js"}],"bas/txt2bas.js":[function(require,module,exports) {
+},{"./lib.js":"lib/unpack/lib.js"}],"lib/unpack/dataview-64.js":[function(require,module,exports) {
+if (!DataView.prototype.getUint64) DataView.prototype.getUint64 = function (byteOffset, littleEndian) {
+  // split 64-bit number into two 32-bit (4-byte) parts
+  const left = this.getUint32(byteOffset, littleEndian);
+  const right = this.getUint32(byteOffset + 4, littleEndian); // combine the two 32-bit values
+
+  const combined = littleEndian ? left + 2 ** 32 * right : 2 ** 32 * left + right;
+  if (!Number.isSafeInteger(combined)) console.warn(combined, 'exceeds MAX_SAFE_INTEGER. Precision may be lost');
+  return combined;
+};
+if (!DataView.prototype.getUint64) DataView.prototype.getInt64 = function (byteOffset, littleEndian) {
+  // split 64-bit number into two 32-bit (4-byte) parts
+  const left = this.getInt32(byteOffset, littleEndian);
+  const right = this.getInt32(byteOffset + 4, littleEndian); // combine the two 32-bit values
+
+  const combined = littleEndian ? left + 2 ** 32 * right : 2 ** 32 * left + right;
+  if (!Number.isSafeInteger(combined)) console.warn(combined, 'exceeds MAX_SAFE_INTEGER. Precision may be lost');
+  return combined;
+};
+},{}],"lib/unpack/unpack.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = exports.Unpack = void 0;
+
+require("./dataview-64.js");
+
+var _lib = require("./lib.js");
+
+function binarySlice(value, ptr, length) {
+  if (!length || isNaN(length)) {
+    length = 8 - ptr;
+  }
+
+  const mask = 2 ** length - 1;
+  const shift = 8 - (ptr + length);
+  const res = value >> shift & mask;
+  return res;
+}
+
+class Unpack {
+  constructor(data) {
+    this.data = data;
+    this.offset = 0;
+  }
+
+  parse(template) {
+    const res = unpack(template, this.data, this.offset);
+    this.last = res;
+
+    if (!res) {
+      return res;
+    }
+
+    this.offset = res.__offset;
+    delete res.__offset;
+    return res;
+  }
+
+}
+
+exports.Unpack = Unpack;
+
+function unpack(template, data, offset = 0) {
+  const result = {}; // return an object
+
+  if (Array.isArray(data)) {
+    data = Uint8Array.from(data);
+  }
+
+  if (typeof data === 'string') {
+    data = (0, _lib.encode)(data).buffer; // ?
+  } else if (typeof data === 'number') {
+    if ((data | 0) !== data) {
+      // float
+      data = Float64Array.from([data]).buffer;
+    } else {
+      data = Int32Array.from([data]).buffer;
+    }
+  } else if (ArrayBuffer.isView(data)) {
+    data = data.buffer;
+  }
+
+  if (offset >= data.byteLength) {
+    return null;
+  }
+
+  const re = new RegExp(_lib.pattern, 'g');
+  let m = [];
+  let bytePtr = 0;
+  const firstChr = template[0];
+  const defaultLittle = firstChr === '<' ? true : false;
+  let templateCounter = -1;
+
+  while (m = re.exec(template)) {
+    templateCounter++;
+    const index = m[4] || templateCounter;
+    let little = defaultLittle;
+    let length = null;
+
+    if (_lib.typeMap[m[2]]) {
+      length = _lib.typeMap[m[2]].length;
+    } else {
+      length = parseInt(m[2] || 1);
+    }
+
+    let c = m[1];
+
+    if (c.length === 2) {
+      little = c[1] === '<';
+      c = c[0];
+    }
+
+    const type = _lib.typeMap[c];
+
+    if (!type) {
+      throw new Error(`unsupported type "${c}"`);
+    }
+
+    if (type.little !== undefined) {
+      little = type.little;
+    }
+
+    const size = type.length; // ?
+
+    let end = c === 'b' ? 1 : size * length;
+
+    if (isNaN(length)) {
+      end = data.byteLength - offset;
+    }
+
+    if (offset + end > data.byteLength) {
+      // return result;
+      break;
+    }
+
+    const view = new DataView(data, offset, end);
+
+    if (c !== 'b') {
+      // reset the byte counter
+      bytePtr = 0;
+    }
+
+    switch (c) {
+      case 'b':
+        c = view.getUint8(0, little);
+        result[index] = binarySlice(c, bytePtr, length);
+        result[index]; // ? [index,result[index],c, bytePtr, length]
+
+        bytePtr += length;
+
+        if (bytePtr > 7) {
+          offset++;
+          bytePtr = 0;
+        }
+
+        break;
+
+      case 'x':
+        // x is skipped null bytes
+        templateCounter--;
+        offset += end;
+        break;
+
+      case 'a':
+      case 'A':
+        result[index] = (0, _lib.decode)(view).padEnd(length, c === 'A' ? ' ' : '\0');
+
+        if (c === 'a' && result[index].indexOf('\0') !== -1) {
+          result[index] = result[index].substring(0, result[index].indexOf('\0'));
+        }
+
+        offset += end;
+        break;
+
+      default:
+        if (length > 1) {
+          result[index] = new type.array(view.buffer.slice(offset, offset + end));
+        } else {
+          result[index] = view[`get${type.fn}`](0, little);
+        }
+
+        offset += end;
+        break;
+    }
+  }
+
+  result.__offset = offset;
+  return result;
+}
+
+var _default = unpack; // unpack('<I$length', Uint8Array.from([0xe7, 0x00, 0x00, 0x00])); // ?
+
+exports.default = _default;
+},{"./dataview-64.js":"lib/unpack/dataview-64.js","./lib.js":"lib/unpack/lib.js"}],"bas/bas2txt.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.bas2txt = bas2txt;
+exports.bas2txtLines = bas2txtLines;
+
+var _codes = _interopRequireDefault(require("./codes.js"));
+
+var _unpack = _interopRequireWildcard(require("../lib/unpack/unpack.js"));
+
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function bas2txt(data) {
+  const unpack = new _unpack.Unpack(data);
+  let {
+    length,
+    ...header
+  } = unpack.parse(`<A8$sig
+    C$marker
+    C$issue
+    C$version
+    I$length
+    C$hType
+    S$hFileLength
+    n$hLine
+    S$hOffset
+    x
+    x104
+    C$checksum`);
+  return bas2txtLines(data.slice(unpack.offset));
+}
+
+function bas2txtLines(data) {
+  const unpack = new _unpack.Unpack(data);
+  let next;
+  let string = '';
+
+  while (next = unpack.parse('<n$line s$length')) {
+    const {
+      length,
+      line: lineNumber
+    } = next;
+
+    if (lineNumber > 9999) {
+      break;
+    }
+
+    const content = unpack.parse(`<C${length}$data`);
+    if (!content || !content.data) break;
+    string = string + lineNumber + ' ';
+    let lastChr = null;
+    const data = Array.from(content.data);
+
+    while (data.length) {
+      let chr = data.shift();
+
+      if (_codes.default[chr]) {
+        if (lastChr !== null && !_codes.default[lastChr]) {
+          string += ' ' + _codes.default[chr] + ' ';
+        } else {
+          string += _codes.default[chr] + ' ';
+        }
+      } else if (chr === 0x0e) {
+        // move forward 5 bits
+        chr = data.shift();
+        let value = null;
+        let neg = 1;
+
+        if (chr === 0x00) {
+          const n = (0, _unpack.default)('<C$sign s$value x', data.splice(0, 4));
+          value = n.value;
+          neg = n.sign === 0x00 ? 1 : -1;
+        } else {
+          // if (chr >> 5 === 3)
+          // one letter number
+          const exp = chr - 128; // 128 float adjust…weird
+
+          let mantissa = (0, _unpack.default)('I$m', data.splice(0, 4)).m; // ? $ // 32bit
+
+          neg = mantissa > 0x7f000000 ? -1 : 1; // ? $ //  sign mask is on the mantissa
+
+          mantissa = mantissa <<= 1; // ? $ // now shift it off
+
+          value = mantissa ** exp; // ?
+          // [mantissa, exp, value]; // ?
+          // } else {
+          // array
+          // console.log('TODO');
+        }
+
+        value *= neg; // console.log('numeric', value);
+      } else {
+        string += String.fromCharCode(chr);
+      }
+
+      lastChr = chr;
+    }
+
+    string += '\n';
+  }
+
+  return string;
+} // if (typeof module !== 'undefined') {
+//   // bas2txt(
+//   //   new Uint8Array(require('fs').readFileSync(__dirname + '/data/keys.bas'))
+//   // );
+// }
+// bas2txtLines(
+//   `00 0A 0F 00 F5 32 2E 33 34 65 2D 32 0E 63 5F D8 00 00 0D`
+//     .split(' ')
+//     .map(_ => eval(`0x${_}`))
+// ); // ?
+},{"./codes.js":"bas/codes.js","../lib/unpack/unpack.js":"lib/unpack/unpack.js"}],"bas/txt2bas.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -642,11 +957,12 @@ var _to = require("../lib/to.js");
 
 var _pack = _interopRequireDefault(require("../lib/unpack/pack.js"));
 
+var _bas2txt = require("./bas2txt.js");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
-// import { bas2txtLines } from './bas2txt.js';
 const encode = a => new TextEncoder().encode(a);
 
 exports.encode = encode;
@@ -734,7 +1050,7 @@ const plus3DOSHeader = basic => {
     length: basic.length,
     hType: 0,
     hFileLength: basic.length - 128,
-    hLine: 30848,
+    hLine: 128,
     hOffset: basic.length - 128
   });
   const checksum = Array.from(res).reduce((acc, curr) => acc += curr, 0);
@@ -807,23 +1123,32 @@ class Lexer {
           length += token.value.length;
           tokens.push(token);
         }
+
+        if (_codes.default[value] === 'BIN') {
+          token = this._processBinary();
+          length += token.value.length;
+          tokens.push(token);
+        }
       } else if (name === 'NUMBER') {
         length += value.toString().length;
+        const {
+          numeric
+        } = token;
         tokens.push(token);
 
-        if ((value | 0) === value && value >= -65535 && value <= 65535) {
+        if ((numeric | 0) === numeric && numeric >= -65535 && numeric <= 65535) {
           const view = new DataView(new ArrayBuffer(6));
           view.setUint8(0, 0x0e);
           view.setUint8(1, 0x00);
-          view.setUint8(2, value < 0 ? 0xff : 0x00);
-          view.setUint16(3, value, true);
+          view.setUint8(2, numeric < 0 ? 0xff : 0x00);
+          view.setUint16(3, numeric, true);
           tokens.push({
             name: 'NUMBER_DATA',
             value: new Uint8Array(view.buffer)
           });
           length += 6;
         } else {
-          const res = (0, _to.zxFloat)(value);
+          const res = (0, _to.zxFloat)(numeric);
           tokens.push({
             name: 'NUMBER_DATA',
             value: new Uint8Array(res.value.buffer)
@@ -865,6 +1190,7 @@ class Lexer {
         offset += v.length;
       }
     });
+    console.log(tokens);
     return {
       basic: new Uint8Array(buffer.buffer),
       lineNumber,
@@ -906,9 +1232,9 @@ class Lexer {
     } else {
       // Not an operator - so it's the beginning of another token.
       // if alpha or starts with 0 (which can only be binary)
-      if (Lexer._isAlpha(c) || c === '') {
+      if (Lexer._isAlpha(c) || c === '' || c === '.' && Lexer._isAlpha(_next)) {
         return this._processIdentifier();
-      } else if (c === '.' && Lexer._isDigit(this.buf.charAt(this.pos + 1))) {
+      } else if (c === '.' && Lexer._isDigit(_next)) {
         return this._processNumber();
       } else if (Lexer._isDigit(c)) {
         return this._processNumber();
@@ -928,10 +1254,20 @@ class Lexer {
         };
       } else if (c === '"') {
         return this._processQuote();
+      } else if (Lexer._isBinarySymbol(c)) {
+        return this._processBinary('@');
       } else {
         throw Error(`Token error at ${this.pos} (${c})\n${this.buf}`);
       }
     }
+  }
+
+  static _isBinarySymbol(c) {
+    return c === '@';
+  }
+
+  static _isBinary(c) {
+    return c === '1' || c === '0';
   }
 
   static _isNewLine(c) {
@@ -943,7 +1279,7 @@ class Lexer {
   }
 
   static _isSymbol(c) {
-    return ',;:=-+/*^()<>'.includes(c);
+    return ',;:=-+/*^()<>#%$'.includes(c);
   }
 
   static _isAlpha(c) {
@@ -956,25 +1292,53 @@ class Lexer {
 
   _processNumber() {
     var endPos = this.pos + 1;
+    let exp = false;
 
-    while (endPos < this.bufLen && (Lexer._isDigit(this.buf.charAt(endPos)) || this.buf.charAt(endPos) === '.')) {
+    while (endPos < this.bufLen && (Lexer._isDigit(this.buf.charAt(endPos)) || this.buf.charAt(endPos) === '.' || this.buf.charAt(endPos) === 'e') || exp && this.buf.charAt(endPos) === '-') {
+      if (this.buf.charAt(endPos) === 'e') {
+        exp = true;
+      }
+
       endPos++;
     }
 
-    let value = this.buf.substring(this.pos, endPos);
+    const value = this.buf.substring(this.pos, endPos); // ?
+
+    let numeric = 0;
 
     if (value.includes('.')) {
-      value = parseFloat(value);
+      numeric = parseFloat(value);
     } else {
-      value = parseInt(value, 10);
+      numeric = parseInt(value, 10);
     }
 
     var tok = {
       name: 'NUMBER',
       value,
+      numeric,
       pos: this.pos
     };
     this.pos = endPos;
+    return tok;
+  }
+
+  _processBinary(start = '') {
+    this._skipNonTokens();
+
+    this.pos++;
+    var endPos = this.pos;
+    this.buf.charAt(endPos); // ?
+
+    while (endPos < this.bufLen && Lexer._isBinary(this.buf.charAt(endPos))) {
+      endPos++;
+    }
+
+    var tok = {
+      name: 'BINARY',
+      value: start + this.buf.substring(this.pos, endPos).trim(),
+      pos: this.pos
+    };
+    this.pos = endPos + 1;
     return tok;
   }
 
@@ -1114,16 +1478,17 @@ class Lexer {
   }
 
 } // console.clear();
+// const l = new Lexer();
+// const res = l.line(
+//   `
+//   30 PRINT %$E3,% BIN 11100011
+// `.trim()
+// ); // ?
+// bas2txtLines(res.basic); // ?
 
 
 exports.default = Lexer;
-const l = new Lexer();
-const res = l.lines(`10 CLS
-20 LOAD "" SCREEN$
-30 PAUSE 0
-`.trim());
-asTap(res, 'tap dot js'); // ?
-},{"./codes.js":"bas/codes.js","../lib/to.js":"lib/to.js","../lib/unpack/pack.js":"lib/unpack/pack.js"}],"../node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
+},{"./codes.js":"bas/codes.js","../lib/to.js":"lib/to.js","../lib/unpack/pack.js":"lib/unpack/pack.js","./bas2txt.js":"bas/bas2txt.js"}],"../node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
 var bundleURL = null;
 
 function getBundleURLCached() {
@@ -10958,315 +11323,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 window.CodeMirror = _CodeMirror.default;
 var _default = _CodeMirror.default;
 exports.default = _default;
-},{"CodeMirror/lib/codemirror.css":"../node_modules/CodeMirror/lib/codemirror.css","CodeMirror":"../node_modules/CodeMirror/lib/codemirror.js"}],"lib/unpack/dataview-64.js":[function(require,module,exports) {
-if (!DataView.prototype.getUint64) DataView.prototype.getUint64 = function (byteOffset, littleEndian) {
-  // split 64-bit number into two 32-bit (4-byte) parts
-  const left = this.getUint32(byteOffset, littleEndian);
-  const right = this.getUint32(byteOffset + 4, littleEndian); // combine the two 32-bit values
-
-  const combined = littleEndian ? left + 2 ** 32 * right : 2 ** 32 * left + right;
-  if (!Number.isSafeInteger(combined)) console.warn(combined, 'exceeds MAX_SAFE_INTEGER. Precision may be lost');
-  return combined;
-};
-if (!DataView.prototype.getUint64) DataView.prototype.getInt64 = function (byteOffset, littleEndian) {
-  // split 64-bit number into two 32-bit (4-byte) parts
-  const left = this.getInt32(byteOffset, littleEndian);
-  const right = this.getInt32(byteOffset + 4, littleEndian); // combine the two 32-bit values
-
-  const combined = littleEndian ? left + 2 ** 32 * right : 2 ** 32 * left + right;
-  if (!Number.isSafeInteger(combined)) console.warn(combined, 'exceeds MAX_SAFE_INTEGER. Precision may be lost');
-  return combined;
-};
-},{}],"lib/unpack/unpack.js":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = exports.Unpack = void 0;
-
-require("./dataview-64.js");
-
-var _lib = require("./lib.js");
-
-function binarySlice(value, ptr, length) {
-  if (!length || isNaN(length)) {
-    length = 8 - ptr;
-  }
-
-  const mask = 2 ** length - 1;
-  const shift = 8 - (ptr + length);
-  const res = value >> shift & mask;
-  return res;
-}
-
-class Unpack {
-  constructor(data) {
-    this.data = data;
-    this.offset = 0;
-  }
-
-  parse(template) {
-    const res = unpack(template, this.data, this.offset);
-    this.last = res;
-
-    if (!res) {
-      return res;
-    }
-
-    this.offset = res.__offset;
-    delete res.__offset;
-    return res;
-  }
-
-}
-
-exports.Unpack = Unpack;
-
-function unpack(template, data, offset = 0) {
-  const result = {}; // return an object
-
-  if (Array.isArray(data)) {
-    data = Uint8Array.from(data);
-  }
-
-  if (typeof data === 'string') {
-    data = (0, _lib.encode)(data).buffer; // ?
-  } else if (typeof data === 'number') {
-    if ((data | 0) !== data) {
-      // float
-      data = Float64Array.from([data]).buffer;
-    } else {
-      data = Int32Array.from([data]).buffer;
-    }
-  } else if (ArrayBuffer.isView(data)) {
-    data = data.buffer;
-  }
-
-  if (offset >= data.byteLength) {
-    return null;
-  }
-
-  const re = new RegExp(_lib.pattern, 'g');
-  let m = [];
-  let bytePtr = 0;
-  const firstChr = template[0];
-  const defaultLittle = firstChr === '<' ? true : false;
-  let templateCounter = -1;
-
-  while (m = re.exec(template)) {
-    templateCounter++;
-    const index = m[4] || templateCounter;
-    let little = defaultLittle;
-    let length = null;
-
-    if (_lib.typeMap[m[2]]) {
-      length = _lib.typeMap[m[2]].length;
-    } else {
-      length = parseInt(m[2] || 1);
-    }
-
-    let c = m[1];
-
-    if (c.length === 2) {
-      little = c[1] === '<';
-      c = c[0];
-    }
-
-    const type = _lib.typeMap[c];
-
-    if (!type) {
-      throw new Error(`unsupported type "${c}"`);
-    }
-
-    if (type.little !== undefined) {
-      little = type.little;
-    }
-
-    const size = type.length; // ?
-
-    let end = c === 'b' ? 1 : size * length;
-
-    if (isNaN(length)) {
-      end = data.byteLength - offset;
-    }
-
-    if (offset + end > data.byteLength) {
-      // return result;
-      break;
-    }
-
-    const view = new DataView(data, offset, end);
-
-    if (c !== 'b') {
-      // reset the byte counter
-      bytePtr = 0;
-    }
-
-    switch (c) {
-      case 'b':
-        c = view.getUint8(0, little);
-        result[index] = binarySlice(c, bytePtr, length);
-        result[index]; // ? [index,result[index],c, bytePtr, length]
-
-        bytePtr += length;
-
-        if (bytePtr > 7) {
-          offset++;
-          bytePtr = 0;
-        }
-
-        break;
-
-      case 'x':
-        // x is skipped null bytes
-        templateCounter--;
-        offset += end;
-        break;
-
-      case 'a':
-      case 'A':
-        result[index] = (0, _lib.decode)(view).padEnd(length, c === 'A' ? ' ' : '\0');
-
-        if (c === 'a' && result[index].indexOf('\0') !== -1) {
-          result[index] = result[index].substring(0, result[index].indexOf('\0'));
-        }
-
-        offset += end;
-        break;
-
-      default:
-        if (length > 1) {
-          result[index] = new type.array(view.buffer.slice(offset, offset + end));
-        } else {
-          result[index] = view[`get${type.fn}`](0, little);
-        }
-
-        offset += end;
-        break;
-    }
-  }
-
-  result.__offset = offset;
-  return result;
-}
-
-var _default = unpack; // unpack('<I$length', Uint8Array.from([0xe7, 0x00, 0x00, 0x00])); // ?
-
-exports.default = _default;
-},{"./dataview-64.js":"lib/unpack/dataview-64.js","./lib.js":"lib/unpack/lib.js"}],"bas/bas2txt.js":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.bas2txt = bas2txt;
-exports.bas2txtLines = bas2txtLines;
-
-var _codes = _interopRequireDefault(require("./codes.js"));
-
-var _unpack = _interopRequireWildcard(require("../lib/unpack/unpack.js"));
-
-function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function bas2txt(data) {
-  const unpack = new _unpack.Unpack(data);
-  let {
-    length,
-    ...header
-  } = unpack.parse(`<A8$sig
-    C$marker
-    C$issue
-    C$version
-    I$length
-    C$hType
-    S$hFileLength
-    n$hLine
-    S$hOffset
-    x
-    x104
-    C$checksum`);
-  return bas2txtLines(data.slice(unpack.offset));
-}
-
-function bas2txtLines(data) {
-  const unpack = new _unpack.Unpack(data);
-  let next;
-  let string = '';
-
-  while (next = unpack.parse('<n$line s$length')) {
-    const {
-      length,
-      line: lineNumber
-    } = next;
-
-    if (lineNumber > 9999) {
-      break;
-    }
-
-    const content = unpack.parse(`<C${length}$data`);
-    if (!content || !content.data) break;
-    string = string + lineNumber + ' ';
-    let lastChr = null;
-    const data = Array.from(content.data);
-
-    while (data.length) {
-      let chr = data.shift();
-
-      if (_codes.default[chr]) {
-        if (lastChr !== null && !_codes.default[lastChr]) {
-          string += ' ' + _codes.default[chr] + ' ';
-        } else {
-          string += _codes.default[chr] + ' ';
-        }
-      } else if (chr === 0x0e) {
-        // move forward 5 bits
-        chr = data.shift();
-        let value = null;
-        let neg = 1;
-
-        if (chr === 0x00) {
-          const n = (0, _unpack.default)('<C$sign s$value x', data.splice(0, 4));
-          value = n.value;
-          neg = n.sign === 0x00 ? 1 : -1;
-        } else if (chr >> 5 === 3) {
-          // one letter number
-          const exp = chr - 128; // 128 float adjust…weird
-
-          let mantissa = (0, _unpack.default)('I$m', data.splice(0, 4)).m; // 32bit
-
-          neg = mantissa > 0x7f000000 ? -1 : 1; // sign mask is on the mantissa
-
-          mantissa = mantissa <<= 1; // now shift it off
-
-          value = mantissa ** exp; // [mantissa, exp, value]; // ?
-        } else {
-          // array
-          console.log('TODO');
-        }
-
-        value *= neg;
-      } else {
-        string += String.fromCharCode(chr);
-      }
-
-      lastChr = chr;
-    }
-
-    string += '\n';
-  }
-
-  return string;
-} // if (typeof module !== 'undefined') {
-//   // bas2txt(
-//   //   new Uint8Array(require('fs').readFileSync(__dirname + '/data/keys.bas'))
-//   // );
-// }
-},{"./codes.js":"bas/codes.js","../lib/unpack/unpack.js":"lib/unpack/unpack.js"}],"../node_modules/CodeMirror/addon/mode/simple.js":[function(require,module,exports) {
+},{"CodeMirror/lib/codemirror.css":"../node_modules/CodeMirror/lib/codemirror.css","CodeMirror":"../node_modules/CodeMirror/lib/codemirror.js"}],"../node_modules/CodeMirror/addon/mode/simple.js":[function(require,module,exports) {
 var define;
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: https://codemirror.net/LICENSE
@@ -12309,7 +12366,8 @@ if (code) {
 }
 
 const cm = _cm.default.fromTextArea(ta, {
-  mode: 'text/x-basic'
+  mode: 'text/x-basic',
+  viewportMargin: Infinity
 });
 
 cm.on('keydown', (cm, event) => {
@@ -12518,7 +12576,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "63251" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "49748" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
