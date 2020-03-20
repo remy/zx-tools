@@ -37,7 +37,7 @@ C$blockChecksum
 */
 
 export const tapHeader = (basic, filename = 'BASIC') => {
-  const autostart = new DataView(basic.buffer).getUint16(0, false); // ?
+  const autostart = new DataView(basic.buffer).getUint16(0, false);
   const res = pack(
     '<S$headerLength C$flagByte C$type A10$filename S$length S$p1 S$p2 C$checksum',
     {
@@ -54,7 +54,7 @@ export const tapHeader = (basic, filename = 'BASIC') => {
 
   const checksum = calculateXORChecksum(res.slice(2, 20));
 
-  res[res.length - 1] = checksum; // ?
+  res[res.length - 1] = checksum;
 
   return res;
 };
@@ -62,7 +62,7 @@ export const tapHeader = (basic, filename = 'BASIC') => {
 export const asTap = (basic, filename = 'tap dot js') => {
   const header = tapHeader(basic, filename);
   const dataType = 0xff;
-  const checksum = calculateXORChecksum(Array.from([dataType, ...basic])); // ?
+  const checksum = calculateXORChecksum(Array.from([dataType, ...basic]));
   const tapData = new Uint8Array(header.length + basic.length + 2 + 2); // ? [header.length, basic.length]
   tapData.set(header, 0); // put header in tap
   new DataView(tapData.buffer).setUint16(header.length, basic.length + 2, true); // set follow block length (plus 2 for flag + checksum)
@@ -153,7 +153,7 @@ export default class Lexer {
           tokens.push(token);
         }
         if (codes[value] === 'BIN') {
-          token = this._processBinary();
+          token = this._processBinary(); // ?
           length += token.value.length;
           tokens.push(token);
         }
@@ -217,6 +217,8 @@ export default class Lexer {
         offset += v.length;
       }
     });
+
+    console.log(tokens);
 
     return {
       basic: new Uint8Array(buffer.buffer),
@@ -334,7 +336,7 @@ export default class Lexer {
       endPos++;
     }
 
-    const value = this.buf.substring(this.pos, endPos); // ?
+    const value = this.buf.substring(this.pos, endPos);
     let numeric = 0;
 
     if (value.includes('.')) {
@@ -355,10 +357,10 @@ export default class Lexer {
 
   _processBinary(start = '') {
     this._skipNonTokens();
-    this.pos++;
+
     var endPos = this.pos;
 
-    this.buf.charAt(endPos); // ?
+    this.buf.charAt(endPos);
     while (endPos < this.bufLen && Lexer._isBinary(this.buf.charAt(endPos))) {
       endPos++;
     }
@@ -368,7 +370,7 @@ export default class Lexer {
       value: start + this.buf.substring(this.pos, endPos).trim(),
       pos: this.pos,
     };
-    this.pos = endPos + 1;
+    this.pos = endPos;
     return tok;
   }
 
@@ -396,7 +398,7 @@ export default class Lexer {
     let ignorePeek = false;
     if (_next == ' ' && curr === 'GO') {
       // check if the next is "SUB" or "TO"
-      const next = this._peekToken(1).toUpperCase(); // ?
+      const next = this._peekToken(1).toUpperCase();
       if (next === 'SUB' || next === 'TO') {
         endPos = endPos + 1 + next.length;
         curr = curr + ' ' + next;
@@ -405,10 +407,10 @@ export default class Lexer {
     }
 
     if (this.opTable[curr] !== undefined) {
-      const peeked = this._peekToken(-1).toUpperCase(); // ? curr
+      const peeked = this._peekToken(-1).toUpperCase();
       if (ignorePeek === false && curr !== peeked) {
         return false;
-      } // ? [$,curr]
+      }
       this.pos = endPos;
 
       return {
@@ -450,14 +452,14 @@ export default class Lexer {
     let tok = this._isOpCode(endPos);
 
     if (tok) {
-      return tok; // ?
+      return tok;
     }
 
     // special case for GO<space>[TO|SUB]
     let value = this.buf.substring(this.pos, endPos);
 
     // if (this.buf.substring(endPos, endPos + 1) === ' ') {
-    //   value += ' '; // ?
+    //   value += ' ';
     //   endPos++;
     // }
 
@@ -499,13 +501,12 @@ export default class Lexer {
   }
 }
 
-// console.clear();
-// const l = new Lexer();
-// const res = l.line(
-//   `
-//   30 PRINT %$E3,% BIN 11100011
+const l = new Lexer();
+const res = l.line(
+  `
+5 let b=bin 01111100: let c=bin 00111000: let d=bin 00010000
 
-// `.trim()
-// ); // ?
+`.trim()
+); // ?
 
-// bas2txtLines(res.basic); // ?
+bas2txtLines(res.basic); // ?
