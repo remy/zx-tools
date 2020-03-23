@@ -3,3 +3,4 @@ node_modules/
 tmp/
 web_modules/
 /**/data/
+.nyc_output/

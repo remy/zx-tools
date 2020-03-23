@@ -7,7 +7,8 @@
     "dev": "rm -rf dist; parcel watch public/index.html public/**/index.html",
     "serve": "serve dist -p 8080",
     "deploy": "npm run build; git add dist; git commit -m'new build'; git push origin master",
-    "serve-dist": "serve dist -p 8080"
+    "serve-dist": "serve dist -p 8080",
+    "test": "tap  --no-coverage-report --watch __tests__/**/*.test.js"
   },
   "browserslist": [
     "last 1 Chrome versions"
@@ -17,7 +18,8 @@
   "license": "MIT",
   "dependencies": {
     "@remy/unpack": "^2.1.0",
-    "codemirror": "^5.52.0"
+    "codemirror": "^5.52.0",
+    "esm": "^3.2.25"
   },
   "devDependencies": {
     "@babel/core": "^7.0.0-0",
@@ -27,7 +29,8 @@
     "babel-preset-env": "^1.7.0",
     "cssnano": "^4.1.10",
     "eslint": "^6.8.0",
-    "parcel-bundler": "^1.12.4"
+    "parcel-bundler": "^1.12.4",
+    "tap": "^14.10.7"
   },
   "description": ""
 }
