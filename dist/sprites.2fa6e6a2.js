@@ -1836,8 +1836,9 @@ class Tool {
   fill(node, source, target) {
     if (!node) return;
     const index = parseInt(node.dataset.index, 10);
+    const value = parseInt(node.dataset.value, 10);
 
-    if (parseInt(node.dataset.value, 10) !== source) {
+    if (value !== source || value === target) {
       return;
     }
 
@@ -2246,7 +2247,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "51765" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "56682" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
