@@ -21,11 +21,18 @@
     <main>
       <div>
         <section class="sprite" id="container"></section>
-        <section id="debug">277 0xe3</section>
+        <section id="debug"></section>
       </div>
       <div id="tools">
         <h2>Tools</h2>
         <div>
+          <div class="button-group" id="tool-types">
+            <button title="[b]rush" data-action="brush"><img width="24" height="24" src="./img/brush.svg"></button>
+            <button title="[f]ill" data-action="fill"><img width="24" height="24" src="./img/fill.svg"></button>
+            <button title="[e]rase" data-action="erase"><img width="24" height="24" src="./img/clear.svg"></button>
+            <button title="[p]an" data-action="pan"><img width="24" height="24" src="./img/pan.svg"></button>
+
+          </div>
           <button data-action="clear">Clear sprite</button>
           <button data-action="new">New sprite</button>
           <div class="button-group">
@@ -47,6 +54,24 @@
 
 
     </main>
+    <footer>
+
+      <details closed>
+        <summary>Changes</summary>
+        <ul>
+          <li>2020-03-23
+            <ul>
+              <li>Add: fill</li>
+              <li>Add: key shortcuts for Brush, Fill, Erase</li>
+              <li>Add: support for arbitrary upload size</li>
+              <li>Add: show coordinates on main draw area</li>
+              <li>Fix: highlighting colours from 7-8</li>
+              <li>TODO: pan tool</li>
+            </ul>
+          </li>
+        </ul>
+      </details>
+    </footer>
     <script src="./index.js"></script>
   </body>
 

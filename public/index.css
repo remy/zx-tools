@@ -27,10 +27,19 @@ button,
   font-size: 16px;
 }
 
+button.selected,
+.button.selected {
+  outline: 2px dashed white !important;
+}
+
 button:hover,
 .button:hover {
   background: #000;
   outline: 2px solid #000;
+}
+
+button img {
+  vertical-align: middle;
 }
 
 body,
@@ -84,6 +93,10 @@ nav a {
 
 nav a:hover {
   text-decoration: underline;
+}
+
+details summary {
+  cursor: pointer;
 }
 
 @media screen and (max-width: 480px) {

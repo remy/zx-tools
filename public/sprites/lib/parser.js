@@ -65,7 +65,9 @@ export function transform({ pixels, width, alphaFirst = false }) {
   if (width / 16 === ((width / 16) | 0)) {
     n = width / 16;
   } else {
-    throw new Error('unsupported dimension');
+    // throw new Error('unsupported dimension');
+    const d = width % 16;
+    n = (width + (16 - d)) / 16;
   }
 
   for (let i = 0; i < pixels.length; i += 4) {
@@ -105,7 +107,7 @@ export function transform({ pixels, width, alphaFirst = false }) {
       pixels[dataIndex + ai],
     ];
 
-    if (a === 0) {
+    if (a === 0 || r === undefined) {
       // transparent
       res.push(0xe3);
     } else {

@@ -47,6 +47,107 @@ function download() {
   }
 }
 
+class Tool {
+  types = ['brush', 'fill', 'erase', 'pan'];
+  _selected = 'brush';
+
+  constructor({ type = 'brush', colour }) {
+    this.colour = colour;
+
+    $('#tool-types button').on('click', e => {
+      this.selected = e.target.dataset.action;
+    });
+
+    const shortcuts = this.types.map(_ => _[0]);
+
+    document.body.addEventListener('keydown', e => {
+      const k = e.key;
+      const i = shortcuts.indexOf(k);
+      if (i > -1) {
+        this.selected = this.types[i];
+      }
+    });
+
+    this.selected = type;
+  }
+
+  get selected() {
+    return this._selected;
+  }
+
+  set selected(value) {
+    this._selected = value;
+    console.log('selection to ' + value);
+
+    $('#tool-types button').className = '';
+    $(`#tool-types button[data-action="${value}"]`).className = 'selected';
+  }
+
+  shift(shift) {
+    if (shift) {
+      if (this._last !== 'erase') this._last = this.selected;
+      this.selected = 'erase';
+    } else if (this._last) {
+      this.selected = this._last;
+      this._last = null;
+    }
+  }
+
+  pan() {}
+
+  fill(node, source, target) {
+    if (!node) return;
+
+    const index = parseInt(node.dataset.index, 10);
+
+    if (parseInt(node.dataset.value, 10) !== source) {
+      return;
+    }
+
+    this.paint(node, target);
+
+    const { x, y } = indexToXY(index);
+    const { children } = node.parentNode;
+
+    this.fill(children[xyToIndex({ x: x - 1, y })], source, target);
+    this.fill(children[xyToIndex({ x: x + 1, y })], source, target);
+    this.fill(children[xyToIndex({ x, y: y - 1 })], source, target);
+    this.fill(children[xyToIndex({ x, y: y + 1 })], source, target);
+  }
+
+  paint(node, target) {
+    const index = node.dataset.index;
+    node.className = 'c-' + target;
+    node.dataset.value = target;
+    const offset = 256 * currentSprite;
+    const x = offset + parseInt(index, 10);
+    sprites[x] = target;
+  }
+
+  apply(node) {
+    let target = this.colour.value;
+    if (this.selected === 'erase') {
+      target = this.colour.transparent;
+    }
+
+    if (this.selected === 'fill') {
+      // now find surrounding pixels of the same colour
+      this.fill(node, parseInt(node.dataset.value, 10), target);
+    } else {
+      this.paint(node, target);
+    }
+
+    // update preview
+    const div = document.querySelector(`#sprites .focus`);
+    render(
+      new Uint8Array(
+        sprites.slice(currentSprite * 256, currentSprite * 256 + 256)
+      ),
+      div
+    );
+  }
+}
+
 class ColourPicker {
   transparent = 0xe3;
   _index = 0;
@@ -103,6 +204,7 @@ class ColourPicker {
 }
 
 const colour = new ColourPicker(8, pickerColour.parentNode);
+const tool = new Tool({ colour });
 
 buttons.on('click', e => {
   const action = e.target.dataset.action;
@@ -191,32 +293,33 @@ container.addEventListener(
   true
 );
 
+document.body.addEventListener('keydown', e => {
+  if (e.key === 'Shift') {
+    tool.shift(true);
+  }
+});
+
+document.body.addEventListener('keyup', e => {
+  if (e.key === 'Shift') {
+    tool.shift(false);
+  }
+});
+
 container.onclick = e => {
   if (e.target.className.startsWith('c-')) {
     if (e.altKey || e.ctrlKey) {
       colour.value = e.target.dataset.value;
     } else {
-      const target = e.shiftKey ? colour.transparent : colour.value;
-      e.target.className = 'c-' + target;
-      e.target.dataset.value = target;
+      // const target = e.shiftKey ? colour.transparent : colour.value;
+      // e.target.className = 'c-' + target;
+      // e.target.dataset.value = target;
 
-      const offset = 256 * currentSprite;
-      const x = offset + parseInt(e.target.dataset.index, 10);
-      sprites[x] = parseInt(target, 10);
-
-      // update preview
-      const div = document.querySelector(`#sprites .focus`);
-      render(
-        new Uint8Array(
-          sprites.slice(currentSprite * 256, currentSprite * 256 + 256)
-        ),
-        div
-      );
+      tool.apply(e.target);
     }
   }
 };
 
-document.body.onkeydown = e => {
+document.body.addEventListener('keydown', e => {
   if (e.key >= '1' && e.key <= '8') {
     colour.index = parseInt(e.key, 10) - 1;
     return;
@@ -244,7 +347,7 @@ document.body.onkeydown = e => {
   if (currentSprite !== current) {
     renderCurrentSprite();
   }
-};
+});
 
 function buildStyleSheet() {
   let css = '';
@@ -316,13 +419,44 @@ function makePixel(index, dataIndex) {
   return d;
 }
 
+function indexToXY(i) {
+  const x = i % 16;
+  const y = (i / 16) | 0;
+
+  return { x, y };
+}
+
+function xyToIndex({ x, y }) {
+  if (x < 0) {
+    return null;
+  }
+
+  if (x >= 16) {
+    return null;
+  }
+
+  if (y >= 16) {
+    return null;
+  }
+
+  return 16 * y + x;
+}
+
 container.onmousemove = e => {
   const value = e.target.dataset.value;
   if (value === undefined) {
     return;
   }
 
-  debug.innerHTML = `${value} 0x${value.toString(16).padStart(2, '0')}`;
+  const { x, y } = indexToXY(e.target.dataset.index);
+
+  debug.innerHTML = `X:${x} Y:${y} -- ${value} 0x${value
+    .toString(16)
+    .padStart(2, '0')}`;
+};
+
+container.onmouseout = () => {
+  debug.innerHTML = '';
 };
 
 drop(document.documentElement, fileHandler);
