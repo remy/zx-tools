@@ -73,7 +73,9 @@ button,
 .pickerColour[data-selected='3'] div:nth-child(3),
 .pickerColour[data-selected='4'] div:nth-child(4),
 .pickerColour[data-selected='5'] div:nth-child(5),
-.pickerColour[data-selected='6'] div:nth-child(6) {
+.pickerColour[data-selected='6'] div:nth-child(6),
+.pickerColour[data-selected='7'] div:nth-child(7),
+.pickerColour[data-selected='8'] div:nth-child(8) {
   outline: 2px dashed yellow;
   z-index: 10;
 }
@@ -184,6 +186,10 @@ button,
   margin-right: 0;
 }
 
+#tool-types button img {
+  pointer-events: none;
+}
+
 #tools {
   display: flex;
   flex-wrap: wrap;
@@ -216,6 +222,10 @@ button,
   right: 0;
   bottom: 0;
   top: 0;
+}
+
+#debug {
+  text-align: left;
 }
 
 

@@ -1642,7 +1642,9 @@ function transform({
   if (width / 16 === (width / 16 | 0)) {
     n = width / 16;
   } else {
-    throw new Error('unsupported dimension');
+    // throw new Error('unsupported dimension');
+    const d = width % 16;
+    n = (width + (16 - d)) / 16;
   }
 
   for (let i = 0; i < pixels.length; i += 4) {
@@ -1673,7 +1675,7 @@ function transform({
 
     const [r, g, b, a] = [pixels[dataIndex + ri], pixels[dataIndex + gi], pixels[dataIndex + bi], pixels[dataIndex + ai]];
 
-    if (a === 0) {
+    if (a === 0 || r === undefined) {
       // transparent
       res.push(0xe3);
     } else {
@@ -1783,6 +1785,118 @@ function download() {
   }
 }
 
+class Tool {
+  constructor({
+    type = 'brush',
+    colour
+  }) {
+    _defineProperty(this, "types", ['brush', 'fill', 'erase', 'pan']);
+
+    _defineProperty(this, "_selected", 'brush');
+
+    this.colour = colour;
+    (0, _$.$)('#tool-types button').on('click', e => {
+      this.selected = e.target.dataset.action;
+    });
+    const shortcuts = this.types.map(_ => _[0]);
+    document.body.addEventListener('keydown', e => {
+      const k = e.key;
+      const i = shortcuts.indexOf(k);
+
+      if (i > -1) {
+        this.selected = this.types[i];
+      }
+    });
+    this.selected = type;
+  }
+
+  get selected() {
+    return this._selected;
+  }
+
+  set selected(value) {
+    this._selected = value;
+    console.log('selection to ' + value);
+    (0, _$.$)('#tool-types button').className = '';
+    (0, _$.$)(`#tool-types button[data-action="${value}"]`).className = 'selected';
+  }
+
+  shift(shift) {
+    if (shift) {
+      if (this._last !== 'erase') this._last = this.selected;
+      this.selected = 'erase';
+    } else if (this._last) {
+      this.selected = this._last;
+      this._last = null;
+    }
+  }
+
+  pan() {}
+
+  fill(node, source, target) {
+    if (!node) return;
+    const index = parseInt(node.dataset.index, 10);
+
+    if (parseInt(node.dataset.value, 10) !== source) {
+      return;
+    }
+
+    this.paint(node, target);
+    const {
+      x,
+      y
+    } = indexToXY(index);
+    const {
+      children
+    } = node.parentNode;
+    this.fill(children[xyToIndex({
+      x: x - 1,
+      y
+    })], source, target);
+    this.fill(children[xyToIndex({
+      x: x + 1,
+      y
+    })], source, target);
+    this.fill(children[xyToIndex({
+      x,
+      y: y - 1
+    })], source, target);
+    this.fill(children[xyToIndex({
+      x,
+      y: y + 1
+    })], source, target);
+  }
+
+  paint(node, target) {
+    const index = node.dataset.index;
+    node.className = 'c-' + target;
+    node.dataset.value = target;
+    const offset = 256 * currentSprite;
+    const x = offset + parseInt(index, 10);
+    sprites[x] = target;
+  }
+
+  apply(node) {
+    let target = this.colour.value;
+
+    if (this.selected === 'erase') {
+      target = this.colour.transparent;
+    }
+
+    if (this.selected === 'fill') {
+      // now find surrounding pixels of the same colour
+      this.fill(node, parseInt(node.dataset.value, 10), target);
+    } else {
+      this.paint(node, target);
+    } // update preview
+
+
+    const div = document.querySelector(`#sprites .focus`);
+    render(new Uint8Array(sprites.slice(currentSprite * 256, currentSprite * 256 + 256)), div);
+  }
+
+}
+
 class ColourPicker {
   constructor(size, target) {
     _defineProperty(this, "transparent", 0xe3);
@@ -1842,6 +1956,9 @@ class ColourPicker {
 }
 
 const colour = new ColourPicker(8, pickerColour.parentNode);
+const tool = new Tool({
+  colour
+});
 buttons.on('click', e => {
   const action = e.target.dataset.action;
   const offset = 256 * currentSprite;
@@ -1913,26 +2030,31 @@ container.addEventListener('mousemove', e => {
     container.onclick(e);
   }
 }, true);
+document.body.addEventListener('keydown', e => {
+  if (e.key === 'Shift') {
+    tool.shift(true);
+  }
+});
+document.body.addEventListener('keyup', e => {
+  if (e.key === 'Shift') {
+    tool.shift(false);
+  }
+});
 
 container.onclick = e => {
   if (e.target.className.startsWith('c-')) {
     if (e.altKey || e.ctrlKey) {
       colour.value = e.target.dataset.value;
     } else {
-      const target = e.shiftKey ? colour.transparent : colour.value;
-      e.target.className = 'c-' + target;
-      e.target.dataset.value = target;
-      const offset = 256 * currentSprite;
-      const x = offset + parseInt(e.target.dataset.index, 10);
-      sprites[x] = parseInt(target, 10); // update preview
-
-      const div = document.querySelector(`#sprites .focus`);
-      render(new Uint8Array(sprites.slice(currentSprite * 256, currentSprite * 256 + 256)), div);
+      // const target = e.shiftKey ? colour.transparent : colour.value;
+      // e.target.className = 'c-' + target;
+      // e.target.dataset.value = target;
+      tool.apply(e.target);
     }
   }
 };
 
-document.body.onkeydown = e => {
+document.body.addEventListener('keydown', e => {
   if (e.key >= '1' && e.key <= '8') {
     colour.index = parseInt(e.key, 10) - 1;
     return;
@@ -1962,7 +2084,7 @@ document.body.onkeydown = e => {
   if (currentSprite !== current) {
     renderCurrentSprite();
   }
-};
+});
 
 function buildStyleSheet() {
   let css = '';
@@ -2035,6 +2157,34 @@ function makePixel(index, dataIndex) {
   return d;
 }
 
+function indexToXY(i) {
+  const x = i % 16;
+  const y = i / 16 | 0;
+  return {
+    x,
+    y
+  };
+}
+
+function xyToIndex({
+  x,
+  y
+}) {
+  if (x < 0) {
+    return null;
+  }
+
+  if (x >= 16) {
+    return null;
+  }
+
+  if (y >= 16) {
+    return null;
+  }
+
+  return 16 * y + x;
+}
+
 container.onmousemove = e => {
   const value = e.target.dataset.value;
 
@@ -2042,7 +2192,15 @@ container.onmousemove = e => {
     return;
   }
 
-  debug.innerHTML = `${value} 0x${value.toString(16).padStart(2, '0')}`;
+  const {
+    x,
+    y
+  } = indexToXY(e.target.dataset.index);
+  debug.innerHTML = `X:${x} Y:${y} -- ${value} 0x${value.toString(16).padStart(2, '0')}`;
+};
+
+container.onmouseout = () => {
+  debug.innerHTML = '';
 };
 
 (0, _dnd.default)(document.documentElement, fileHandler);
@@ -2088,7 +2246,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "49748" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "51765" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
