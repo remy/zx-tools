@@ -99,8 +99,9 @@ class Tool {
     if (!node) return;
 
     const index = parseInt(node.dataset.index, 10);
+    const value = parseInt(node.dataset.value, 10);
 
-    if (parseInt(node.dataset.value, 10) !== source) {
+    if (value !== source || value === target) {
       return;
     }
 
