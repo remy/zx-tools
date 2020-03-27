@@ -324,7 +324,7 @@ exports.default = _default;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.zxFloatToVal = exports._zxFloat = exports.zxFloat = exports.toHex = exports.toBinary = void 0;
+exports.zxFloatToVal = exports._zxFloat = exports._zxFloat2 = exports.zxFloat = exports.toHex = exports.toBinary = void 0;
 
 const toBinary = (n, size = 8) => {
   if (n < 0) {
@@ -346,36 +346,112 @@ const toHex = (n, size = 8) => {
   }
 
   return n.toString(16).padStart(size / (8 / 2), 0).toUpperCase();
-}; // via https://stackoverflow.com/questions/37471158/converting-ieee-754-from-bit-stream-into-float-in-javascript#37471222
-
+};
 
 exports.toHex = toHex;
 
-const zxFloat = source => {
+function getNumberParts(x) {
+  var float = new Float64Array(1),
+      bytes = new Uint8Array(float.buffer);
+  float[0] = x;
+  var sign = bytes[7] >> 7,
+      exponent = ((bytes[7] & 0x7f) << 4 | bytes[6] >> 4) - 0x3ff;
+  bytes[7] = 0x3f;
+  bytes[6] |= 0xf0;
+  return {
+    sign: sign,
+    exponent: exponent,
+    mantissa: float[0]
+  };
+}
+
+const zxFloat = value => {
+  const sign = value < 0 ? 1 : 0;
+
+  if (sign) {
+    value = 0 - value; // abs
+  }
+
+  let int = value | 0; // ?
+
+  let frac = value - int; // ?
+
+  let e = 0;
+
+  if (int === 0) {
+    // search the fraction for steps
+    let frac = 0;
+
+    for (let i = 0; i < 32; i++) {
+      const res = frac >> i;
+
+      if (res) {
+        // ?
+        const v = Math.pow(2, -(32 - i));
+        frac += v;
+      }
+    }
+  } else {}
+
+  return [];
+  const v2 = new DataView(new ArrayBuffer(6));
+  v2.setUint8(0, 0x0e);
+  v2.setUint8(1, res.exponent + 128); // v2.setUint32(2, (m >>> 1) | (sign === -1 ? 0x80000000 : 0), false); // ? v2.getUint32(2)
+
+  v2.setFloat32(2, res.mantissa - 1, false); // ? v2.getUint32(2)
+
+  if (res.sign < 0) {
+    const m1 = v2.getUint8(2);
+    v2.setUint8(2, m1 | 0x80);
+  }
+
+  return new Uint8Array(v2.buffer);
+}; // via https://stackoverflow.com/questions/37471158/converting-ieee-754-from-bit-stream-into-float-in-javascript#37471222
+
+
+exports.zxFloat = zxFloat;
+
+const _zxFloat2 = source => {
+  // const view = new DataView(new ArrayBuffer(4));
+  // view.setFloat64(0, source << 1, false);
+  // const bits = view.getFloat64(0, false);
+  // const sign = source < 0 ? 1.0 : -1.0; // ?
+  // const e = view.getUint8(0);
   const view = new DataView(new ArrayBuffer(4));
   view.setFloat32(0, source, false); // var bytes = [0x40, 0x33, 0xc3, 0x85];
+  // var bytes = new Uint8Array(view.buffer) // ?
   // var bits = (bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | bytes[3];
 
-  const bits = view.getUint32(0);
+  const bits = view.getUint32(0, false); //?
+
   const sign = bits >>> 31 == 0 ? 1.0 : -1.0; // ?
 
   let e = bits >>> 23 & 0xff; // ?
+  // e = e - 150; // ?
+  // let m = e == 0 ? (bits & 0x7fffff) << 1 : (bits & 0x7fffff) | 0x800000; // ?
+  // FIXME doesn't hand negative
 
-  const m = e == 0 ? (bits & 0x7fffff) << 1 : bits & 0x7fffff | 0x800000; // ?
+  var f1 = source / Math.pow(2, e - 1023);
+  let m = Math.floor((f1 - 1) * Math.pow(2, 52)); // ?
 
-  const f = sign * m * Math.pow(2, e - 150); // ?
-
-  e = e - 150; // ?
+  const f = Float32Array.of(sign * m * Math.pow(2, e))[0]; // ?
+  // m = m | (sign === -1 ? 0x80000000 : 0); // ?
 
   const v2 = new DataView(new ArrayBuffer(6));
   v2.setUint8(0, 0x0e);
-  v2.setUint8(1, e + 128);
-  v2.setUint32(2, m >>> 1 | (sign === -1 ? 0x80000000 : 0), false); // ? v2.getUint32(2)
+  v2.setUint8(1, e + 128); // v2.setUint32(2, (m >>> 1) | (sign === -1 ? 0x80000000 : 0), false); // ? v2.getUint32(2)
+
+  v2.setUint32(2, m, false); // ? v2.getUint32(2)
+
+  if (sign < 0) {
+    const m1 = v2.getUint8(2);
+    v2.setUint8(2, m1 | 0x80);
+  }
 
   return new Uint8Array(v2.buffer);
 };
 
-exports.zxFloat = zxFloat;
+exports._zxFloat2 = _zxFloat2;
 
 const _zxFloat = source => {
   const view = new DataView(new ArrayBuffer(4)); //Float32Array.of(source).buffer);
@@ -410,25 +486,35 @@ const zxFloatToVal = source => {
 
   let mantissa = view.getUint32(1, false); // ? $ // 32bit
 
-  let neg = mantissa >>> 31 ? -1 : 1; // ?
+  let sign = mantissa >>> 31 ? -1 : 1; // ?
 
-  mantissa = mantissa << 1; // ? $ // now shift it off
+  mantissa = mantissa | 0x80000000;
+  let frac = 0;
 
-  const value = mantissa * Math.pow(2, exp);
-  return value * neg;
+  for (let i = 0; i < 32; i++) {
+    // FIXME
+    if (mantissa >> i & 1 === 1) {
+      const v = Math.pow(2, -(32 - i));
+      frac += v;
+    }
+  }
+
+  frac = frac.toFixed(8); // ?
+
+  const value = frac * Math.pow(2, exp);
+  return value * sign; // ?
 }; // 2.34e-1 => 0E 7E 6F 9D B2 2C = 0.234
 // Array.from(zxFloat(-2.34e-1)).map(_ => toHex(_)); // ?
+// const res = zxFloat(2.34e-1);
+// Array.from(res).map(_ => toHex(_)); // ?
+// 0E 7B 3F B1 5B 57 = 0.234
 
 
 exports.zxFloatToVal = zxFloatToVal;
-const res = zxFloat(2.34e-1);
-Array.from(res).map(_ => toHex(_)); // ?
-// 0E 7B 3F B1 5B 57 = 0.234
-// const res = Array.from(zxFloat(2.34e-1)).map(_ => toHex(_)); // ?
-
-zxFloatToVal(res.slice(1)); // ?
-
-zxFloatToVal(new Uint8Array([0x7e, 0x6f, 0x9d, 0xb2, 0x2c])); // ?
+const res = zxFloat(2.34e-1); // Array.from(res).map(_ => toHex(_)); // ?
+// zxFloatToVal(res.slice(1)); // ?
+// zxFloatToVal(new Uint8Array([0x7e, 0x6f, 0x9d, 0xb2, 0x2c])); // ?
+// zxFloatToVal(new Uint8Array([0x7d, 0x1f, 0xbe, 0x76, 0xc8])); // ?
 },{}],"lib/unpack/lib.js":[function(require,module,exports) {
 "use strict";
 
@@ -1530,16 +1616,16 @@ class Lexer {
     }
   }
 
-}
+} // const l = new Lexer();
+// const res = l.line(
+//   `
+// 5 let b=@01111100
+// `.trim()
+// ); // ?
+// bas2txtLines(res.basic); // ?
+
 
 exports.default = Lexer;
-const l = new Lexer();
-const res = l.line(`
-5 let b=@01111100
-
-`.trim()); // ?
-
-(0, _bas2txt.bas2txtLines)(res.basic); // ?
 },{"./codes.js":"bas/codes.js","../lib/to.js":"lib/to.js","../lib/unpack/pack.js":"lib/unpack/pack.js","./bas2txt.js":"bas/bas2txt.js"}],"../node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
 var bundleURL = null;
 
@@ -12628,7 +12714,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "56682" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "51760" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

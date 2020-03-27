@@ -12,7 +12,7 @@ export function rgbFromIndex(index) {
     r: (r * 255.0) / 7.0,
     g: (g * 255.0) / 7.0,
     b: (b * 255.0) / 3.0,
-    a: 1
+    a: 255,
   };
 }
 
@@ -21,3 +21,5 @@ export function toRGB332(r, g, b) {
     (Math.floor(r / 32) << 5) + (Math.floor(g / 32) << 2) + Math.floor(b / 64)
   );
 }
+
+export const transparent = 0xe3;

@@ -55,6 +55,10 @@ button,
   color: white;
 }
 
+h2 {
+  display: none;
+}
+
 .picker {
   --scale: 12px;
   width: calc(16 * var(--scale));
@@ -63,6 +67,7 @@ button,
 }
 
 .pickerColour {
+  width: 80px;
   display: flex;
   flex-direction: column;
   flex-grow: 1;
@@ -115,13 +120,18 @@ button,
   z-index: 10;
 }
 
+canvas {
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16'><rect stroke='black' stroke-width='0.2' stroke-opacity='100%' fill='lightgrey' width='16' height='16' x='0' y='0' /><rect fill='white' width='8' height='8' x='1' y='1' /><rect fill='white' width='7' height='7' x='8' y='8' /></svg>");
+}
+
 #container {
+  cursor: crosshair;
   border-radius: 2px;
   --block-size: calc(var(--size));
-  /* add a block grid */
-  /* background: hotpink; */
-  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16'><rect stroke='black' stroke-width='0.2' stroke-opacity='100%' fill='lightgrey' width='16' height='16' x='0' y='0' /><rect fill='white' width='8' height='8' x='1' y='1' /><rect fill='white' width='7' height='7' x='8' y='8' /></svg>");
-  cursor: crosshair;
+}
+
+[data-tool='pan'] #container {
+  cursor: move;
 }
 
 #container div:hover {
@@ -150,7 +160,7 @@ button,
   margin: 0;
 }
 
-#sprites > div.focus {
+#sprites > .focus {
   outline: 1px dashed rgb(255, 255, 0);
   z-index: 1;
 }
@@ -186,13 +196,16 @@ button,
   margin-right: 0;
 }
 
-#tool-types button img {
+#tool-types button img,
+#tool-types button svg {
   pointer-events: none;
+  display: block;
+  margin: 0 auto;
 }
 
 #tools {
   display: flex;
-  flex-wrap: wrap;
+  /* flex-wrap: wrap; */
   background: #303030;
   padding: 20px;
 }
@@ -210,6 +223,7 @@ button,
   display: flex;
   position: relative;
   cursor: pointer !important;
+  justify-content: center;
 }
 
 #upload input {

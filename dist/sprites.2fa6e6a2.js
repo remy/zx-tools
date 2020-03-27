@@ -151,6 +151,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.rgbFromIndex = rgbFromIndex;
 exports.toRGB332 = toRGB332;
+exports.transparent = void 0;
 
 function rgbFromIndex(index) {
   if (index === 0xe3) {
@@ -170,13 +171,16 @@ function rgbFromIndex(index) {
     r: r * 255.0 / 7.0,
     g: g * 255.0 / 7.0,
     b: b * 255.0 / 3.0,
-    a: 1
+    a: 255
   };
 }
 
 function toRGB332(r, g, b) {
   return (Math.floor(r / 32) << 5) + (Math.floor(g / 32) << 2) + Math.floor(b / 64);
 }
+
+const transparent = 0xe3;
+exports.transparent = transparent;
 },{}],"lib/save.js":[function(require,module,exports) {
 "use strict";
 
@@ -1659,20 +1663,7 @@ function transform({
     dataIndex *= 4; // NOTE I don't fully understand how this works, but it does after
     // lots of testing...
 
-    dataIndex -= p * 4 * (spriteIndex / n | 0) * n; // if (spriteRow !== tmp) {
-    //   console.log({
-    //     row,
-    //     offset,
-    //     spriteRow,
-    //     dataIndex,
-    //     spriteIndex,
-    //     n,
-    //     alt: n * spriteIndex * 4,
-    //     alt2: p * 4 * ((spriteIndex / n) | 0),
-    //   });
-    // }
-    // tmp = spriteRow;
-
+    dataIndex -= p * 4 * (spriteIndex / n | 0) * n;
     const [r, g, b, a] = [pixels[dataIndex + ri], pixels[dataIndex + gi], pixels[dataIndex + bi], pixels[dataIndex + ai]];
 
     if (a === 0 || r === undefined) {
@@ -1726,181 +1717,330 @@ class ArrayNode extends Array {
 const $ = (s, ctx = document) => ArrayNode.from(ctx.querySelectorAll(s));
 
 exports.$ = $;
-},{}],"sprites/index.js":[function(require,module,exports) {
+},{}],"sprites/SpriteSheet.js":[function(require,module,exports) {
 "use strict";
 
-var _dnd = _interopRequireDefault(require("../lib/dnd.js"));
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.getCoords = getCoords;
+exports.emptyCanvas = emptyCanvas;
+exports.default = exports.Sprite = void 0;
 
 var _colour = require("./lib/colour.js");
 
-var _save = _interopRequireDefault(require("../lib/save.js"));
-
-var _parser = require("./lib/parser.js");
-
-var _$ = require("../lib/$.js");
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
-const container = document.querySelector('#container');
-const spritesContainer = document.querySelector('#sprites');
-const debug = document.querySelector('#debug');
-const picker = document.querySelector('.picker');
-const upload = document.querySelector('#upload input');
-const pickerColour = document.querySelector('.pickerColour div');
-const buttons = (0, _$.$)('#tools button[data-action]');
-let sprites = Uint8Array.from({
-  length: 256
-}, (_, i) => i);
-let currentSprite = 0;
-let totalSprites = 1;
+const pixelLength = 256;
+const width = 16;
+const colourTable = [];
 
-const newSprite = () => {
-  totalSprites++;
-  currentSprite = totalSprites - 1;
-  sprites = Uint8Array.from(Array.from(sprites).concat(Array.from({
-    length: 256
-  }).fill(colour.transparent)));
-  renderSpritePreviews();
-  renderCurrentSprite();
-};
-
-const dupeSprite = () => {
-  const offset = currentSprite;
-  console.log('dupe ' + offset);
-  const copy = Array.from(sprites.slice(offset * 256, offset * 256 + 256));
-  totalSprites++;
-  currentSprite = totalSprites - 1;
-  sprites = Uint8Array.from(Array.from(sprites).concat(copy));
-  renderSpritePreviews();
-  renderCurrentSprite();
-};
-
-function download() {
-  const filename = prompt('Filename:', 'untitled.spr');
-
-  if (filename) {
-    (0, _save.default)(sprites, filename);
-  }
+for (let i = 0; i < pixelLength; i++) {
+  colourTable.push((0, _colour.rgbFromIndex)(i));
 }
 
-class Tool {
-  constructor({
-    type = 'brush',
-    colour
+function getCoords(e) {
+  const rect = e.target.getBoundingClientRect();
+  const x = (e.clientX - rect.left) / 16 | 0; //x position within the element.
+
+  const y = (e.clientY - rect.top) / 16 | 0; //y position within the element.
+
+  const index = xyToIndex({
+    x,
+    y
+  });
+  return {
+    x,
+    y,
+    index
+  };
+}
+
+function emptyCanvas(ctx) {
+  const blankData = new Uint8ClampedArray(ctx.canvas.width * ctx.canvas.height * 4); // blankData.fill(transparent);
+
+  for (let i = 0; i < blankData.length; i += 4) {
+    blankData[i + 0] = 0;
+    blankData[i + 1] = 0;
+    blankData[i + 2] = 0;
+    blankData[i + 3] = 0;
+  }
+
+  const blank = new ImageData(blankData, ctx.canvas.width, ctx.canvas.height);
+  ctx.putImageData(blank, 0, 0);
+}
+
+function xyToIndex({
+  x,
+  y
+}) {
+  if (x < 0) {
+    return null;
+  }
+
+  if (x >= width) {
+    return null;
+  }
+
+  if (y >= width) {
+    return null;
+  }
+
+  return width * y + x;
+}
+
+class Sprite {
+  /**
+   *
+   * @param {Uint8Array} pixels
+   */
+  constructor(pixels) {
+    _defineProperty(this, "scale", 16);
+
+    this.pixels = pixels;
+    this.ctx = document.createElement('canvas').getContext('2d');
+    this.ctx.canvas.width = this.ctx.canvas.height = width;
+    this.render();
+  }
+
+  get canvas() {
+    return this.ctx.canvas;
+  }
+
+  pget({
+    index = null,
+    x = null,
+    y
   }) {
-    _defineProperty(this, "types", ['brush', 'fill', 'erase', 'pan']);
+    if (index === null) {
+      index = xyToIndex({
+        x,
+        y
+      });
+    }
 
-    _defineProperty(this, "_selected", 'brush');
+    return this.pixels[index];
+  }
 
-    this.colour = colour;
-    (0, _$.$)('#tool-types button').on('click', e => {
-      this.selected = e.target.dataset.action;
-    });
-    const shortcuts = this.types.map(_ => _[0]);
-    document.body.addEventListener('keydown', e => {
-      const k = e.key;
-      const i = shortcuts.indexOf(k);
+  pset({
+    index = null,
+    x = null,
+    y,
+    value
+  }) {
+    if (index === null) {
+      index = xyToIndex({
+        x,
+        y
+      });
+    }
 
-      if (i > -1) {
-        this.selected = this.types[i];
+    this.pixels[index] = value;
+    this.render();
+  }
+
+  clear() {
+    this.pixels.fill(_colour.transparent);
+    this.render();
+  }
+
+  canvasToPixels() {
+    const imageData = this.ctx.getImageData(0, 0, width, width);
+
+    for (let i = 0; i < imageData.data.length / 4; i++) {
+      const [r, g, b, a] = imageData.data.slice(i * 4, i * 4 + 4);
+
+      if (a === 0) {
+        this.pixels[i] = _colour.transparent;
+      } else {
+        this.pixels[i] = (0, _colour.toRGB332)(r, g, b);
       }
-    });
-    this.selected = type;
-  }
-
-  get selected() {
-    return this._selected;
-  }
-
-  set selected(value) {
-    this._selected = value;
-    console.log('selection to ' + value);
-    (0, _$.$)('#tool-types button').className = '';
-    (0, _$.$)(`#tool-types button[data-action="${value}"]`).className = 'selected';
-  }
-
-  shift(shift) {
-    if (shift) {
-      if (this._last !== 'erase') this._last = this.selected;
-      this.selected = 'erase';
-    } else if (this._last) {
-      this.selected = this._last;
-      this._last = null;
     }
   }
 
-  pan() {}
+  render(dx = 0, dy = 0) {
+    const pixels = this.pixels; // imageData is the internal copy
 
-  fill(node, source, target) {
-    if (!node) return;
-    const index = parseInt(node.dataset.index, 10);
-    const value = parseInt(node.dataset.value, 10);
+    const imageData = this.ctx.getImageData(0, 0, width, width);
 
-    if (value !== source || value === target) {
+    for (let i = 0; i < pixels.length; i++) {
+      let index = pixels[i];
+      const {
+        r,
+        g,
+        b,
+        a
+      } = colourTable[index];
+      imageData.data[i * 4 + 0] = r;
+      imageData.data[i * 4 + 1] = g;
+      imageData.data[i * 4 + 2] = b;
+      imageData.data[i * 4 + 3] = a * 255;
+    }
+
+    if (dx !== 0 || dy !== 0) {
+      emptyCanvas(this.ctx);
+    }
+
+    this.ctx.putImageData(imageData, dx, dy, 0, 0, imageData.width, imageData.height);
+  }
+
+  paint(ctx) {
+    // clear, set to jaggy and scale to canvas
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(this.ctx.canvas, 0, 0, this.ctx.canvas.width, this.ctx.canvas.height, 0, 0, ctx.canvas.width, ctx.canvas.height);
+  }
+
+}
+
+exports.Sprite = Sprite;
+
+class SpriteSheet {
+  constructor(data, ctx) {
+    _defineProperty(this, "sprites", []);
+
+    _defineProperty(this, "previewCtx", []);
+
+    _defineProperty(this, "history", []);
+
+    _defineProperty(this, "ctx", null);
+
+    _defineProperty(this, "_undoPtr", 0);
+
+    _defineProperty(this, "_current", 0);
+
+    _defineProperty(this, "length", 0);
+
+    this.data = new Uint8Array(pixelLength * 4 * 16);
+    this.data.set(data, 0);
+
+    for (let i = 0; i < this.data.length; i += pixelLength) {
+      const spriteData = this.data.subarray(i, i + pixelLength);
+      const sprite = new Sprite(spriteData);
+      this.sprites.push(sprite);
+      const ctx = document.createElement('canvas').getContext('2d');
+      ctx.canvas.width = ctx.canvas.height = width * 2;
+      this.previewCtx.push(ctx);
+      sprite.paint(ctx);
+    }
+
+    this.snapshot();
+    this.length = data.length / pixelLength;
+    this._current = 0;
+    this.ctx = ctx;
+  }
+
+  snapshot() {
+    this.history.splice(this._undoPtr + 1);
+    this.history.push(new Uint8Array(this.data));
+    this._undoPtr = this.history.length - 1;
+    console.log(`history: ${this.history.length}`);
+  }
+
+  undo() {
+    const data = this.history[this._undoPtr];
+
+    if (!data) {
+      console.log(`no undo data @ ${this._undoPtr}`);
       return;
     }
 
-    this.paint(node, target);
-    const {
-      x,
-      y
-    } = indexToXY(index);
-    const {
-      children
-    } = node.parentNode;
-    this.fill(children[xyToIndex({
-      x: x - 1,
-      y
-    })], source, target);
-    this.fill(children[xyToIndex({
-      x: x + 1,
-      y
-    })], source, target);
-    this.fill(children[xyToIndex({
-      x,
-      y: y - 1
-    })], source, target);
-    this.fill(children[xyToIndex({
-      x,
-      y: y + 1
-    })], source, target);
-  }
+    console.log(`undoing @ ${this._undoPtr}`);
+    this._undoPtr--;
+    this.data = data;
 
-  paint(node, target) {
-    const index = node.dataset.index;
-    node.className = 'c-' + target;
-    node.dataset.value = target;
-    const offset = 256 * currentSprite;
-    const x = offset + parseInt(index, 10);
-    sprites[x] = target;
-  }
-
-  apply(node) {
-    let target = this.colour.value;
-
-    if (this.selected === 'erase') {
-      target = this.colour.transparent;
+    for (let i = 0; i < this.length; i++) {
+      this.rebuild(i);
     }
 
-    if (this.selected === 'fill') {
-      // now find surrounding pixels of the same colour
-      this.fill(node, parseInt(node.dataset.value, 10), target);
-    } else {
-      this.paint(node, target);
-    } // update preview
+    this.paint();
+  }
+
+  rebuild(i) {
+    if (i < 0 || i > this.length) {
+      return; // noop
+    }
+
+    const sprite = new Sprite(this.data.subarray(i * pixelLength, i * pixelLength + pixelLength));
+    this.sprites[i] = sprite;
+    sprite.paint(this.previewCtx[i]);
+  }
+
+  getPreviewElements() {
+    return this.previewCtx.map(_ => _.canvas);
+  }
+
+  canvasToPixels() {
+    this.sprites[this._current].canvasToPixels();
+  }
+
+  pset(coords, value) {
+    this.sprites[this._current].pset({ ...coords,
+      value
+    });
+
+    return true;
+  }
+
+  pget(args) {
+    return this.sprites[this._current].pget(args);
+  }
+
+  get current() {
+    return this._current;
+  }
+
+  get sprite() {
+    return this.sprites[this._current];
+  }
+
+  set current(value) {
+    this._current = value;
+    this.paint();
+  }
+
+  clear() {
+    this.snapshot();
+
+    this.sprites[this._current].clear(); // this.sprites[this._current].render();
 
 
-    const div = document.querySelector(`#sprites .focus`);
-    render(new Uint8Array(sprites.slice(currentSprite * 256, currentSprite * 256 + 256)), div);
+    this.paint();
+  }
+
+  renderPreview(i) {
+    this.sprites[i].draw(this.previewCtx[i]);
+  }
+
+  paint(i = this._current) {
+    const sprite = this.sprites[i];
+    sprite.paint(this.ctx);
+    sprite.paint(this.previewCtx[this._current]);
+    this.getPreviewElements().map(_ => _.classList.remove('focus'));
+
+    this.previewCtx[this._current].canvas.classList.add('focus');
   }
 
 }
 
+exports.default = SpriteSheet;
+
+_defineProperty(SpriteSheet, "getCoords", getCoords);
+},{"./lib/colour.js":"sprites/lib/colour.js"}],"sprites/ColourPicker.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _colour = require("./lib/colour.js");
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 class ColourPicker {
   constructor(size, target) {
-    _defineProperty(this, "transparent", 0xe3);
+    _defineProperty(this, "transparent", _colour.transparent);
 
     _defineProperty(this, "_index", 0);
 
@@ -1956,21 +2096,279 @@ class ColourPicker {
 
 }
 
-const colour = new ColourPicker(8, pickerColour.parentNode);
-const tool = new Tool({
+exports.default = ColourPicker;
+},{"./lib/colour.js":"sprites/lib/colour.js"}],"sprites/Tool.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _$ = require("../lib/$.js");
+
+var _SpriteSheet = require("./SpriteSheet.js");
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+class Tool {
+  constructor({
+    type = 'brush',
+    colour
+  }) {
+    _defineProperty(this, "types", ['brush', 'fill', 'erase', 'pan']);
+
+    _defineProperty(this, "_selected", 'brush');
+
+    _defineProperty(this, "state", {
+      target: null,
+      index: null
+    });
+
+    this.colour = colour;
+    (0, _$.$)('#tool-types button').on('click', e => {
+      this.selected = e.target.dataset.action;
+    });
+    const shortcuts = this.types.map(_ => _[0]);
+    document.body.addEventListener('keydown', e => {
+      const k = e.key;
+      const i = shortcuts.indexOf(k);
+
+      if (i > -1) {
+        this.selected = this.types[i];
+      }
+    });
+    this.selected = type;
+  }
+
+  get selected() {
+    return this._selected;
+  }
+
+  set selected(value) {
+    this._selected = value;
+    this.state = {
+      index: null,
+      target: null
+    };
+    (0, _$.$)('#tool-types button').className = '';
+    (0, _$.$)(`#tool-types button[data-action="${value}"]`).className = 'selected';
+    document.documentElement.dataset.tool = value;
+  }
+
+  shift(shift) {
+    this.state.index = null;
+
+    if (shift) {
+      if (this._last !== 'erase') this._last = this.selected;
+      this.selected = 'erase';
+    } else if (this._last) {
+      this.selected = this._last;
+      this._last = null;
+    }
+  }
+
+  pan(coords, sprites) {
+    const sprite = sprites.sprite;
+    const ctx = sprites.ctx;
+    const x = coords.x - this._coords.x;
+    const y = coords.y - this._coords.y;
+    sprite.render(x, y);
+    sprite.paint(ctx);
+  }
+
+  fill(sprites, coords, source, target) {
+    if (!coords || coords.index === null) return;
+    const value = sprites.pget(coords);
+
+    if (value !== source || value === target) {
+      return;
+    }
+
+    this.paint(sprites, coords, target);
+    const {
+      x,
+      y
+    } = coords;
+    this.fill(sprites, {
+      x: x - 1,
+      y
+    }, source, target);
+    this.fill(sprites, {
+      x: x + 1,
+      y
+    }, source, target);
+    this.fill(sprites, {
+      x,
+      y: y - 1
+    }, source, target);
+    this.fill(sprites, {
+      x,
+      y: y + 1
+    }, source, target);
+  }
+
+  paint(sprites, coords, target) {
+    return sprites.pset(coords, target);
+  }
+
+  start(event) {
+    const coords = (0, _SpriteSheet.getCoords)(event);
+    this._coords = coords;
+  }
+
+  end() {// this._coords = null;
+  }
+
+  apply(event, sprites) {
+    const coords = (0, _SpriteSheet.getCoords)(event);
+    let target = this.colour.value;
+
+    if (this.selected === 'erase') {
+      target = this.colour.transparent;
+    } // if nothing has changed, don't do the work
+
+
+    if (event.type === this.state.event && coords.index === this.state.index && target === this.state.target) {
+      return;
+    }
+
+    this.state.index = coords.index;
+    this.state.target = target;
+    this.state.event = event.type;
+
+    if (this.selected === 'pan') {
+      if (event.type === 'click' && this._coords.index !== coords.index) {
+        // this is a release
+        // read from the canvas and put into pixels
+        sprites.snapshot();
+        sprites.canvasToPixels();
+        sprites.rebuild(sprites.current);
+        sprites.paint();
+        return;
+      }
+
+      if (!this._coords) {
+        return; // noop
+      }
+
+      this.pan(coords, sprites);
+      return;
+    }
+
+    if (this.selected === 'fill') {
+      // now find surrounding pixels of the same colour
+      this.fill(sprites, coords, sprites.pget(coords), target);
+    } else {
+      this.paint(sprites, coords, target);
+    } // update canvas
+
+
+    if (event.type === 'click') sprites.snapshot();
+    sprites.paint();
+  }
+
+}
+
+exports.default = Tool;
+},{"../lib/$.js":"lib/$.js","./SpriteSheet.js":"sprites/SpriteSheet.js"}],"sprites/index.js":[function(require,module,exports) {
+"use strict";
+
+var _dnd = _interopRequireDefault(require("../lib/dnd.js"));
+
+var _colour = require("./lib/colour.js");
+
+var _save = _interopRequireDefault(require("../lib/save.js"));
+
+var _parser = require("./lib/parser.js");
+
+var _$ = require("../lib/$.js");
+
+var _SpriteSheet = _interopRequireDefault(require("./SpriteSheet.js"));
+
+var _ColourPicker = _interopRequireDefault(require("./ColourPicker.js"));
+
+var _Tool = _interopRequireDefault(require("./Tool.js"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+const container = document.querySelector('#container');
+const ctx = container.getContext('2d');
+const spritesContainer = document.querySelector('#sprites');
+const debug = document.querySelector('#debug');
+const picker = document.querySelector('.picker');
+const upload = document.querySelector('#upload input');
+const pickerColour = document.querySelector('.pickerColour div');
+const buttons = (0, _$.$)('#tools button[data-action]');
+let sprites = null;
+
+function newSpriteSheet(check = true) {
+  if (check) {
+    if (!confirm('Are you sure you want to create a blank new sprite sheet?')) {
+      return;
+    }
+  }
+
+  sprites = new _SpriteSheet.default(Uint8Array.from({
+    length: 256 * 16 * 4
+  }, (_, i) => {
+    if (check == false && i < 256) return i;
+    return _colour.transparent;
+  }), ctx);
+  renderSpritePreviews();
+  renderCurrentSprite();
+}
+
+const newSprite = () => {
+  totalSprites++;
+  currentSprite = totalSprites - 1;
+  sprites = Uint8Array.from(Array.from(sprites).concat(Array.from({
+    length: 256
+  }).fill(colour.transparent)));
+  renderSpritePreviews();
+  renderCurrentSprite();
+};
+
+const dupeSprite = () => {
+  const offset = currentSprite;
+  console.log('dupe ' + offset);
+  const copy = Array.from(sprites.slice(offset * 256, offset * 256 + 256));
+  totalSprites++;
+  currentSprite = totalSprites - 1;
+  sprites = Uint8Array.from(Array.from(sprites).concat(copy));
+  renderSpritePreviews();
+  renderCurrentSprite();
+};
+
+function download() {
+  const filename = prompt('Filename:', 'untitled.spr');
+
+  if (filename) {
+    (0, _save.default)(sprites.data, filename);
+  }
+}
+
+const colour = new _ColourPicker.default(8, pickerColour.parentNode);
+const tool = new _Tool.default({
   colour
 });
 buttons.on('click', e => {
   const action = e.target.dataset.action;
-  const offset = 256 * currentSprite;
 
   if (action === 'new') {
-    newSprite();
+    newSpriteSheet(true);
+  }
+
+  if (action === 'undo') {
+    sprites.undo();
   }
 
   if (action === 'dupe') {
     dupeSprite();
   }
+
+  let currentSprite = sprites.current;
+  const totalSprites = sprites.length;
 
   if (action.startsWith('ro')) {
     const left = action === 'rol';
@@ -1980,13 +2378,17 @@ buttons.on('click', e => {
       return;
     }
 
-    const copy = sprites.slice(offset, offset + 256);
+    sprites.snapshot();
+    const offset = 256 * currentSprite;
+    const copy = sprites.data.slice(offset, offset + 256);
     const next = (currentSprite + (left ? -1 : 1)) * 256;
-    sprites.set(sprites.slice(next, next + 256), offset);
-    sprites.set(copy, next);
-    currentSprite += left ? -1 : 1;
-    renderSpritePreviews();
-    renderCurrentSprite();
+    sprites.data.set(sprites.data.slice(next, next + 256), offset);
+    sprites.data.set(copy, next);
+    sprites.current += left ? -1 : 1;
+    sprites.rebuild(sprites.current - 1);
+    sprites.rebuild(sprites.current + 1);
+    sprites.rebuild(sprites.current);
+    sprites.paint();
   }
 
   if (action === 'del') {
@@ -2004,12 +2406,7 @@ buttons.on('click', e => {
   }
 
   if (action === 'clear') {
-    for (let i = offset; i < offset + 256; i++) {
-      sprites[i] = colour.transparent;
-    }
-
-    renderSpritePreviews();
-    renderCurrentSprite();
+    sprites.clear();
   }
 
   if (action === 'download') {
@@ -2020,44 +2417,46 @@ picker.addEventListener('mousedown', e => {
   colour.value = e.target.dataset.value;
 });
 let down = false;
-container.addEventListener('mousedown', () => {
+container.addEventListener('mousedown', event => {
   down = true;
+  tool.start(event);
 }, true);
 container.addEventListener('mouseup', () => {
   down = false;
+  tool.end();
 }, true);
 container.addEventListener('mousemove', e => {
   if (down) {
     container.onclick(e);
   }
 }, true);
-document.body.addEventListener('keydown', e => {
-  if (e.key === 'Shift') {
-    tool.shift(true);
+
+container.onclick = e => {
+  if (e.altKey || e.ctrlKey) {
+    colour.value = sprites.pget(_SpriteSheet.default.getCoords(e));
+  } else {
+    tool.apply(e, sprites);
   }
-});
+}; // main key handlers
+
+
 document.body.addEventListener('keyup', e => {
   if (e.key === 'Shift') {
     tool.shift(false);
   }
 });
-
-container.onclick = e => {
-  if (e.target.className.startsWith('c-')) {
-    if (e.altKey || e.ctrlKey) {
-      colour.value = e.target.dataset.value;
-    } else {
-      // const target = e.shiftKey ? colour.transparent : colour.value;
-      // e.target.className = 'c-' + target;
-      // e.target.dataset.value = target;
-      tool.apply(e.target);
-    }
-  }
-};
-
 document.body.addEventListener('keydown', e => {
+  if (e.key === 'Shift') {
+    tool.shift(true);
+  }
+
   if (e.key >= '1' && e.key <= '8') {
     colour.index = parseInt(e.key, 10) - 1;
+    return;
+  }
+
+  if (e.shiftKey === false && e.key === 'z' && (e.metaKey || e.ctrlKey)) {
+    sprites.undo();
     return;
   }
 
@@ -2066,24 +2465,24 @@ document.body.addEventListener('keydown', e => {
     return;
   }
 
-  const current = currentSprite;
+  let current = sprites.current;
 
   if (e.key === 'ArrowLeft') {
-    currentSprite--;
+    current--;
   }
 
   if (e.key === 'ArrowRight') {
-    currentSprite++;
+    current++;
   }
 
-  if (currentSprite === totalSprites) {
-    currentSprite = 0;
-  } else if (currentSprite < 0) {
-    currentSprite = totalSprites - 1;
+  if (current === sprites.length) {
+    current = 0;
+  } else if (current < 0) {
+    current = sprites.length - 1;
   }
 
-  if (currentSprite !== current) {
-    renderCurrentSprite();
+  if (current !== sprites.current) {
+    sprites.current = current;
   }
 });
 
@@ -2111,37 +2510,24 @@ function renderCurrentSprite() {
   } catch (e) {// noop
   }
 
-  document.querySelector(`#sprites > :nth-child(${currentSprite + 1})`).classList.add('focus');
-  const offset = 256 * currentSprite;
-  render(new Uint8Array(sprites.slice(offset, offset + 256)));
+  const focused = document.querySelector(`#sprites > :nth-child(${sprites.current + 1})`);
+  if (focused) focused.classList.add('focus');
+  sprites.paint();
 }
 
 function renderSpritePreviews() {
   spritesContainer.innerHTML = '';
-  Array.from({
-    length: totalSprites
-  }, (_, offset) => {
-    const div = document.createElement('div');
-    div.className = 'sprite';
-    render(new Uint8Array(sprites.slice(offset * 256, offset * 256 + 256)), div);
-    div.addEventListener('mousedown', () => {
-      currentSprite = offset;
-      renderCurrentSprite();
-    });
-    spritesContainer.appendChild(div);
-  });
+  sprites.getPreviewElements().map(_ => spritesContainer.appendChild(_));
 }
 
 function fileHandler(file) {
   file = (0, _parser.decode)(file);
-  totalSprites = file.byteLength / 256;
-  currentSprite = 0;
-  sprites = file;
+  sprites = new _SpriteSheet.default(file, ctx);
   renderSpritePreviews();
   renderCurrentSprite();
 }
 
-function render(data, into = container) {
+function render(data, into) {
   into.innerHTML = '';
 
   for (let i = 0; i < data.length; i++) {
@@ -2158,52 +2544,30 @@ function makePixel(index, dataIndex) {
   return d;
 }
 
-function indexToXY(i) {
-  const x = i % 16;
-  const y = i / 16 | 0;
-  return {
-    x,
-    y
-  };
-}
-
-function xyToIndex({
-  x,
-  y
-}) {
-  if (x < 0) {
-    return null;
-  }
-
-  if (x >= 16) {
-    return null;
-  }
-
-  if (y >= 16) {
-    return null;
-  }
-
-  return 16 * y + x;
-}
-
 container.onmousemove = e => {
-  const value = e.target.dataset.value;
-
-  if (value === undefined) {
-    return;
-  }
-
-  const {
+  let {
     x,
     y
-  } = indexToXY(e.target.dataset.index);
+  } = _SpriteSheet.default.getCoords(e);
+
+  const value = sprites.pget({
+    x,
+    y
+  });
   debug.innerHTML = `X:${x} Y:${y} -- ${value} 0x${value.toString(16).padStart(2, '0')}`;
 };
 
 container.onmouseout = () => {
-  debug.innerHTML = '';
+  debug.innerHTML = '&nbsp;';
 };
 
+spritesContainer.addEventListener('click', e => {
+  const node = e.target;
+
+  if (node.nodeName === 'CANVAS') {
+    sprites.current = Array.from(node.parentNode.childNodes).indexOf(node);
+  }
+});
 (0, _dnd.default)(document.documentElement, fileHandler);
 upload.addEventListener('change', e => {
   const droppedFile = e.target.files[0];
@@ -2215,11 +2579,13 @@ upload.addEventListener('change', e => {
 
   reader.readAsArrayBuffer(droppedFile);
 });
-renderSpritePreviews();
-renderCurrentSprite();
-render(sprites, picker);
+newSpriteSheet(false); // render the colour picker
+
+render(Uint8Array.from({
+  length: 256
+}, (_, i) => i), picker);
 buildStyleSheet();
-},{"../lib/dnd.js":"lib/dnd.js","./lib/colour.js":"sprites/lib/colour.js","../lib/save.js":"lib/save.js","./lib/parser.js":"sprites/lib/parser.js","../lib/$.js":"lib/$.js"}],"../node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"../lib/dnd.js":"lib/dnd.js","./lib/colour.js":"sprites/lib/colour.js","../lib/save.js":"lib/save.js","./lib/parser.js":"sprites/lib/parser.js","../lib/$.js":"lib/$.js","./SpriteSheet.js":"sprites/SpriteSheet.js","./ColourPicker.js":"sprites/ColourPicker.js","./Tool.js":"sprites/Tool.js"}],"../node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -2247,7 +2613,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "56682" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "51760" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

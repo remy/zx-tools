@@ -1,5 +1,6 @@
 import BASIC from './codes.js';
 import { Unpack, default as unpacker } from '../lib/unpack/unpack.js';
+import { toHex } from '../lib/to.js';
 
 export function bas2txt(data) {
   const unpack = new Unpack(data);
@@ -26,6 +27,7 @@ export function bas2txtLines(data) {
   const unpack = new Unpack(data);
   let next;
   let string = '';
+  const lines = [];
   while ((next = unpack.parse('<n$line s$length'))) {
     const { length, line: lineNumber } = next;
     if (lineNumber > 9999) {
@@ -42,6 +44,9 @@ export function bas2txtLines(data) {
 
     while (data.length) {
       let chr = data.shift();
+      if (chr === 0x0d) {
+        break;
+      }
       if (BASIC[chr]) {
         if (lastChr !== null && !BASIC[lastChr]) {
           string += ' ' + BASIC[chr] + ' ';
@@ -72,7 +77,7 @@ export function bas2txtLines(data) {
           // console.log('TODO');
         }
         value *= neg;
-        // console.log('numeric', value);
+        console.log('numeric', value);
       } else {
         string += String.fromCharCode(chr);
       }
@@ -80,20 +85,21 @@ export function bas2txtLines(data) {
       lastChr = chr;
     }
 
-    string += '\n';
+    lines.push(string);
   }
 
-  return string;
+  // note that the 0x0d (13) is dropped in the line, so we're putting it back here
+  return lines.join('\n');
 }
 
-// if (typeof module !== 'undefined') {
-//   // bas2txt(
-//   //   new Uint8Array(require('fs').readFileSync(__dirname + '/data/keys.bas'))
-//   // );
-// }
+const res = bas2txtLines(
+  `00 0A 0F 00 F5 32 2E 33 34 65 2D 32 0E 7B 3F B1 5B 57 0D`
+    .split(' ')
+    .map(_ => eval(`0x${_.trim()}`))
+); // ?
 
-// bas2txtLines(
-//   `00 0A 0F 00 F5 32 2E 33 34 65 2D 32 0E 63 5F D8 00 00 0D`
-//     .split(' ')
-//     .map(_ => eval(`0x${_}`))
-// ); // ?
+function asHex(s) {
+  return s.split('').map(_ => toHex(_.charCodeAt(0)));
+}
+
+asHex(res); //?

@@ -86,20 +86,6 @@ export function transform({ pixels, width, alphaFirst = false }) {
     // lots of testing...
     dataIndex -= p * 4 * ((spriteIndex / n) | 0) * n;
 
-    // if (spriteRow !== tmp) {
-    //   console.log({
-    //     row,
-    //     offset,
-    //     spriteRow,
-    //     dataIndex,
-    //     spriteIndex,
-    //     n,
-    //     alt: n * spriteIndex * 4,
-    //     alt2: p * 4 * ((spriteIndex / n) | 0),
-    //   });
-    // }
-    // tmp = spriteRow;
-
     const [r, g, b, a] = [
       pixels[dataIndex + ri],
       pixels[dataIndex + gi],

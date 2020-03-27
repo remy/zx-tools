@@ -218,7 +218,7 @@ export default class Lexer {
       }
     });
 
-    console.log(tokens);
+    // console.log(tokens);
 
     return {
       basic: new Uint8Array(buffer.buffer),
@@ -276,16 +276,16 @@ export default class Lexer {
         return { name: 'SYMBOL', value: c, pos: this.pos++ };
       } else if (c === '"') {
         return this._processQuote();
-      } else if (Lexer._isBinarySymbol(c)) {
-        return this._processBinary('@');
+      } else if (Lexer._isNumericSymbol(c)) {
+        return { name: 'SYMBOL', value: c, pos: this.pos++ };
       } else {
         throw Error(`Token error at ${this.pos} (${c})\n${this.buf}`);
       }
     }
   }
 
-  static _isBinarySymbol(c) {
-    return c === '@';
+  static _isNumericSymbol(c) {
+    return c === '@' || c === '$';
   }
 
   static _isBinary(c) {
@@ -315,8 +315,7 @@ export default class Lexer {
       (c >= 'a' && c <= 'z') ||
       (c >= 'A' && c <= 'Z') ||
       (c >= '0' && c <= '9') ||
-      c === '_' ||
-      c === '$'
+      c === '_'
     );
   }
 
@@ -331,7 +330,9 @@ export default class Lexer {
       (exp && this.buf.charAt(endPos) === '-')
     ) {
       if (this.buf.charAt(endPos) === 'e') {
-        exp = true;
+        exp = true; // only allow this once
+      } else {
+        exp = false;
       }
       endPos++;
     }
@@ -358,9 +359,12 @@ export default class Lexer {
   _processBinary(start = '') {
     this._skipNonTokens();
 
+    if (start.length) {
+      this.pos += start.length;
+    }
+
     var endPos = this.pos;
 
-    this.buf.charAt(endPos);
     while (endPos < this.bufLen && Lexer._isBinary(this.buf.charAt(endPos))) {
       endPos++;
     }
@@ -458,11 +462,6 @@ export default class Lexer {
     // special case for GO<space>[TO|SUB]
     let value = this.buf.substring(this.pos, endPos);
 
-    // if (this.buf.substring(endPos, endPos + 1) === ' ') {
-    //   value += ' ';
-    //   endPos++;
-    // }
-
     tok = {
       name: 'IDENTIFIER',
       value,
@@ -501,12 +500,12 @@ export default class Lexer {
   }
 }
 
-const l = new Lexer();
-const res = l.line(
-  `
-5 let b=bin 01111100: let c=bin 00111000: let d=bin 00010000
+// const l = new Lexer();
+// const res = l.line(
+//   `
+// 5 let b=@01111100
 
-`.trim()
-); // ?
+// `.trim()
+// ); // ?
 
-bas2txtLines(res.basic); // ?
+// bas2txtLines(res.basic); // ?
