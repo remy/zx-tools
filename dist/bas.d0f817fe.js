@@ -324,7 +324,7 @@ exports.default = _default;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.zxFloatToVal = exports._zxFloat = exports._zxFloat2 = exports.zxFloat = exports.toHex = exports.toBinary = void 0;
+exports.zxToFloat = exports.floatToZX = exports.toHex = exports.toBinary = void 0;
 
 const toBinary = (n, size = 8) => {
   if (n < 0) {
@@ -346,175 +346,65 @@ const toHex = (n, size = 8) => {
   }
 
   return n.toString(16).padStart(size / (8 / 2), 0).toUpperCase();
-};
+}; // https://www.facebook.com/groups/ZXNextBasic/permalink/792585537934454/?comment_id=792727721253569
+// by Daniel A. Nagy originally in C, bless his socks
+
 
 exports.toHex = toHex;
 
-function getNumberParts(x) {
-  var float = new Float64Array(1),
-      bytes = new Uint8Array(float.buffer);
-  float[0] = x;
-  var sign = bytes[7] >> 7,
-      exponent = ((bytes[7] & 0x7f) << 4 | bytes[6] >> 4) - 0x3ff;
-  bytes[7] = 0x3f;
-  bytes[6] |= 0xf0;
-  return {
-    sign: sign,
-    exponent: exponent,
-    mantissa: float[0]
-  };
-}
+const floatToZX = input => {
+  const sign = input < 0;
+  const out = new Uint8Array(5);
+  if (sign) input = -input;
+  out[0] = 0x80;
 
-const zxFloat = value => {
-  const sign = value < 0 ? 1 : 0;
-
-  if (sign) {
-    value = 0 - value; // abs
+  while (input < 0.5) {
+    input *= 2;
+    out[0]--;
   }
 
-  let int = value | 0; // ?
-
-  let frac = value - int; // ?
-
-  let e = 0;
-
-  if (int === 0) {
-    // search the fraction for steps
-    let frac = 0;
-
-    for (let i = 0; i < 32; i++) {
-      const res = frac >> i;
-
-      if (res) {
-        // ?
-        const v = Math.pow(2, -(32 - i));
-        frac += v;
-      }
-    }
-  } else {}
-
-  return [];
-  const v2 = new DataView(new ArrayBuffer(6));
-  v2.setUint8(0, 0x0e);
-  v2.setUint8(1, res.exponent + 128); // v2.setUint32(2, (m >>> 1) | (sign === -1 ? 0x80000000 : 0), false); // ? v2.getUint32(2)
-
-  v2.setFloat32(2, res.mantissa - 1, false); // ? v2.getUint32(2)
-
-  if (res.sign < 0) {
-    const m1 = v2.getUint8(2);
-    v2.setUint8(2, m1 | 0x80);
+  while (input >= 1) {
+    input *= 0.5;
+    out[0]++;
   }
 
-  return new Uint8Array(v2.buffer);
-}; // via https://stackoverflow.com/questions/37471158/converting-ieee-754-from-bit-stream-into-float-in-javascript#37471222
-
-
-exports.zxFloat = zxFloat;
-
-const _zxFloat2 = source => {
-  // const view = new DataView(new ArrayBuffer(4));
-  // view.setFloat64(0, source << 1, false);
-  // const bits = view.getFloat64(0, false);
-  // const sign = source < 0 ? 1.0 : -1.0; // ?
-  // const e = view.getUint8(0);
-  const view = new DataView(new ArrayBuffer(4));
-  view.setFloat32(0, source, false); // var bytes = [0x40, 0x33, 0xc3, 0x85];
-  // var bytes = new Uint8Array(view.buffer) // ?
-  // var bits = (bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | bytes[3];
-
-  const bits = view.getUint32(0, false); //?
-
-  const sign = bits >>> 31 == 0 ? 1.0 : -1.0; // ?
-
-  let e = bits >>> 23 & 0xff; // ?
-  // e = e - 150; // ?
-  // let m = e == 0 ? (bits & 0x7fffff) << 1 : (bits & 0x7fffff) | 0x800000; // ?
-  // FIXME doesn't hand negative
-
-  var f1 = source / Math.pow(2, e - 1023);
-  let m = Math.floor((f1 - 1) * Math.pow(2, 52)); // ?
-
-  const f = Float32Array.of(sign * m * Math.pow(2, e))[0]; // ?
-  // m = m | (sign === -1 ? 0x80000000 : 0); // ?
-
-  const v2 = new DataView(new ArrayBuffer(6));
-  v2.setUint8(0, 0x0e);
-  v2.setUint8(1, e + 128); // v2.setUint32(2, (m >>> 1) | (sign === -1 ? 0x80000000 : 0), false); // ? v2.getUint32(2)
-
-  v2.setUint32(2, m, false); // ? v2.getUint32(2)
-
-  if (sign < 0) {
-    const m1 = v2.getUint8(2);
-    v2.setUint8(2, m1 | 0x80);
-  }
-
-  return new Uint8Array(v2.buffer);
+  input *= 0x100000000;
+  input += 0.5;
+  let mantissa = input;
+  out[1] = mantissa >> 24;
+  mantissa &= 0xffffff;
+  out[2] = mantissa >> 16;
+  mantissa &= 0xffff;
+  out[3] = mantissa >> 8;
+  mantissa &= 0xff;
+  out[4] = mantissa;
+  if (!sign) out[1] &= 0x7f;
+  return out;
 };
 
-exports._zxFloat2 = _zxFloat2;
+exports.floatToZX = floatToZX;
 
-const _zxFloat = source => {
-  const view = new DataView(new ArrayBuffer(4)); //Float32Array.of(source).buffer);
-
-  view.setFloat32(0, source); // use little endian consistently
-
-  const bits = view.getUint32(0); // ?
-
-  const sign = bits >>> 31 == 1 ? -1 : 1; // ?
-
-  let e = bits >>> 23 & 0xff; // ?
-  // e -= 127 // ?
-
-  const m = e == 0 ? (bits & 0x7fffffff) << 1 : bits & 0x7fffffff | 0x800000; // ?
-
-  const proof = sign * m * Math.pow(2, e - 150); // ?
-
-  const v2 = new DataView(new ArrayBuffer(6));
-  v2.setUint8(0, 0x0e);
-  v2.setUint8(1, e + 128); // ? e + 128
-
-  v2.setUint16(2, m >>> 9 | (sign === -1 ? 0x0000 : 0x8000), false); // ? [(m >>> 9) | (sign === -1 ? 0x0000 : 0x8000)]
-
-  return new Uint8Array(v2.buffer);
-};
-
-exports._zxFloat = _zxFloat;
-
-const zxFloatToVal = source => {
+const zxToFloat = source => {
   const view = new DataView(source.buffer);
-  const exp = view.getUint8(0) - 128; // ?
-
-  let mantissa = view.getUint32(1, false); // ? $ // 32bit
-
-  let sign = mantissa >>> 31 ? -1 : 1; // ?
-
+  const exp = view.getUint8(0) - 128;
+  let mantissa = view.getUint32(1, false);
+  let sign = mantissa >>> 31 ? -1 : 1;
   mantissa = mantissa | 0x80000000;
   let frac = 0;
 
   for (let i = 0; i < 32; i++) {
-    // FIXME
-    if (mantissa >> i & 1 === 1) {
+    if (mantissa >> i & 1) {
       const v = Math.pow(2, -(32 - i));
       frac += v;
     }
   }
 
-  frac = frac.toFixed(8); // ?
-
+  frac = frac.toFixed(8);
   const value = frac * Math.pow(2, exp);
-  return value * sign; // ?
-}; // 2.34e-1 => 0E 7E 6F 9D B2 2C = 0.234
-// Array.from(zxFloat(-2.34e-1)).map(_ => toHex(_)); // ?
-// const res = zxFloat(2.34e-1);
-// Array.from(res).map(_ => toHex(_)); // ?
-// 0E 7B 3F B1 5B 57 = 0.234
+  return value * sign;
+};
 
-
-exports.zxFloatToVal = zxFloatToVal;
-const res = zxFloat(2.34e-1); // Array.from(res).map(_ => toHex(_)); // ?
-// zxFloatToVal(res.slice(1)); // ?
-// zxFloatToVal(new Uint8Array([0x7e, 0x6f, 0x9d, 0xb2, 0x2c])); // ?
-// zxFloatToVal(new Uint8Array([0x7d, 0x1f, 0xbe, 0x76, 0xc8])); // ?
+exports.zxToFloat = zxToFloat;
 },{}],"lib/unpack/lib.js":[function(require,module,exports) {
 "use strict";
 
@@ -970,8 +860,6 @@ var _codes = _interopRequireDefault(require("./codes.js"));
 
 var _unpack = _interopRequireWildcard(require("../lib/unpack/unpack.js"));
 
-var _to = require("../lib/to.js");
-
 function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
@@ -1001,8 +889,8 @@ function bas2txt(data) {
 function bas2txtLines(data) {
   const unpack = new _unpack.Unpack(data);
   let next;
-  let string = '';
   const lines = [];
+  console.log(data);
 
   while (next = unpack.parse('<n$line s$length')) {
     const {
@@ -1016,7 +904,7 @@ function bas2txtLines(data) {
 
     const content = unpack.parse(`<C${length}$data`);
     if (!content || !content.data) break;
-    string = string + lineNumber + ' ';
+    let string = lineNumber + ' ';
     let lastChr = null;
     const data = Array.from(content.data);
 
@@ -1034,35 +922,9 @@ function bas2txtLines(data) {
           string += _codes.default[chr] + ' ';
         }
       } else if (chr === 0x0e) {
-        // move forward 5 bits
-        chr = data.shift();
-        let value = null;
-        let neg = 1;
-
-        if (chr === 0x00) {
-          const n = (0, _unpack.default)('<C$sign s$value x', data.splice(0, 4));
-          value = n.value;
-          neg = n.sign === 0x00 ? 1 : -1;
-        } else {
-          // if (chr >> 5 === 3)
-          // one letter number
-          const exp = chr - 128; // 128 float adjust…weird
-
-          let mantissa = (0, _unpack.default)('I$m', data.splice(0, 4)).m; // ? $ // 32bit
-
-          neg = mantissa > 0x7f000000 ? -1 : 1; // ? $ //  sign mask is on the mantissa
-
-          mantissa = mantissa <<= 1; // ? $ // now shift it off
-
-          value = mantissa ** exp; // ?
-          // [mantissa, exp, value]; // ?
-          // } else {
-          // array
-          // console.log('TODO');
-        }
-
-        value *= neg;
-        console.log('numeric', value);
+        // move forward 5 bits - this contains the encoded numerical value
+        // which, since we're porting to text, we don't care about on the way in
+        data.splice(0, 5);
       } else {
         string += String.fromCharCode(chr);
       }
@@ -1070,6 +932,7 @@ function bas2txtLines(data) {
       lastChr = chr;
     }
 
+    console.log(string);
     lines.push(string);
   } // note that the 0x0d (13) is dropped in the line, so we're putting it back here
 
@@ -1079,12 +942,8 @@ function bas2txtLines(data) {
 
 const res = bas2txtLines(`00 0A 0F 00 F5 32 2E 33 34 65 2D 32 0E 7B 3F B1 5B 57 0D`.split(' ').map(_ => eval(`0x${_.trim()}`))); // ?
 
-function asHex(s) {
-  return s.split('').map(_ => (0, _to.toHex)(_.charCodeAt(0)));
-}
-
-asHex(res); //?
-},{"./codes.js":"bas/codes.js","../lib/unpack/unpack.js":"lib/unpack/unpack.js","../lib/to.js":"lib/to.js"}],"bas/txt2bas.js":[function(require,module,exports) {
+console.log(res);
+},{"./codes.js":"bas/codes.js","../lib/unpack/unpack.js":"lib/unpack/unpack.js"}],"bas/txt2bas.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1287,10 +1146,12 @@ class Lexer {
           });
           length += 6;
         } else {
-          const res = (0, _to.zxFloat)(numeric);
+          const value = new Uint8Array(6);
+          value[0] = 0x0e;
+          value.set((0, _to.floatToZX)(numeric), 1);
           tokens.push({
             name: 'NUMBER_DATA',
-            value: new Uint8Array(res.value.buffer)
+            value
           });
           length += 6;
         }
@@ -1373,6 +1234,8 @@ class Lexer {
       // if alpha or starts with 0 (which can only be binary)
       if (Lexer._isAlpha(c) || c === '' || c === '.' && Lexer._isAlpha(_next)) {
         return this._processIdentifier();
+      } else if (Lexer._isLiteralNumeric(c)) {
+        return this._processLiteralNumber();
       } else if (c === '.' && Lexer._isDigit(_next)) {
         return this._processNumber();
       } else if (Lexer._isDigit(c)) {
@@ -1409,6 +1272,10 @@ class Lexer {
     return c === '@' || c === '$';
   }
 
+  static _isLiteralNumeric(c) {
+    return c === '%';
+  }
+
   static _isBinary(c) {
     return c === '1' || c === '0';
   }
@@ -1431,6 +1298,28 @@ class Lexer {
 
   static _isAlphaNum(c) {
     return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9' || c === '_';
+  }
+
+  _processLiteralNumber() {
+    var endPos = this.pos + 1;
+    let needsClose = false;
+
+    while (endPos < this.bufLen && (Lexer._isDigit(this.buf.charAt(endPos)) || this.buf.charAt(endPos) === '(' || this.buf.charAt(endPos) === '!') || needsClose && this.buf.charAt(endPos) === ')') {
+      if (this.buf.charAt(endPos) === '(') {
+        needsClose = true; // only allow this once
+      }
+
+      endPos++;
+    }
+
+    const value = this.buf.substring(this.pos, endPos);
+    var tok = {
+      name: 'LITERLA_NUMBER',
+      value,
+      pos: this.pos
+    };
+    this.pos = endPos;
+    return tok;
   }
 
   _processNumber() {
@@ -12714,7 +12603,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "51760" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "49717" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
