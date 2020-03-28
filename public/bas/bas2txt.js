@@ -1,6 +1,5 @@
 import BASIC from './codes.js';
 import { Unpack, default as unpacker } from '../lib/unpack/unpack.js';
-import { toHex } from '../lib/to.js';
 
 export function bas2txt(data) {
   const unpack = new Unpack(data);
@@ -26,8 +25,11 @@ export function bas2txt(data) {
 export function bas2txtLines(data) {
   const unpack = new Unpack(data);
   let next;
-  let string = '';
+
   const lines = [];
+
+  console.log(data);
+
   while ((next = unpack.parse('<n$line s$length'))) {
     const { length, line: lineNumber } = next;
     if (lineNumber > 9999) {
@@ -36,7 +38,7 @@ export function bas2txtLines(data) {
     const content = unpack.parse(`<C${length}$data`);
     if (!content || !content.data) break;
 
-    string = string + lineNumber + ' ';
+    let string = lineNumber + ' ';
 
     let lastChr = null;
 
@@ -54,36 +56,17 @@ export function bas2txtLines(data) {
           string += BASIC[chr] + ' ';
         }
       } else if (chr === 0x0e) {
-        // move forward 5 bits
-        chr = data.shift();
-        let value = null;
-        let neg = 1;
-        if (chr === 0x00) {
-          const n = unpacker('<C$sign s$value x', data.splice(0, 4));
-          value = n.value;
-          neg = n.sign === 0x00 ? 1 : -1;
-        } else {
-          // if (chr >> 5 === 3)
-          // one letter number
-          const exp = chr - 128; // 128 float adjust…weird
-          let mantissa = unpacker('I$m', data.splice(0, 4)).m; // ? $ // 32bit
-          neg = mantissa > 0x7f000000 ? -1 : 1; // ? $ //  sign mask is on the mantissa
-
-          mantissa = mantissa <<= 1; // ? $ // now shift it off
-          value = mantissa ** exp; // ?
-          // [mantissa, exp, value]; // ?
-          // } else {
-          // array
-          // console.log('TODO');
-        }
-        value *= neg;
-        console.log('numeric', value);
+        // move forward 5 bits - this contains the encoded numerical value
+        // which, since we're porting to text, we don't care about on the way in
+        data.splice(0, 5);
       } else {
         string += String.fromCharCode(chr);
       }
 
       lastChr = chr;
     }
+
+    console.log(string);
 
     lines.push(string);
   }
@@ -98,8 +81,4 @@ const res = bas2txtLines(
     .map(_ => eval(`0x${_.trim()}`))
 ); // ?
 
-function asHex(s) {
-  return s.split('').map(_ => toHex(_.charCodeAt(0)));
-}
-
-asHex(res); //?
+console.log(res);
