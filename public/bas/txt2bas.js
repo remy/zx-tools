@@ -131,6 +131,7 @@ export default class Lexer {
   // TODO arrays
   line(line) {
     this.input(line);
+    this.inLiteral = false;
     let lineNumber = null;
     let tokens = [];
     let length = 0;
@@ -263,18 +264,31 @@ export default class Lexer {
       ) {
         return this._processIdentifier();
       } else if (Lexer._isLiteralNumeric(c)) {
-        return this._processLiteralNumber();
+        this.inLiteral = true;
+        return { name: 'SYMBOL', value: c, pos: this.pos++ };
       } else if (c === '.' && Lexer._isDigit(_next)) {
         return this._processNumber();
       } else if (Lexer._isDigit(c)) {
         return this._processNumber();
+      } else if (Lexer._isLiteralReset(c)) {
+        this.inLiteral = false;
+        return { name: 'SYMBOL', value: c, pos: this.pos++ };
+      } else if (Lexer._isStatementSep(c)) {
+        this.inLiteral = false;
+        return { name: 'SYMBOL', value: c, pos: this.pos++ };
       } else if (Lexer._isSymbol(c)) {
-        if (c === '<' && _next === '>') {
-          return {
-            name: 'KEYWORD',
-            value: this.opTable['<>'],
-            pos: (this.pos += 2),
-          };
+        if (c === '<' || c === '>') {
+          // check if the next is a symbol
+          const value = this.opTable[
+            Object.keys(opTable).find(_ => _ === c + _next)
+          ];
+          if (value) {
+            return {
+              name: 'KEYWORD',
+              value,
+              pos: (this.pos += 2),
+            };
+          }
         }
         return { name: 'SYMBOL', value: c, pos: this.pos++ };
       } else if (c === '"') {
@@ -307,8 +321,16 @@ export default class Lexer {
     return c >= '0' && c <= '9';
   }
 
+  static _isStatementSep(c) {
+    return c === ':';
+  }
+
+  static _isLiteralReset(c) {
+    return c === '=' || c === ',';
+  }
+
   static _isSymbol(c) {
-    return ',;:=-+/*^()<>#%$'.includes(c);
+    return '!,;-+/*^()<>#%$'.includes(c);
   }
 
   static _isAlpha(c) {
@@ -345,7 +367,7 @@ export default class Lexer {
     const value = this.buf.substring(this.pos, endPos);
 
     var tok = {
-      name: 'LITERLA_NUMBER',
+      name: 'LITERAL_NUMBER',
       value,
       pos: this.pos,
     };
@@ -380,8 +402,13 @@ export default class Lexer {
       numeric = parseInt(value, 10);
     }
 
+    let name = 'NUMBER';
+    if (this.inLiteral) {
+      name = 'LITERAL_NUMBER';
+    }
+
     var tok = {
-      name: 'NUMBER',
+      name,
       value,
       numeric,
       pos: this.pos,

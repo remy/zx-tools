@@ -44,6 +44,7 @@ cm.on('keydown', (cm, event) => {
       let inserted = false;
       let removed = false;
       cm.eachLine(({ text, line: lineNumber }) => {
+        // FIXME should thisn't be cm.line?
         if (lineNumber === line) {
           return; // skip the newly inserted line
         }
