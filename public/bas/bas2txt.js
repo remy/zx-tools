@@ -1,5 +1,5 @@
 import BASIC from './codes.js';
-import { Unpack, default as unpacker } from '../lib/unpack/unpack.js';
+import { Unpack } from '../lib/unpack/unpack.js';
 
 export function bas2txt(data) {
   const unpack = new Unpack(data);
@@ -27,8 +27,6 @@ export function bas2txtLines(data) {
   let next;
 
   const lines = [];
-
-  console.log(data);
 
   while ((next = unpack.parse('<n$line s$length'))) {
     const { length, line: lineNumber } = next;
@@ -66,19 +64,9 @@ export function bas2txtLines(data) {
       lastChr = chr;
     }
 
-    console.log(string);
-
     lines.push(string);
   }
 
   // note that the 0x0d (13) is dropped in the line, so we're putting it back here
   return lines.join('\n');
 }
-
-const res = bas2txtLines(
-  `00 0A 0F 00 F5 32 2E 33 34 65 2D 32 0E 7B 3F B1 5B 57 0D`
-    .split(' ')
-    .map(_ => eval(`0x${_.trim()}`))
-); // ?
-
-console.log(res);

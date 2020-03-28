@@ -1,7 +1,6 @@
 import codes from './codes.js';
-import { zxFloat } from '../lib/to.js';
+import { floatToZX } from '../lib/to.js';
 import pack from '../lib/unpack/pack.js';
-import { bas2txtLines } from './bas2txt.js';
 
 export const encode = a => new TextEncoder().encode(a);
 
@@ -178,10 +177,12 @@ export default class Lexer {
           });
           length += 6;
         } else {
-          const res = zxFloat(numeric);
+          const value = new Uint8Array(6);
+          value[0] = 0x0e;
+          value.set(floatToZX(numeric), 1);
           tokens.push({
             name: 'NUMBER_DATA',
-            value: new Uint8Array(res.value.buffer),
+            value,
           });
           length += 6;
         }
@@ -261,6 +262,8 @@ export default class Lexer {
         (c === '.' && Lexer._isAlpha(_next))
       ) {
         return this._processIdentifier();
+      } else if (Lexer._isLiteralNumeric(c)) {
+        return this._processLiteralNumber();
       } else if (c === '.' && Lexer._isDigit(_next)) {
         return this._processNumber();
       } else if (Lexer._isDigit(c)) {
@@ -286,6 +289,10 @@ export default class Lexer {
 
   static _isNumericSymbol(c) {
     return c === '@' || c === '$';
+  }
+
+  static _isLiteralNumeric(c) {
+    return c === '%';
   }
 
   static _isBinary(c) {
@@ -317,6 +324,33 @@ export default class Lexer {
       (c >= '0' && c <= '9') ||
       c === '_'
     );
+  }
+
+  _processLiteralNumber() {
+    var endPos = this.pos + 1;
+    let needsClose = false;
+    while (
+      (endPos < this.bufLen &&
+        (Lexer._isDigit(this.buf.charAt(endPos)) ||
+          this.buf.charAt(endPos) === '(' ||
+          this.buf.charAt(endPos) === '!')) ||
+      (needsClose && this.buf.charAt(endPos) === ')')
+    ) {
+      if (this.buf.charAt(endPos) === '(') {
+        needsClose = true; // only allow this once
+      }
+      endPos++;
+    }
+
+    const value = this.buf.substring(this.pos, endPos);
+
+    var tok = {
+      name: 'LITERLA_NUMBER',
+      value,
+      pos: this.pos,
+    };
+    this.pos = endPos;
+    return tok;
   }
 
   _processNumber() {
