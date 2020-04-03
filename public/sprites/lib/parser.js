@@ -44,6 +44,29 @@ export function bmp(file) {
   return transform({ pixels, width: bmp.width, alphaFirst: true });
 }
 
+export function pngNoTransformFile(file) {
+  const png = new PNG(file);
+  const pixels = png.decode();
+  const res = [];
+  for (let i = 0; i < pixels.length; i += 4) {
+    const [r, g, b, a] = [
+      pixels[i + 0],
+      pixels[i + 1],
+      pixels[i + 2],
+      pixels[i + 3],
+    ];
+
+    if (a === 0 || r === undefined) {
+      // transparent
+      res.push(0xe3);
+    } else {
+      res.push(toRGB332(r, g, b));
+    }
+  }
+
+  return { data: new Uint8Array(res), png };
+}
+
 export function png(file) {
   const png = new PNG(file);
   const pixels = png.decode();

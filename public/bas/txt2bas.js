@@ -73,7 +73,11 @@ export const asTap = (basic, filename = 'tap dot js') => {
   return tapData;
 };
 
-export const plus3DOSHeader = basic => {
+export const plus3DOSHeader = (
+  basic,
+  opts = { hType: 0, hOffset: basic.length - 128 }
+) => {
+  const { hType, hOffset } = opts;
   const res = pack(
     '< A8$sig C$eof C$issue C$version I$length C$hType S$hFileLength n$hLine S$hOffset',
     {
@@ -82,10 +86,10 @@ export const plus3DOSHeader = basic => {
       issue: 1,
       version: 0,
       length: basic.length,
-      hType: 0,
+      hType,
       hFileLength: basic.length - 128,
       hLine: 128,
-      hOffset: basic.length - 128,
+      hOffset,
     }
   );
 

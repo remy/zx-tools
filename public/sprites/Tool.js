@@ -96,7 +96,7 @@ export default class Tool {
   }
 
   apply(event, sprites) {
-    const coords = getCoords(event);
+    const coords = getCoords(event, 32, 32);
     let target = this.colour.value;
 
     if (this.selected === 'erase') {

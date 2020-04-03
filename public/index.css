@@ -1,5 +1,9 @@
 /* root index.css */
 
+[hidden] {
+  display: none !important;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -12,6 +16,10 @@ code {
   background: #eee;
   border: 2px solid #eee;
   border-radius: 2px;
+}
+
+label {
+  cursor: pointer;
 }
 
 button,
@@ -77,11 +85,11 @@ nav li {
   padding: 8px 16px;
 }
 
-nav .selected:before {
+nav li.selected:before {
   content: '❯ ';
 }
 
-nav li:last-child {
+body > nav li:last-child {
   flex-grow: 1;
   text-align: right;
 }
@@ -95,6 +103,10 @@ nav a:hover {
   text-decoration: underline;
 }
 
+details {
+  display: block;
+}
+
 details summary {
   cursor: pointer;
 }
@@ -103,4 +115,8 @@ details summary {
   nav ul {
     justify-content: space-between;
   }
+}
+
+button svg {
+  vertical-align: middle;
 }

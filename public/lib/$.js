@@ -5,7 +5,9 @@ class ArrayNode extends Array {
     // allow setting any node property via proxy
     return new Proxy(this, {
       set(obj, prop, value) {
-        if (prop in HTMLElement.prototype) {
+        const type = obj[0];
+
+        if (type && prop in type) {
           return obj.filter(el => (el[prop] = value));
         }
 
@@ -25,4 +27,12 @@ class ArrayNode extends Array {
   }
 }
 
-export const $ = (s, ctx = document) => ArrayNode.from(ctx.querySelectorAll(s));
+export const $ = (s, ctx = document) => {
+  const res = ctx.querySelectorAll(s);
+
+  if (res.length === 0) {
+    console.warn(`${s} zero results`);
+  }
+
+  return ArrayNode.from(res);
+};

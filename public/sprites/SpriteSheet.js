@@ -3,16 +3,15 @@ import { rgbFromIndex, transparent, toRGB332 } from './lib/colour.js';
 const pixelLength = 256;
 const width = 16;
 
-const colourTable = [];
-for (let i = 0; i < pixelLength; i++) {
-  colourTable.push(rgbFromIndex(i));
-}
+export const colourTable = Array.from({ length: pixelLength }, (_, i) => {
+  return rgbFromIndex(i);
+});
 
-export function getCoords(e) {
+export function getCoords(e, w = width, h = w) {
   const rect = e.target.getBoundingClientRect();
-  const x = ((e.clientX - rect.left) / 16) | 0; //x position within the element.
-  const y = ((e.clientY - rect.top) / 16) | 0; //y position within the element.
-  const index = xyToIndex({ x, y });
+  const x = ((e.clientX - rect.left) / w) | 0; //x position within the element.
+  const y = ((e.clientY - rect.top) / h) | 0; //y position within the element.
+  const index = xyToIndex({ x, y, w: 16 });
   return { x, y, index };
 }
 
@@ -32,20 +31,20 @@ export function emptyCanvas(ctx) {
   ctx.putImageData(blank, 0, 0);
 }
 
-function xyToIndex({ x, y }) {
+export function xyToIndex({ x, y, w = width }) {
   if (x < 0) {
     return null;
   }
 
-  if (x >= width) {
+  if (x >= w) {
     return null;
   }
 
-  if (y >= width) {
+  if (y >= w) {
     return null;
   }
 
-  return width * y + x;
+  return w * y + x;
 }
 
 export class Sprite {
@@ -131,9 +130,13 @@ export class Sprite {
     );
   }
 
-  paint(ctx) {
+  // we always paint square…
+  paint(ctx, dx = 0, dy = 0, w = null) {
+    if (w === null) {
+      w = ctx.canvas.width;
+    }
     // clear, set to jaggy and scale to canvas
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.clearRect(dx, dy, w, w);
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(
       this.ctx.canvas,
@@ -141,10 +144,10 @@ export class Sprite {
       0,
       this.ctx.canvas.width,
       this.ctx.canvas.height,
-      0,
-      0,
-      ctx.canvas.width,
-      ctx.canvas.height
+      dx,
+      dy,
+      w,
+      w
     );
   }
 }
@@ -157,12 +160,12 @@ export default class SpriteSheet {
   _undoPtr = 0;
   _current = 0;
   length = 0;
+  clipboard = null;
+  hooks = [];
 
-  static getCoords = getCoords;
-
-  constructor(data, ctx) {
+  constructor(data, ctx, scale = 2) {
     this.data = new Uint8Array(pixelLength * 4 * 16);
-    this.data.set(data, 0);
+    this.data.set(data.slice(0, pixelLength * 4 * 16), 0);
 
     for (let i = 0; i < this.data.length; i += pixelLength) {
       const spriteData = this.data.subarray(i, i + pixelLength);
@@ -170,7 +173,7 @@ export default class SpriteSheet {
       this.sprites.push(sprite);
 
       const ctx = document.createElement('canvas').getContext('2d');
-      ctx.canvas.width = ctx.canvas.height = width * 2;
+      ctx.canvas.width = ctx.canvas.height = width * scale;
       this.previewCtx.push(ctx);
       sprite.paint(ctx);
     }
@@ -178,7 +181,39 @@ export default class SpriteSheet {
     this.snapshot();
     this.length = data.length / pixelLength;
     this._current = 0;
+    this.scale = scale;
     this.ctx = ctx;
+
+    window.sprites = this;
+  }
+
+  getCoords(e) {
+    return getCoords(e, this.scale * 16);
+  }
+
+  hook(callback) {
+    this.hooks.push(callback);
+  }
+
+  trigger() {
+    this.hooks.forEach(callback => callback());
+  }
+
+  copy() {
+    // FIXME support partial copy/clip //{ x = 0, y = 0, w = width, h = width }
+    this.clipboard = new Sprite(new Uint8Array(this.sprite.pixels));
+  }
+
+  paste() {
+    if (this.clipboard.pixels) this.set(this.clipboard.pixels);
+  }
+
+  set(data) {
+    // FIXME support partial paste
+    this.snapshot();
+    this.data.set(data, this._current * pixelLength);
+    this.rebuild(this._current);
+    this.paint();
   }
 
   snapshot() {
@@ -192,10 +227,8 @@ export default class SpriteSheet {
     const data = this.history[this._undoPtr];
 
     if (!data) {
-      console.log(`no undo data @ ${this._undoPtr}`);
       return;
     }
-    console.log(`undoing @ ${this._undoPtr}`);
     this._undoPtr--;
 
     this.data = data;
@@ -214,6 +247,7 @@ export default class SpriteSheet {
     );
     this.sprites[i] = sprite;
     sprite.paint(this.previewCtx[i]);
+    this.trigger();
   }
 
   getPreviewElements() {
@@ -226,6 +260,7 @@ export default class SpriteSheet {
 
   pset(coords, value) {
     this.sprites[this._current].pset({ ...coords, value });
+    this.trigger();
     return true;
   }
 
@@ -246,10 +281,14 @@ export default class SpriteSheet {
     this.paint();
   }
 
+  get(index) {
+    return this.sprites[index];
+  }
+
   clear() {
     this.snapshot();
     this.sprites[this._current].clear();
-    // this.sprites[this._current].render();
+    this.trigger();
     this.paint();
   }
 

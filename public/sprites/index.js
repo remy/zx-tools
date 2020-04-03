@@ -1,11 +1,15 @@
 import drop from '../lib/dnd.js';
 import { rgbFromIndex, transparent } from './lib/colour.js';
 import save from '../lib/save.js';
-import { decode } from './lib/parser.js';
+import { decode, pngNoTransformFile } from './lib/parser.js';
+import ImageWindow from './ImageWindow.js';
 import { $ } from '../lib/$.js';
 import SpriteSheet from './SpriteSheet.js';
 import ColourPicker from './ColourPicker.js';
 import Tool from './Tool.js';
+import TileMap from './TileMap.js';
+import { plus3DOSHeader } from '../bas/txt2bas.js';
+import Tabs from '../lib/Tabs.js';
 
 const container = document.querySelector('#container');
 const ctx = container.getContext('2d');
@@ -14,8 +18,8 @@ const debug = document.querySelector('#debug');
 const picker = document.querySelector('.picker');
 const upload = document.querySelector('#upload input');
 const pickerColour = document.querySelector('.pickerColour div');
-
 const buttons = $('#tools button[data-action]');
+const tileDownloads = $('#tiles button');
 
 let sprites = null;
 
@@ -34,32 +38,13 @@ function newSpriteSheet(check = true) {
     ctx
   );
 
+  // FIXME not quite right…
+  tileMap.sprites = sprites;
+  tileMap.paint();
+
   renderSpritePreviews();
   renderCurrentSprite();
 }
-
-const newSprite = () => {
-  totalSprites++;
-  currentSprite = totalSprites - 1;
-  sprites = Uint8Array.from(
-    Array.from(sprites).concat(
-      Array.from({ length: 256 }).fill(colour.transparent)
-    )
-  );
-  renderSpritePreviews();
-  renderCurrentSprite();
-};
-
-const dupeSprite = () => {
-  const offset = currentSprite;
-  console.log('dupe ' + offset);
-  const copy = Array.from(sprites.slice(offset * 256, offset * 256 + 256));
-  totalSprites++;
-  currentSprite = totalSprites - 1;
-  sprites = Uint8Array.from(Array.from(sprites).concat(copy));
-  renderSpritePreviews();
-  renderCurrentSprite();
-};
 
 function download() {
   const filename = prompt('Filename:', 'untitled.spr');
@@ -68,8 +53,41 @@ function download() {
   }
 }
 
+new Tabs('.tabbed');
 const colour = new ColourPicker(8, pickerColour.parentNode);
 const tool = new Tool({ colour });
+const tileMap = new TileMap({ size: 16, sprites });
+let imageWindow = null;
+window.tileMap = tileMap;
+document.querySelector('#tile-map-container').appendChild(tileMap.ctx.canvas);
+
+function fileToImageWindow(file) {
+  const res = pngNoTransformFile(file);
+  const ctx = document
+    .querySelector('#png-importer canvas.png')
+    .getContext('2d');
+  imageWindow = new ImageWindow(res.data, ctx, res.png.width, res.png.height);
+  imageWindow.oncopy = data => sprites.set(data);
+  window.__imageWindow = imageWindow;
+  imageWindow.paint();
+}
+
+drop(document.querySelector('#png-importer'), fileToImageWindow);
+
+$('#png-import-tools button').on('click', e => {
+  const action = e.target.dataset.action;
+  if (action === 'zoom-in') {
+    imageWindow.zoom++;
+  }
+
+  if (action === 'zoom-out') {
+    imageWindow.zoom--;
+  }
+
+  if (action === 'copy') {
+    imageWindow.copy();
+  }
+});
 
 buttons.on('click', e => {
   const action = e.target.dataset.action;
@@ -80,10 +98,6 @@ buttons.on('click', e => {
 
   if (action === 'undo') {
     sprites.undo();
-  }
-
-  if (action === 'dupe') {
-    dupeSprite();
   }
 
   let currentSprite = sprites.current;
@@ -112,16 +126,12 @@ buttons.on('click', e => {
     sprites.paint();
   }
 
-  if (action === 'del') {
-    const copy = Array.from(sprites);
-    copy.splice(offset, 256);
-    sprites = Uint8Array.from(copy);
-    totalSprites--;
-    if (currentSprite !== 0) {
-      currentSprite--;
-    }
-    renderSpritePreviews();
-    renderCurrentSprite();
+  if (action === 'copy') {
+    sprites.copy();
+  }
+
+  if (action === 'paste') {
+    sprites.paste();
   }
 
   if (action === 'clear') {
@@ -168,7 +178,7 @@ container.addEventListener(
 
 container.onclick = e => {
   if (e.altKey || e.ctrlKey) {
-    colour.value = sprites.pget(SpriteSheet.getCoords(e));
+    colour.value = sprites.pget(sprites.getCoords(e));
   } else {
     tool.apply(e, sprites);
   }
@@ -253,6 +263,8 @@ function renderSpritePreviews() {
 function fileHandler(file) {
   file = decode(file);
   sprites = new SpriteSheet(file, ctx);
+  tileMap.sprites = sprites;
+  tileMap.paint();
 
   renderSpritePreviews();
   renderCurrentSprite();
@@ -271,11 +283,12 @@ function makePixel(index, dataIndex) {
   d.className = 'c-' + index;
   d.dataset.value = index;
   d.dataset.index = dataIndex;
+  d.title = `${index} -- 0x${index.toString(16).padStart(2, '0')}`;
   return d;
 }
 
 container.onmousemove = e => {
-  let { x, y } = SpriteSheet.getCoords(e);
+  let { x, y } = sprites.getCoords(e);
   const value = sprites.pget({ x, y });
 
   debug.innerHTML = `X:${x} Y:${y} -- ${value} 0x${value
@@ -295,6 +308,42 @@ spritesContainer.addEventListener('click', e => {
 });
 
 drop(document.documentElement, fileHandler);
+
+document.documentElement.ondrop = async e => {
+  e.preventDefault();
+  const files = e.dataTransfer.files;
+
+  console.log('file length', files.length);
+
+  if (files.length === 1) {
+    const droppedFile = files[0];
+    const reader = new FileReader();
+    reader.onload = event => {
+      fileHandler(new Uint8Array(event.target.result));
+    };
+    reader.readAsArrayBuffer(droppedFile);
+  } else {
+    let id = sprites.current + 1;
+    await Promise.all(
+      Array.from(files).map(file => {
+        const reader = new FileReader();
+        return new Promise(resolve => {
+          reader.onload = event => {
+            const res = decode(new Uint8Array(event.target.result));
+            sprites.current = id;
+            sprites.set(res);
+            id++;
+            resolve();
+          }; // data url!
+          reader.readAsArrayBuffer(file);
+        });
+      })
+    );
+    renderSpritePreviews();
+    renderCurrentSprite();
+  }
+};
+
 upload.addEventListener('change', e => {
   const droppedFile = e.target.files[0];
   const reader = new FileReader();
@@ -303,6 +352,56 @@ upload.addEventListener('change', e => {
   };
   reader.readAsArrayBuffer(droppedFile);
 });
+
+$('input[name="transparency"]').on('change', e => {
+  document.documentElement.dataset.transparency = e.target.value;
+});
+
+tileDownloads.on('click', e => {
+  console.log(e.target.dataset.type);
+  const filename = prompt('Filename:', 'untitled.map');
+  if (filename) {
+    const data = new Uint8Array(tileMap.bank.length + 128);
+    data.set(plus3DOSHeader(data, { hType: 3, hOffset: 0x8000 }));
+    data.set(tileMap.bank, 128);
+    save(data, filename);
+  }
+});
+
+// support native paste of pngs
+document.onpaste = async event => {
+  const items = (event.clipboardData || event.originalEvent.clipboardData)
+    .items;
+  const files = [];
+  for (let index in items) {
+    const item = items[index];
+    if (item.kind === 'file' && item.type === 'image/png') {
+      files.push(item);
+    }
+  } // will only ever be 1 file :(
+
+  let id = sprites.current;
+
+  await Promise.all(
+    files.map(item => {
+      const blob = item.getAsFile();
+      const reader = new FileReader();
+      return new Promise(resolve => {
+        reader.onload = event => {
+          const res = decode(new Uint8Array(event.target.result));
+          sprites.current = id;
+          sprites.set(res);
+          id++;
+          resolve();
+        }; // data url!
+        reader.readAsArrayBuffer(blob);
+      });
+    })
+  );
+
+  renderSpritePreviews();
+  renderCurrentSprite();
+};
 
 newSpriteSheet(false);
 
