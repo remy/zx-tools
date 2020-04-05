@@ -74,6 +74,12 @@ function fileToImageWindow(file) {
 
 drop(document.querySelector('#png-importer'), fileToImageWindow);
 
+const importMask = document.querySelector('#png-container .focus');
+$('#png-import-tools input[type=range]').on('input', (e) => {
+  const v = parseInt(e.target.value);
+  importMask.style.borderColor = `rgba(127, 127, 127, ${v / 100})`;
+});
+
 $('#png-import-tools button').on('click', (e) => {
   const action = e.target.dataset.action;
   if (action === 'zoom-in') {
@@ -197,16 +203,16 @@ document.body.addEventListener('keydown', (e) => {
   }
 
   if (e.shiftKey && e.key === 'ArrowLeft') {
-    imageWindow.shiftX(true);
+    imageWindow.shiftX(true, e.ctrlKey ? 8 : 1);
   }
   if (e.shiftKey && e.key === 'ArrowRight') {
-    imageWindow.shiftX();
+    imageWindow.shiftX(false, e.ctrlKey ? 8 : 1);
   }
   if (e.shiftKey && e.key === 'ArrowUp') {
-    imageWindow.shiftY(true);
+    imageWindow.shiftY(true, e.ctrlKey ? 8 : 1);
   }
   if (e.shiftKey && e.key === 'ArrowDown') {
-    imageWindow.shiftY();
+    imageWindow.shiftY(false, e.ctrlKey ? 8 : 1);
   }
 
   if (e.key >= '1' && e.key <= '8') {
@@ -224,22 +230,24 @@ document.body.addEventListener('keydown', (e) => {
     return;
   }
 
-  let current = sprites.current;
-  if (e.key === 'ArrowLeft') {
-    current--;
-  }
-  if (e.key === 'ArrowRight') {
-    current++;
-  }
+  if (!e.shiftKey) {
+    let current = sprites.current;
+    if (e.key === 'ArrowLeft') {
+      current--;
+    }
+    if (e.key === 'ArrowRight') {
+      current++;
+    }
 
-  if (current === sprites.length) {
-    current = 0;
-  } else if (current < 0) {
-    current = sprites.length - 1;
-  }
+    if (current === sprites.length) {
+      current = 0;
+    } else if (current < 0) {
+      current = sprites.length - 1;
+    }
 
-  if (current !== sprites.current) {
-    sprites.current = current;
+    if (current !== sprites.current) {
+      sprites.current = current;
+    }
   }
 });
 
