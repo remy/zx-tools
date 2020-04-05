@@ -23,7 +23,7 @@ export default class ImageWindow {
     });
 
     this.render(this.__ctx, data);
-    // this.zoom = 10;
+    this.zoom = 0;
   }
 
   get zoom() {
@@ -31,6 +31,7 @@ export default class ImageWindow {
   }
 
   set zoom(value) {
+    const preZoomDelta = this.zoomDelta;
     this.zoomFactor = value;
     if (this.zoomFactor > 4) {
       this.zoomFactor = 4;
@@ -41,6 +42,11 @@ export default class ImageWindow {
     }
 
     this.parent.dataset.zoom = this.zoomFactor;
+
+    const delta = this.zoomDelta - preZoomDelta;
+    this.x += delta;
+    this.y += delta;
+
     this.paint();
   }
 
@@ -51,8 +57,21 @@ export default class ImageWindow {
     return 16 / (this.zoomFactor + 1) / 2;
   }
 
+  get zoomDelta() {
+    return (0xff >> (this.zoomFactor + 3)) << 3;
+  }
+
+  coords(x = this.x, y = this.y) {
+    const delta = this.zoomDelta;
+    return {
+      x: Math.abs(x - delta),
+      y: Math.abs(y - delta),
+    };
+  }
+
   start(event) {
     const coords = getCoords(event, this.pxScale);
+    this.parent.dataset.dragging = true;
     this._coords = {
       x: coords.x,
       y: coords.y,
@@ -62,6 +81,7 @@ export default class ImageWindow {
   }
 
   end(event) {
+    this.parent.dataset.dragging = false;
     const scale = this.pxScale;
     const coords = getCoords(event, scale);
     this.x = (this._coords.curX + (coords.x - this._coords.x) * scale) | 0;
@@ -94,12 +114,10 @@ export default class ImageWindow {
   copy() {
     const data = new Uint8Array(16 * 16);
     const ctx = this.__ctx;
-    const scale = this.pxScale;
 
-    const x = this.x - scale * 8;
-    const y = this.y - scale * 8;
+    const { x, y } = this.coords();
 
-    const imageData = ctx.getImageData(-x, -y, 16, 16);
+    const imageData = ctx.getImageData(x, y, 16, 16);
 
     for (let i = 0; i < data.length; i++) {
       const [r, g, b, a] = imageData.data.slice(i * 4, i * 4 + 4);
@@ -115,15 +133,15 @@ export default class ImageWindow {
   }
 
   paint(x = this.x, y = this.y) {
-    const scale = this.pxScale;
     const zoom =
       this.zoomFactor < 0
         ? 512 << (this.zoomFactor * -1)
         : 512 >> this.zoomFactor;
 
-    this.status.innerHTML = `Zoom: ${this.zoomFactor}/${zoom}<br>X/Y: ${
-      x - scale * 8
-    }/${y - scale * 8}`;
+    const localCords = this.coords(x, y);
+    this.status.innerHTML = `Zoom: ${5 - this.zoomFactor}:1<br>X/Y: ${
+      localCords.x
+    }/${localCords.y}`;
     const ctx = this.ctx;
     emptyCanvas(ctx);
     const w = ctx.canvas.width;

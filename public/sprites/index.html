@@ -95,6 +95,32 @@
           </div>
         </section>
 
+
+        <section class="container" id="tiles" data-title="Tile Map">
+          <div class="tile-controls">
+            <h2>Map settings</h2>
+            <div hidden>
+              <strong>Size</strong>
+              <label><input type="radio" value="16" name="size"> 16px</label>
+              <label><input type="radio" value="8" name="size"> 8px</label>
+            </div>
+            <div hidden>
+              <strong>Dimensions</strong>
+              <label><input type="number" min="1" max="32" value="32" name="width"> width</label>
+              <label><input type="number" min="1" max="24" value="24" name="height"> height</label>
+            </div>
+            <div>
+              <strong>UI transparency</strong>
+              <label><input type="radio" value="hatched" checked name="transparency"> hatched</label>
+              <label><input type="radio" value="black" name="transparency"> black</label>
+            </div>
+            <button class="download-btn" data-type="bin">Download .bin</button>
+            <!-- <button class="download-btn" data-type="bas">Download .bas</button> -->
+            <a href="/bas/?id=0a51ba71408dbeff08baad3acaf1d533" target="_blank">Example BASIC code</a>
+          </div>
+          <div id="tile-map-container"></div>
+        </section>
+
         <section id="png-importer" data-title="PNG importer">
           <div id="png-container">
             <canvas width="512" height="512" class="png"></canvas>
@@ -117,49 +143,38 @@
                       d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zM7 9h5v1H7z" />
                   </svg>
                 </button>
-                <button action="shift-left"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#fff"
+                <!-- <button action="shift-left"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#fff"
                     width="24" height="24">
                     <path d="M14 7l-5 5 5 5V7z" />
                     <path d="M24 0v24H0V0h24z" fill="none" /></svg></button>
                 <button action="shift-right"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#fff"
                     width="24" height="24">
                     <path d="M10 17l5-5-5-5v10z" />
-                    <path d="M0 24V0h24v24H0z" fill="none" /></svg></button>
+                    <path d="M0 24V0h24v24H0z" fill="none" /></svg></button> -->
+              </div>
+              <div class="range">
+                <label>Mask %
+                  <input type="range" min="0" max="100"></label>
               </div>
               <div id="png-status">
 
               </div>
+              <p>Directions: </p>
+              <p>Drag a PNG file onto this area, then pan around with the clip area over the 16x16 sprite you want to
+                import into your
+                spritesheet. Make sure to select the correct position in the spritesheet before copying.
+              </p>
+              <p>Zoom in to get an accurate clip. To shift 1px use shift+cursor keys.</p>
             </div>
         </section>
-
-        <section class="container" id="tiles" data-title="Tile Map">
-          <div class="tile-controls">
-            <h2>Map settings</h2>
-            <div>
-              <strong>Size</strong>
-              <label><input type="radio" value="16" name="size"> 16px</label>
-              <label><input type="radio" value="8" name="size"> 8px</label>
-            </div>
-            <div>
-              <strong>Dimensions</strong>
-              <label><input type="number" min="1" max="32" value="32" name="width"> width</label>
-              <label><input type="number" min="1" max="24" value="24" name="height"> height</label>
-            </div>
-            <div>
-              <strong>UI transparency</strong>
-              <label><input type="radio" value="hatched" checked name="transparency"> hatched</label>
-              <label><input type="radio" value="black" name="transparency"> black</label>
-            </div>
-            <button class="download-btn" data-type="bin">Download .bin</button>
-            <!-- <button class="download-btn" data-type="bas">Download .bas</button> -->
-            <a href="/bas/?id=0a51ba71408dbeff08baad3acaf1d533" target="_blank">Example BASIC code</a>
-          </div>
-          <div id="tile-map-container"></div>
-        </section>
-
 
         <section id="changes" data-title="Changes">
           <ul>
+            <li>2020 April 5
+              <ul>
+                <li>Add: png import tool</li>
+              </ul>
+            </li>
             <li>2020 April 2
               <ul>
                 <li>Add: tile map editor</li>

@@ -37,7 +37,7 @@ input {
   justify-content: center;
   flex-wrap: wrap;
   align-items: flex-start;
-  justify-content: space-evenly;
+  justify-content: flex-start;
 }
 
 main * {
@@ -233,6 +233,7 @@ button svg {
   /* flex-wrap: wrap; */
   background: #303030;
   padding: 20px;
+  margin-left: 20px;
 }
 
 .tools h2 {
@@ -273,6 +274,7 @@ button svg {
 
 #tiles {
   display: flex;
+  flex-direction: row-reverse;
   overflow: scroll;
   width: 100%;
 }
@@ -280,15 +282,17 @@ button svg {
 #tiles .container {
   display: flex;
   flex-direction: row;
-  justify-content: space-evenly;
+  justify-content: flex-start;
 }
 
 .tile-controls {
   min-width: 300px;
-  background: rgba(255, 255, 255, 0.1);
+  flex: 0;
+  margin-right: auto;
+  background: #303030;
   /* flex-grow: 1; */
   padding: 20px;
-  margin-right: 20px;
+  margin-left: 20px;
 }
 
 .tile-controls label {
@@ -319,10 +323,6 @@ button svg {
 
 strong {
   font-weight: 600;
-}
-
-#tile-map-container {
-  flex-grow: 1;
 }
 
 #tile-map-container canvas {
@@ -408,4 +408,29 @@ details {
 
 #png-container[data-zoom='0'] .focus {
   border-width: 248px;
+}
+
+.range label {
+  display: flex;
+}
+
+.range input[type='range'] {
+  flex: 1;
+  margin-left: 20px;
+}
+
+#png-import-tools p {
+  max-width: 300px;
+}
+
+#png-container canvas {
+  cursor: grab;
+}
+
+#png-container canvas {
+  cursor: grab;
+}
+
+#png-container[data-dragging='true'] canvas {
+  cursor: grabbing;
 }
