@@ -67,14 +67,14 @@ function fileToImageWindow(file) {
     .querySelector('#png-importer canvas.png')
     .getContext('2d');
   imageWindow = new ImageWindow(res.data, ctx, res.png.width, res.png.height);
-  imageWindow.oncopy = data => sprites.set(data);
-  window.__imageWindow = imageWindow;
+  imageWindow.oncopy = (data) => sprites.set(data);
+  window.imageWindow = imageWindow;
   imageWindow.paint();
 }
 
 drop(document.querySelector('#png-importer'), fileToImageWindow);
 
-$('#png-import-tools button').on('click', e => {
+$('#png-import-tools button').on('click', (e) => {
   const action = e.target.dataset.action;
   if (action === 'zoom-in') {
     imageWindow.zoom++;
@@ -89,7 +89,7 @@ $('#png-import-tools button').on('click', e => {
   }
 });
 
-buttons.on('click', e => {
+buttons.on('click', (e) => {
   const action = e.target.dataset.action;
 
   if (action === 'new') {
@@ -143,14 +143,14 @@ buttons.on('click', e => {
   }
 });
 
-picker.addEventListener('mousedown', e => {
+picker.addEventListener('mousedown', (e) => {
   colour.value = e.target.dataset.value;
 });
 
 let down = false;
 container.addEventListener(
   'mousedown',
-  event => {
+  (event) => {
     down = true;
     tool.start(event);
   },
@@ -168,7 +168,7 @@ container.addEventListener(
 
 container.addEventListener(
   'mousemove',
-  e => {
+  (e) => {
     if (down) {
       container.onclick(e);
     }
@@ -176,7 +176,7 @@ container.addEventListener(
   true
 );
 
-container.onclick = e => {
+container.onclick = (e) => {
   if (e.altKey || e.ctrlKey) {
     colour.value = sprites.pget(sprites.getCoords(e));
   } else {
@@ -185,15 +185,28 @@ container.onclick = e => {
 };
 
 // main key handlers
-document.body.addEventListener('keyup', e => {
+document.body.addEventListener('keyup', (e) => {
   if (e.key === 'Shift') {
     tool.shift(false);
   }
 });
 
-document.body.addEventListener('keydown', e => {
+document.body.addEventListener('keydown', (e) => {
   if (e.key === 'Shift') {
     tool.shift(true);
+  }
+
+  if (e.shiftKey && e.key === 'ArrowLeft') {
+    imageWindow.shiftX(true);
+  }
+  if (e.shiftKey && e.key === 'ArrowRight') {
+    imageWindow.shiftX();
+  }
+  if (e.shiftKey && e.key === 'ArrowUp') {
+    imageWindow.shiftY(true);
+  }
+  if (e.shiftKey && e.key === 'ArrowDown') {
+    imageWindow.shiftY();
   }
 
   if (e.key >= '1' && e.key <= '8') {
@@ -257,7 +270,7 @@ function renderCurrentSprite() {
 
 function renderSpritePreviews() {
   spritesContainer.innerHTML = '';
-  sprites.getPreviewElements().map(_ => spritesContainer.appendChild(_));
+  sprites.getPreviewElements().map((_) => spritesContainer.appendChild(_));
 }
 
 function fileHandler(file) {
@@ -287,7 +300,7 @@ function makePixel(index, dataIndex) {
   return d;
 }
 
-container.onmousemove = e => {
+container.onmousemove = (e) => {
   let { x, y } = sprites.getCoords(e);
   const value = sprites.pget({ x, y });
 
@@ -300,7 +313,7 @@ container.onmouseout = () => {
   debug.innerHTML = '&nbsp;';
 };
 
-spritesContainer.addEventListener('click', e => {
+spritesContainer.addEventListener('click', (e) => {
   const node = e.target;
   if (node.nodeName === 'CANVAS') {
     sprites.current = Array.from(node.parentNode.childNodes).indexOf(node);
@@ -309,7 +322,7 @@ spritesContainer.addEventListener('click', e => {
 
 drop(document.documentElement, fileHandler);
 
-document.documentElement.ondrop = async e => {
+document.documentElement.ondrop = async (e) => {
   e.preventDefault();
   const files = e.dataTransfer.files;
 
@@ -318,17 +331,17 @@ document.documentElement.ondrop = async e => {
   if (files.length === 1) {
     const droppedFile = files[0];
     const reader = new FileReader();
-    reader.onload = event => {
+    reader.onload = (event) => {
       fileHandler(new Uint8Array(event.target.result));
     };
     reader.readAsArrayBuffer(droppedFile);
   } else {
     let id = sprites.current + 1;
     await Promise.all(
-      Array.from(files).map(file => {
+      Array.from(files).map((file) => {
         const reader = new FileReader();
-        return new Promise(resolve => {
-          reader.onload = event => {
+        return new Promise((resolve) => {
+          reader.onload = (event) => {
             const res = decode(new Uint8Array(event.target.result));
             sprites.current = id;
             sprites.set(res);
@@ -344,20 +357,20 @@ document.documentElement.ondrop = async e => {
   }
 };
 
-upload.addEventListener('change', e => {
+upload.addEventListener('change', (e) => {
   const droppedFile = e.target.files[0];
   const reader = new FileReader();
-  reader.onload = event => {
+  reader.onload = (event) => {
     fileHandler(new Uint8Array(event.target.result));
   };
   reader.readAsArrayBuffer(droppedFile);
 });
 
-$('input[name="transparency"]').on('change', e => {
+$('input[name="transparency"]').on('change', (e) => {
   document.documentElement.dataset.transparency = e.target.value;
 });
 
-tileDownloads.on('click', e => {
+tileDownloads.on('click', (e) => {
   console.log(e.target.dataset.type);
   const filename = prompt('Filename:', 'untitled.map');
   if (filename) {
@@ -369,7 +382,7 @@ tileDownloads.on('click', e => {
 });
 
 // support native paste of pngs
-document.onpaste = async event => {
+document.onpaste = async (event) => {
   const items = (event.clipboardData || event.originalEvent.clipboardData)
     .items;
   const files = [];
@@ -383,11 +396,11 @@ document.onpaste = async event => {
   let id = sprites.current;
 
   await Promise.all(
-    files.map(item => {
+    files.map((item) => {
       const blob = item.getAsFile();
       const reader = new FileReader();
-      return new Promise(resolve => {
-        reader.onload = event => {
+      return new Promise((resolve) => {
+        reader.onload = (event) => {
           const res = decode(new Uint8Array(event.target.result));
           sprites.current = id;
           sprites.set(res);

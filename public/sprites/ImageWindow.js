@@ -17,9 +17,9 @@ export default class ImageWindow {
     this.status = $('#png-status');
 
     trackDown(ctx.canvas, {
-      start: e => this.start(e),
-      handler: e => this.pan(e),
-      end: e => this.end(e),
+      start: (e) => this.start(e),
+      handler: (e) => this.pan(e),
+      end: (e) => this.end(e),
     });
 
     this.render(this.__ctx, data);
@@ -35,7 +35,6 @@ export default class ImageWindow {
     if (this.zoomFactor > 15) {
       this.zoomFactor = 15;
     }
-    this.status.textContent = `Zoom: ${this.zoomFactor}`;
     this.parent.dataset.zoom = this.zoomFactor;
     this.paint();
   }
@@ -47,13 +46,61 @@ export default class ImageWindow {
     return 16 / (this.zoomFactor + 1) / 2;
   }
 
+  start(event) {
+    const coords = getCoords(event, this.pxScale);
+    this._coords = {
+      x: coords.x,
+      y: coords.y,
+      curX: this.x,
+      curY: this.y,
+    };
+  }
+
+  end(event) {
+    const scale = this.pxScale;
+    const coords = getCoords(event, scale);
+    this.x = (this._coords.curX + (coords.x - this._coords.x) * scale) | 0;
+    this.y = (this._coords.curY + (coords.y - this._coords.y) * scale) | 0;
+    console.log('end', this.x, this.y);
+
+    this.paint();
+  }
+
+  shiftX(neg = false) {
+    this.x += neg ? -1 : 1;
+    this.paint();
+  }
+  shiftY(neg = false) {
+    this.y += neg ? -1 : 1;
+    this.paint();
+  }
+
+  pan(event) {
+    if (event.type === 'click') {
+      return;
+    }
+    const scale = this.pxScale;
+    const coords = getCoords(event, scale);
+    const x = this.x + (coords.x - this._coords.x) * scale;
+    const y = this.y + (coords.y - this._coords.y) * scale;
+    this.paint(x | 0, y | 0);
+  }
+
   copy() {
     const data = new Uint8Array(16 * 16);
     const ctx = this.__ctx;
     const { width, height } = ctx.canvas;
+    const scale = this.pxScale;
+
+    const x = this.x - scale * 8;
+    const y = this.y - scale * 8;
+    console.log({ x, y, xo: this.x, yo: this.y });
+
     const imageData = ctx.getImageData(
-      (width - 16) / 2 - this.x,
-      (height - 16) / 2 - this.y,
+      // (width - 16) / 2 + this.x,
+      // (height - 16) / 2 + this.y,
+      -x,
+      -y,
       16,
       16
     );
@@ -71,37 +118,12 @@ export default class ImageWindow {
     if (this.oncopy) this.oncopy(data);
   }
 
-  start(event) {
-    const coords = getCoords(event, this.pxScale);
-    this._coords = {
-      x: coords.x,
-      y: coords.y,
-    };
-  }
-
-  end(event) {
-    const scale = this.pxScale;
-    const coords = getCoords(event, scale);
-    this.x += (coords.x - this._coords.x) * scale;
-    this.y += (coords.y - this._coords.y) * scale;
-    console.log('end', this.x, this.y);
-
-    this.paint();
-  }
-
-  pan(event) {
-    if (event.type === 'click') {
-      return;
-    }
-    const scale = this.pxScale;
-    const coords = getCoords(event, scale);
-    const x = this.x + (coords.x - this._coords.x) * scale;
-    const y = this.x + (coords.y - this._coords.y) * scale;
-    this.paint(x, y);
-  }
-
   paint(x = this.x, y = this.y) {
+    const scale = this.pxScale;
     const zoom = this.zoomFactor * 16;
+    this.status.innerHTML = `Zoom: ${this.zoomFactor}<br>X/Y: ${
+      x - scale * 8
+    }/${y - scale * 8}`;
     const ctx = this.ctx;
     emptyCanvas(ctx);
     const w = ctx.canvas.width;
@@ -109,10 +131,10 @@ export default class ImageWindow {
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(
       this.__ctx.canvas,
-      zoom - x,
-      zoom - y,
-      this.__ctx.canvas.width - zoom * 2,
-      this.__ctx.canvas.height - zoom * 2,
+      -x,
+      -y,
+      512 / (this.zoomFactor + 1),
+      512 / (this.zoomFactor + 1),
       0,
       0,
       w,
