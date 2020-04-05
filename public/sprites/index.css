@@ -390,64 +390,20 @@ details {
   height: 512px;
 }
 
-#png-container[data-zoom='15'] .focus {
+#png-container[data-zoom='4'] .focus {
   border-width: 128px;
 }
 
-#png-container[data-zoom='14'] .focus {
+#png-container[data-zoom='3'] .focus {
   border-width: 192px;
 }
 
-#png-container[data-zoom='13'] .focus {
-  border-width: 214px;
-}
-
-#png-container[data-zoom='12'] .focus {
+#png-container[data-zoom='2'] .focus {
   border-width: 224px;
 }
 
-#png-container[data-zoom='11'] .focus {
-  border-width: 232px;
-}
-
-#png-container[data-zoom='10'] .focus {
-  border-width: 236px;
-}
-
-#png-container[data-zoom='9'] .focus {
-  border-width: 240px;
-}
-
-#png-container[data-zoom='8'] .focus {
-  border-width: 242px;
-}
-
-#png-container[data-zoom='7'] .focus {
-  border-width: 242px;
-}
-
-#png-container[data-zoom='6'] .focus {
-  border-width: 243px;
-}
-
-#png-container[data-zoom='5'] .focus {
-  border-width: 244px;
-}
-
-#png-container[data-zoom='4'] .focus {
-  border-width: 245px;
-}
-
-#png-container[data-zoom='3'] .focus {
-  border-width: 246px;
-}
-
-#png-container[data-zoom='2'] .focus {
-  border-width: 247px;
-}
-
 #png-container[data-zoom='1'] .focus {
-  border-width: 247.5px;
+  border-width: 240px;
 }
 
 #png-container[data-zoom='0'] .focus {

@@ -32,15 +32,20 @@ export default class ImageWindow {
 
   set zoom(value) {
     this.zoomFactor = value;
-    if (this.zoomFactor > 15) {
-      this.zoomFactor = 15;
+    if (this.zoomFactor > 4) {
+      this.zoomFactor = 4;
     }
+
+    if (this.zoomFactor < -3) {
+      this.zoomFactor = -3;
+    }
+
     this.parent.dataset.zoom = this.zoomFactor;
     this.paint();
   }
 
   get pxScale() {
-    if (this.zoomFactor >= 10) {
+    if (this.zoomFactor >= 3) {
       return 1;
     }
     return 16 / (this.zoomFactor + 1) / 2;
@@ -61,17 +66,17 @@ export default class ImageWindow {
     const coords = getCoords(event, scale);
     this.x = (this._coords.curX + (coords.x - this._coords.x) * scale) | 0;
     this.y = (this._coords.curY + (coords.y - this._coords.y) * scale) | 0;
-    console.log('end', this.x, this.y);
 
     this.paint();
   }
 
-  shiftX(neg = false) {
-    this.x += neg ? -1 : 1;
+  shiftX(neg = false, n = 1) {
+    this.x += neg ? -n : n;
     this.paint();
   }
-  shiftY(neg = false) {
-    this.y += neg ? -1 : 1;
+
+  shiftY(neg = false, n = 1) {
+    this.y += neg ? -n : n;
     this.paint();
   }
 
@@ -89,21 +94,12 @@ export default class ImageWindow {
   copy() {
     const data = new Uint8Array(16 * 16);
     const ctx = this.__ctx;
-    const { width, height } = ctx.canvas;
     const scale = this.pxScale;
 
     const x = this.x - scale * 8;
     const y = this.y - scale * 8;
-    console.log({ x, y, xo: this.x, yo: this.y });
 
-    const imageData = ctx.getImageData(
-      // (width - 16) / 2 + this.x,
-      // (height - 16) / 2 + this.y,
-      -x,
-      -y,
-      16,
-      16
-    );
+    const imageData = ctx.getImageData(-x, -y, 16, 16);
 
     for (let i = 0; i < data.length; i++) {
       const [r, g, b, a] = imageData.data.slice(i * 4, i * 4 + 4);
@@ -120,8 +116,12 @@ export default class ImageWindow {
 
   paint(x = this.x, y = this.y) {
     const scale = this.pxScale;
-    const zoom = this.zoomFactor * 16;
-    this.status.innerHTML = `Zoom: ${this.zoomFactor}<br>X/Y: ${
+    const zoom =
+      this.zoomFactor < 0
+        ? 512 << (this.zoomFactor * -1)
+        : 512 >> this.zoomFactor;
+
+    this.status.innerHTML = `Zoom: ${this.zoomFactor}/${zoom}<br>X/Y: ${
       x - scale * 8
     }/${y - scale * 8}`;
     const ctx = this.ctx;
@@ -129,17 +129,7 @@ export default class ImageWindow {
     const w = ctx.canvas.width;
     ctx.clearRect(0, 0, w, w);
     ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(
-      this.__ctx.canvas,
-      -x,
-      -y,
-      512 / (this.zoomFactor + 1),
-      512 / (this.zoomFactor + 1),
-      0,
-      0,
-      w,
-      w
-    );
+    ctx.drawImage(this.__ctx.canvas, -x, -y, zoom, zoom, 0, 0, w, w);
   }
 
   render(ctx = this.ctx, pixels) {
