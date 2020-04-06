@@ -2,9 +2,9 @@ import codes from './codes.js';
 import { floatToZX } from '../lib/to.js';
 import pack from '../lib/unpack/pack.js';
 
-export const encode = a => new TextEncoder().encode(a);
+export const encode = (a) => new TextEncoder().encode(a);
 
-export const calculateXORChecksum = array =>
+export const calculateXORChecksum = (array) =>
   Uint8Array.of(array.reduce((checksum, item) => checksum ^ item, 0))[0];
 
 const opTable = Object.entries(codes).reduce(
@@ -121,11 +121,11 @@ export default class Lexer {
   }
 
   lines(lines) {
-    const data = lines.split('\n').map(line => this.line(line).basic);
+    const data = lines.split('\n').map((line) => this.line(line).basic);
     const len = data.reduce((acc, curr) => (acc += curr.length), 0);
     const res = new Uint8Array(len);
     let offset = 0;
-    data.forEach(line => {
+    data.forEach((line) => {
       res.set(line, offset);
       offset += line.length;
     });
@@ -267,6 +267,8 @@ export default class Lexer {
         (c === '.' && Lexer._isAlpha(_next))
       ) {
         return this._processIdentifier();
+      } else if (Lexer._isStartOfComment(c)) {
+        return this._processComment();
       } else if (Lexer._isLiteralNumeric(c)) {
         this.inLiteral = true;
         return { name: 'SYMBOL', value: c, pos: this.pos++ };
@@ -284,7 +286,7 @@ export default class Lexer {
         if (c === '<' || c === '>') {
           // check if the next is a symbol
           const value = this.opTable[
-            Object.keys(opTable).find(_ => _ === c + _next)
+            Object.keys(opTable).find((_) => _ === c + _next)
           ];
           if (value) {
             return {
@@ -334,13 +336,17 @@ export default class Lexer {
   }
 
   static _isSymbol(c) {
-    return '!,;-+/*^()<>#%$'.includes(c);
+    return '!,;-+/*^()<>#%${}[]'.includes(c);
   }
 
   static _isAlpha(c) {
     return (
       (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c === '_' || c === '$'
     );
+  }
+
+  static _isStartOfComment(c) {
+    return c === ';';
   }
 
   static _isAlphaNum(c) {

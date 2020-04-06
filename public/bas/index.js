@@ -2,7 +2,7 @@ import dnd from '../lib/dnd.js';
 import { $ } from '../lib/$.js';
 import Lexer, { asTap, plus3DOSHeader } from './txt2bas.js';
 import CodeMirror from './lib/cm.js';
-import { bas2txt, bas2txtLines } from './bas2txt.js';
+import { bas2txt, bas2txtLines, tap2txt } from './bas2txt.js';
 import './basic-syntax.js';
 import save from '../lib/save.js';
 import { decode } from '../lib/unpack/lib.js';
@@ -108,7 +108,7 @@ cm.on('keydown', (cm, event) => {
   }
 });
 
-$('button').on('click', e => {
+$('button').on('click', (e) => {
   const { action } = e.target.dataset;
   download(action);
 });
@@ -136,7 +136,7 @@ function download(action) {
 
   let offset = 0;
   const basic = new Uint8Array(length);
-  lines.forEach(line => {
+  lines.forEach((line) => {
     basic.set(line.basic, offset);
     offset += line.basic.length;
   });
@@ -180,8 +180,11 @@ function download(action) {
 
 CodeMirror.commands.save = () => download('tap');
 
-dnd(document.body, file => {
-  if (file[0] === 0x50) {
+dnd(document.body, (file) => {
+  if (file[0] === 0x13) {
+    console.log('decode from tap');
+    cm.setValue(tap2txt(file));
+  } else if (file[0] === 0x50) {
     cm.setValue(bas2txt(file));
   } else {
     cm.setValue(decode(file));
@@ -190,7 +193,7 @@ dnd(document.body, file => {
 });
 
 if (window.location.search) {
-  loadGist().then(file => {
+  loadGist().then((file) => {
     if (file) cm.setValue(file);
   });
 }

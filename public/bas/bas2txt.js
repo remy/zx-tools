@@ -1,6 +1,16 @@
 import BASIC from './codes.js';
 import { Unpack } from '../lib/unpack/unpack.js';
 
+export function tap2txt(data) {
+  const unpack = new Unpack(data);
+
+  const res = unpack.parse(
+    `<S$headerLength C$flagByte C$type A10$filename S$length S$p1 S$p2 C$checksum x2`
+  );
+
+  return bas2txtLines(data.slice(24, data.length - 24));
+}
+
 export function bas2txt(data) {
   const unpack = new Unpack(data);
 
