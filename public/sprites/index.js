@@ -13,7 +13,7 @@ import Tabs from '../lib/Tabs.js';
 
 const container = document.querySelector('#container');
 const ctx = container.getContext('2d');
-const spritesContainer = document.querySelector('#sprites');
+const spritesContainer = document.querySelector('#sprites .container');
 const debug = document.querySelector('#debug');
 const picker = document.querySelector('.picker');
 const upload = document.querySelector('#upload input');
@@ -53,7 +53,7 @@ function download() {
   }
 }
 
-new Tabs('.tabbed');
+const tabs = new Tabs('.tabbed');
 const colour = new ColourPicker(8, pickerColour.parentNode);
 const tool = new Tool({ colour });
 const tileMap = new TileMap({ size: 16, sprites });
@@ -191,28 +191,37 @@ container.onclick = (e) => {
 };
 
 // main key handlers
-document.body.addEventListener('keyup', (e) => {
+document.documentElement.addEventListener('keyup', (e) => {
   if (e.key === 'Shift') {
     tool.shift(false);
   }
 });
 
-document.body.addEventListener('keydown', (e) => {
+document.documentElement.addEventListener('keydown', (e) => {
   if (e.key === 'Shift') {
     tool.shift(true);
   }
 
-  if (e.shiftKey && e.key === 'ArrowLeft') {
-    imageWindow.shiftX(true, e.ctrlKey ? 8 : 1);
+  let focusTool = null;
+  if (tabs.selected === 'sprite-editor') {
+    focusTool = tool;
+  } else if (tabs.selected === 'png-importer') {
+    focusTool = imageWindow;
   }
-  if (e.shiftKey && e.key === 'ArrowRight') {
-    imageWindow.shiftX(false, e.ctrlKey ? 8 : 1);
-  }
-  if (e.shiftKey && e.key === 'ArrowUp') {
-    imageWindow.shiftY(true, e.ctrlKey ? 8 : 1);
-  }
-  if (e.shiftKey && e.key === 'ArrowDown') {
-    imageWindow.shiftY(false, e.ctrlKey ? 8 : 1);
+
+  if (focusTool) {
+    if (e.shiftKey && e.key === 'ArrowLeft') {
+      focusTool.shiftX(true, e.ctrlKey ? 8 : 1, sprites);
+    }
+    if (e.shiftKey && e.key === 'ArrowRight') {
+      focusTool.shiftX(false, e.ctrlKey ? 8 : 1, sprites);
+    }
+    if (e.shiftKey && e.key === 'ArrowUp') {
+      focusTool.shiftY(true, e.ctrlKey ? 8 : 1, sprites);
+    }
+    if (e.shiftKey && e.key === 'ArrowDown') {
+      focusTool.shiftY(false, e.ctrlKey ? 8 : 1, sprites);
+    }
   }
 
   if (e.key >= '1' && e.key <= '8') {
@@ -222,6 +231,7 @@ document.body.addEventListener('keydown', (e) => {
 
   if (e.shiftKey === false && e.key === 'z' && (e.metaKey || e.ctrlKey)) {
     sprites.undo();
+    tool.resetState();
     return;
   }
 
@@ -278,7 +288,10 @@ function renderCurrentSprite() {
 
 function renderSpritePreviews() {
   spritesContainer.innerHTML = '';
-  sprites.getPreviewElements().map((_) => spritesContainer.appendChild(_));
+  sprites.getPreviewElements().map((_, i) => {
+    _.title = 'Index: ' + i;
+    spritesContainer.appendChild(_);
+  });
 }
 
 function fileHandler(file) {

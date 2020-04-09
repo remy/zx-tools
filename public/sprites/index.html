@@ -20,7 +20,11 @@
     </nav>
     <main>
       <div id="sprites">
+        <button title="[D]ownload" class="button--download" data-action="download">Download<br>spritesheet</button>
+        <div class="container"></div>
+
       </div>
+
 
       <div class="tabbed">
         <nav class="tab-navigation tabs">
@@ -55,8 +59,8 @@
                     <path fill="#fff"
                       d="M19.99 9.79c.51-.4.51-1.18 0-1.58l-6.76-5.26c-.72-.56-1.73-.56-2.46 0L9.41 4.02l7.88 7.88 2.7-2.11zm0 3.49l-.01-.01a.991.991 0 00-1.22 0l-.05.04 1.4 1.4a.982.982 0 00-.12-1.43zm1.45 5.6L4.12 1.56a.996.996 0 10-1.41 1.41l3.52 3.52-2.22 1.72c-.51.4-.51 1.18 0 1.58l6.76 5.26c.72.56 1.73.56 2.46 0l.87-.68 1.42 1.42-2.92 2.27c-.36.28-.87.28-1.23 0l-6.15-4.78a.991.991 0 00-1.22 0 .997.997 0 000 1.57l6.76 5.26c.72.56 1.73.56 2.46 0l3.72-2.89 3.07 3.07c.39.39 1.02.39 1.41 0 .41-.39.41-1.02.02-1.41z" />
                   </svg></button>
-                <button title="[p]an" data-action="pan"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                    fill="#fff" width="24" height="24">
+                <button title="[p]an + shift+cursor keys" data-action="pan"><svg xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24" fill="#fff" width="24" height="24">
                     <path d="M0 0h24v24H0V0z" fill="none" />
                     <path
                       d="M10.5 9h3c.28 0 .5-.22.5-.5V6h1.79c.45 0 .67-.54.35-.85l-3.79-3.79c-.2-.2-.51-.2-.71 0L7.85 5.15a.5.5 0 00.36.85H10v2.5c0 .28.22.5.5.5zm-2 1H6V8.21c0-.45-.54-.67-.85-.35l-3.79 3.79c-.2.2-.2.51 0 .71l3.79 3.79a.5.5 0 00.85-.36V14h2.5c.28 0 .5-.22.5-.5v-3c0-.28-.22-.5-.5-.5zm14.15 1.65l-3.79-3.79a.501.501 0 00-.86.35V10h-2.5c-.28 0-.5.22-.5.5v3c0 .28.22.5.5.5H18v1.79c0 .45.54.67.85.35l3.79-3.79c.2-.19.2-.51.01-.7zM13.5 15h-3c-.28 0-.5.22-.5.5V18H8.21c-.45 0-.67.54-.35.85l3.79 3.79c.2.2.51.2.71 0l3.79-3.79a.5.5 0 00-.35-.85H14v-2.5c0-.28-.22-.5-.5-.5z" />
@@ -84,7 +88,6 @@
                 <button data-action="rol">&lt;&lt;</button>
                 <button data-action="ror">&gt;&gt;</button>
               </div>
-              <button data-action="download">Download spritesheet</button>
               <span class="button" id="upload"><input type="file">Upload .png / .spr</span>
               <button data-action="new">New sprite sheet</button>
             </div>
@@ -170,6 +173,14 @@
 
         <section id="changes" data-title="Changes">
           <ul>
+            <li>2020 April 9
+              <ul>
+                <li>Fix: pan sprites with cursors</li>
+                <li>Fix: tile map doesn't fill screen</li>
+                <li>Fix: better use of screen space</li>
+                <li>Fix: more tooltips on hover</li>
+              </ul>
+            </li>
             <li>2020 April 5
               <ul>
                 <li>Add: png import tool</li>
@@ -196,7 +207,6 @@
                 <li>Add: support for arbitrary upload size</li>
                 <li>Add: show coordinates on main draw area</li>
                 <li>Fix: highlighting colours from 7-8</li>
-                <li>TODO: pan tool</li>
               </ul>
             </li>
           </ul>

@@ -13,7 +13,7 @@ export default class ColourPicker {
     }).join('');
     target.innerHTML = html;
 
-    target.addEventListener('mousedown', e => {
+    target.addEventListener('mousedown', (e) => {
       if (e.target.dataset.id) {
         this.index = e.target.dataset.id;
       }
@@ -40,7 +40,11 @@ export default class ColourPicker {
   set history(values) {
     this._history = values;
     values.forEach((value, i) => {
-      document.querySelector('#picker-' + i).className = 'c-' + value;
+      const el = document.querySelector('#picker-' + i);
+      el.title = `Key ${i} - ${value} -- 0x${value
+        .toString(16)
+        .padStart(2, '0')}`;
+      el.className = 'c-' + value;
     });
   }
 

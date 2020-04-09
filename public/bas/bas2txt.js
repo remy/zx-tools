@@ -4,7 +4,7 @@ import { Unpack } from '../lib/unpack/unpack.js';
 export function tap2txt(data) {
   const unpack = new Unpack(data);
 
-  const res = unpack.parse(
+  unpack.parse(
     `<S$headerLength C$flagByte C$type A10$filename S$length S$p1 S$p2 C$checksum x2`
   );
 
@@ -14,7 +14,7 @@ export function tap2txt(data) {
 export function bas2txt(data) {
   const unpack = new Unpack(data);
 
-  let { length, ...header } = unpack.parse(
+  unpack.parse(
     `<A8$sig
     C$marker
     C$issue

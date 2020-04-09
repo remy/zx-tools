@@ -25,7 +25,7 @@ const sizes = new Map([
 ]);
 
 export default class TileMap {
-  scale = 3;
+  scale = 2;
   _sprites = null;
   _tmp = null;
 
@@ -48,13 +48,13 @@ export default class TileMap {
     el.height = h * size * scale;
 
     const cancel = trackDown(el, {
-      handler: e => {
+      handler: (e) => {
         const { index } = getCoords(e, this.width, this.size * this.scale);
         this.set(index);
         this._tmp = null;
         this.paint();
       },
-      end: e => this.hover(e),
+      end: (e) => this.hover(e),
     });
 
     el.addEventListener('mouseout', () => {
@@ -82,7 +82,7 @@ export default class TileMap {
     return this._sprites;
   }
 
-  getXY = i => {
+  getXY = (i) => {
     const x = i % this.width;
     const y = (i / this.width) | 0;
 

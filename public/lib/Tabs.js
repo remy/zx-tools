@@ -20,11 +20,11 @@ export default class Tabs {
     this.root = document.querySelector(selector);
 
     const panels = $(selector + ' > section:not([hidden])');
-    this.panels = panels.map(el => new Tab(this, el));
-    const ids = panels.map(_ => _.id);
+    this.panels = panels.map((el) => new Tab(this, el));
+    const ids = panels.map((_) => _.id);
 
     const tabNav = document.querySelector(selector + ' > .tabs ul');
-    panels.map(panel => {
+    panels.map((panel) => {
       const a = document.createElement('a');
       a.href = '#' + panel.id;
 
@@ -36,7 +36,7 @@ export default class Tabs {
 
     this.tabs = $(selector + ' > .tabs a');
 
-    this.tabs.on('click', e => {
+    this.tabs.on('click', (e) => {
       e.preventDefault();
       this.show(e.target.hash.substring(1));
       window.history.pushState(null, '', e.target.hash);
@@ -53,12 +53,13 @@ export default class Tabs {
 
   show(id) {
     this.hide();
-    this.panels.find(_ => _.id === id).show();
-    this.tabs.find(_ => _.hash === '#' + id).className = 'selected';
+    this.panels.find((_) => _.id === id).show();
+    this.tabs.find((_) => _.hash === '#' + id).className = 'selected';
+    this.selected = id;
   }
 
   hide() {
     this.tabs.className = '';
-    this.panels.forEach(_ => _.hide());
+    this.panels.forEach((_) => _.hide());
   }
 }
