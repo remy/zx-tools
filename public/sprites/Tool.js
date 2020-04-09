@@ -12,13 +12,13 @@ export default class Tool {
   constructor({ type = 'brush', colour }) {
     this.colour = colour;
 
-    $('#tool-types button').on('click', e => {
+    $('#tool-types button').on('click', (e) => {
       this.selected = e.target.dataset.action;
     });
 
-    const shortcuts = this.types.map(_ => _[0]);
+    const shortcuts = this.types.map((_) => _[0]);
 
-    document.body.addEventListener('keydown', e => {
+    document.body.addEventListener('keydown', (e) => {
       const k = e.key;
       const i = shortcuts.indexOf(k);
       if (i > -1) {
@@ -35,22 +35,66 @@ export default class Tool {
 
   set selected(value) {
     this._selected = value;
-    this.state = { index: null, target: null };
+    this.state = { index: null, target: null, x: 0, y: 0 };
 
     $('#tool-types button').className = '';
     $(`#tool-types button[data-action="${value}"]`).className = 'selected';
     document.documentElement.dataset.tool = value;
   }
 
+  resetState() {
+    this.state = { index: null, target: null, x: 0, y: 0 };
+  }
+
   shift(shift) {
     this.state.index = null;
+    console.log('shift called', this.state, shift);
     if (shift) {
       if (this._last !== 'erase') this._last = this.selected;
       this.selected = 'erase';
-    } else if (this._last) {
-      this.selected = this._last;
-      this._last = null;
+    } else {
+      if (this.state.dirty) {
+        console.log('commiting');
+        const sprites = this.state.dirty;
+        this.state.dirty = false;
+        this.state.x = 0;
+        this.state.y = 0;
+        sprites.snapshot();
+        sprites.canvasToPixels();
+        sprites.rebuild(sprites.current);
+        sprites.paint();
+      }
+
+      if (this._last) {
+        // this.selected setter clears dirty flag
+        this.selected = this._last;
+        this._last = null;
+      }
     }
+  }
+
+  shiftX(neg = false, n = 1, sprites) {
+    this.shiftPx('x', neg, n, sprites);
+  }
+
+  shiftY(neg = false, n = 1, sprites) {
+    this.shiftPx('y', neg, n, sprites);
+  }
+
+  shiftPx(axis, neg, n, sprites) {
+    // important, we're using the shift key to manually pan
+    // so we're tracking it with this dirty state. when shift
+    // goes to false, then we need to clear this state
+    this.state.dirty = sprites;
+    const sprite = sprites.sprite;
+    const ctx = sprites.ctx;
+    this.state[axis] += neg ? -n : n;
+    const { x, y } = this.state; // weird way to do it.
+
+    console.log({ x, y });
+
+    sprite.render(x, y);
+    sprite.paint(ctx);
   }
 
   pan(coords, sprites) {
@@ -87,7 +131,7 @@ export default class Tool {
   }
 
   start(event) {
-    const coords = getCoords(event);
+    const coords = getCoords(event, 32);
     this._coords = coords;
   }
 
