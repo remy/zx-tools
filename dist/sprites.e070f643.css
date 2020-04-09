@@ -11,13 +11,19 @@ html[data-transparency='black'] {
   --transparent-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><rect fill='black' width='32' height='32' x='0' y='0' /></svg>");
 }
 
+body {
+  min-height: 100vh;
+  margin: 0;
+  padding: 20px;
+}
+
 a {
   color: white;
 }
 
 main {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   justify-content: center;
   margin: 20px 0px;
   flex-wrap: wrap;
@@ -89,12 +95,13 @@ h2 {
   width: calc(16 * var(--scale));
   height: calc(16 * var(--scale));
   position: relative;
+  order: 3;
 }
 
 .pickerColour {
-  width: 80px;
+  order: 2;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   flex-grow: 1;
 }
 
@@ -113,7 +120,8 @@ h2 {
 .pickerColour div {
   --scale: 24px;
   /*! width: calc(16 * var(--scale) / 12); */
-  height: calc(16 * var(--scale) / 16);
+  width: calc(16 * var(--scale) / 16);
+  height: 40px;
   position: relative;
 }
 
@@ -170,27 +178,33 @@ canvas {
   cursor: crosshair;
 }
 
-#sprites {
+#sprites .container {
   --block-size: 32px;
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  max-width: calc(32 * 16px);
-  margin: 20px auto 30px auto;
-  width: 100%;
+  margin: 0 40px;
+  /* width: 100%; */
+  width: calc(4 * var(--block-size));
 }
 
-#sprites > div {
+@media screen and (min-width: 480px) {
+  #sprites {
+    max-width: calc(64 * 16px);
+  }
+}
+
+#sprites .container > div {
   --scale: 32px;
   margin: 0;
 }
 
-#sprites > .focus {
+#sprites .container > .focus {
   outline: 1px dashed rgb(255, 255, 0);
   z-index: 1;
 }
 
-#sprites > div > div {
+#sprites .container > div > div {
   height: calc(var(--scale) / 16);
   width: calc(var(--scale) / 16);
 }
@@ -228,10 +242,14 @@ button svg {
   margin: 0 auto;
 }
 
+#tools {
+  flex-direction: column;
+}
+
 .tools {
   display: flex;
   /* flex-wrap: wrap; */
-  background: #303030;
+  /* background: #303030; */
   padding: 20px;
   margin-left: 20px;
 }
@@ -246,7 +264,8 @@ button svg {
 }
 
 .tools > div + div {
-  margin-left: 16px;
+  margin: 4px auto;
+  /* margin-left: 16px; */
 }
 
 #upload {
@@ -289,7 +308,7 @@ button svg {
   min-width: 300px;
   flex: 0;
   margin-right: auto;
-  background: #303030;
+  /* background: #303030; */
   /* flex-grow: 1; */
   padding: 20px;
   margin-left: 20px;
@@ -337,7 +356,9 @@ details {
 }
 
 .tabbed {
-  width: 100%;
+  /* width: 100%; */
+  min-width: 75%;
+  flex-grow: 1;
 }
 
 .tabbed > section {
@@ -421,6 +442,8 @@ details {
 
 #png-import-tools p {
   max-width: 300px;
+  font-size: 90%;
+  line-height: 1.4;
 }
 
 #png-container canvas {
@@ -433,6 +456,17 @@ details {
 
 #png-container[data-dragging='true'] canvas {
   cursor: grabbing;
+}
+
+.tools > .button:last-of-type,
+.tools > button:last-of-type {
+  margin-bottom: 0;
+}
+
+.button--download {
+  margin: 16px auto;
+  width: auto;
+  font-size: 90%;
 }
 
 

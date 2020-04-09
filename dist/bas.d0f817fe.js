@@ -11333,16 +11333,13 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function tap2txt(data) {
   const unpack = new _unpack.Unpack(data);
-  const res = unpack.parse(`<S$headerLength C$flagByte C$type A10$filename S$length S$p1 S$p2 C$checksum x2`);
+  unpack.parse(`<S$headerLength C$flagByte C$type A10$filename S$length S$p1 S$p2 C$checksum x2`);
   return bas2txtLines(data.slice(24, data.length - 24));
 }
 
 function bas2txt(data) {
   const unpack = new _unpack.Unpack(data);
-  let {
-    length,
-    ...header
-  } = unpack.parse(`<A8$sig
+  unpack.parse(`<A8$sig
     C$marker
     C$issue
     C$version
@@ -11667,7 +11664,7 @@ _cm.default.defineSimpleMode('basic', {
     regex: new RegExp(`\\b(?:${$keywords.join('|')})(?:[\\b|\\s|]|$)`),
     token: 'keyword'
   }, {
-    regex: /'.*/,
+    regex: /;.*/,
     token: 'comment'
   }, {
     regex: /\b(REM)\b(.*)/,
@@ -12665,7 +12662,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "57387" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "53453" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
