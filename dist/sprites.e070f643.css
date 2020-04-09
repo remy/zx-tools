@@ -308,10 +308,9 @@ button svg {
   min-width: 300px;
   flex: 0;
   margin-right: auto;
-  /* background: #303030; */
-  /* flex-grow: 1; */
   padding: 20px;
   margin-left: 20px;
+  display: block;
 }
 
 .tile-controls label {
@@ -441,7 +440,7 @@ details {
 }
 
 #png-import-tools p {
-  max-width: 300px;
+  max-width: 240px;
   font-size: 90%;
   line-height: 1.4;
 }
