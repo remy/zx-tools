@@ -1,0 +1,19 @@
+main {
+  max-width: 720px;
+  padding-bottom: 80vh;
+  line-height: 1.6;
+}
+
+ul {
+  padding-left: 16px;
+}
+
+main li a {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: list-item;
+  white-space: pre;
+}
+
+
+/*# sourceMappingURL=/help.9cc616b2.css.map */
