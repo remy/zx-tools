@@ -18,7 +18,7 @@ const debug = document.querySelector('#debug');
 const picker = document.querySelector('.picker');
 const upload = document.querySelector('#upload input');
 const pickerColour = document.querySelector('.pickerColour div');
-const buttons = $('#tools button[data-action]');
+const buttons = $('button[data-action]');
 const tileDownloads = $('#tiles button');
 
 let sprites = null;
