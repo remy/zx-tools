@@ -3670,7 +3670,7 @@ class Lexer {
   }
 
   static _isSymbol(c) {
-    return '!,;-+/*^()<>#%${}[]'.includes(c);
+    return '!,;-+/*^()<>#%${}[]|'.includes(c);
   }
 
   static _isAlpha(c) {
@@ -4466,7 +4466,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "54105" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "56988" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
