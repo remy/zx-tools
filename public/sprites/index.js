@@ -10,7 +10,7 @@ import Tool from './Tool.js';
 import TileMap from './TileMap.js';
 import { plus3DOSHeader } from '../bas/txt2bas.js';
 import Tabs from '../lib/Tabs.js';
-
+import { Unpack } from '../lib/unpack/unpack.js';
 const container = document.querySelector('#container');
 const ctx = container.getContext('2d');
 const spritesContainer = document.querySelector('#sprites .container');
@@ -72,7 +72,31 @@ function fileToImageWindow(file) {
   imageWindow.paint();
 }
 
+function fileToTile(file) {
+  const unpack = new Unpack(file);
+
+  unpack.parse(
+    `<A8$sig
+    C$marker
+    C$issue
+    C$version
+    I$length
+    C$hType
+    S$hFileLength
+    n$hLine
+    S$hOffset
+    x
+    x104
+    C$checksum`
+  );
+
+  tileMap.bank = new Uint8Array(file.slice(unpack.offset));
+  tileMap.sprites = sprites; // just in case
+  tileMap.paint();
+}
+
 drop(document.querySelector('#png-importer'), fileToImageWindow);
+drop(document.querySelector('#tiles'), fileToTile);
 
 const importMask = document.querySelector('#png-container .focus');
 $('#png-import-tools input[type=range]').on('input', (e) => {
