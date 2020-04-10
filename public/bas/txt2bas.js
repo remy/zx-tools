@@ -336,7 +336,7 @@ export default class Lexer {
   }
 
   static _isSymbol(c) {
-    return '!,;-+/*^()<>#%${}[]'.includes(c);
+    return '!,;-+/*^()<>#%${}[]|'.includes(c);
   }
 
   static _isAlpha(c) {
