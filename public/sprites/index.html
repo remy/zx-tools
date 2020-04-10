@@ -171,45 +171,87 @@
             </div>
         </section>
 
-        <section id="changes" data-title="Changes">
-          <ul>
-            <li>2020 April 9
+        <section id="usage" data-title="Usage">
+          <div>
+            <p><a target="_blank" href="https://github.com/remy/zx-tools/issues/new">Report an issue/suggestion</a></p>
+            <div class="col2">
+              <h2>Sprite Editor</h2>
+              <dl class="keys">
+                <dt>D</dt>
+                <dd>download spritesheet .spr file</dd>
+                <dt>alt + click</dt>
+                <dd>pick colour from sprite and add to palette</dd>
+                <dt>shift + click</dt>
+                <dd>switch to erase</dd>
+                <dt>left/right cursor</dt>
+                <dd>change current sprite in sprite sheet</dd>
+                <dt>shift + cursor keys</dt>
+                <dd>shift/pan sprite by 1 pixel</dd>
+                <dt>ctrl + shift + cursor keys</dt>
+                <dd>shift/pan sprite by 8 pixels</dd>
+                <dt>1 - 8</dt>
+                <dd>select palette colour <em>n</em></dd>
+                <dt>ctrl + z</dt>
+                <dd>undo</dd>
+                <dt>Drag and drop</dt>
+                <dd>Supported: .png and .spr files</dd>
+              </dl>
+              <h2>Tile Map</h2>
+              <p>Sprite 64 (index 63) is used to initially fill the tile map.</p>
+              <h2>PNG Importer</h2>
+              <dl>
+                <dt>shift + cursor keys</dt>
+                <dd>shift/pan sprite by 1 pixel</dd>
+                <dt>ctrl + shift + cursor keys</dt>
+                <dd>shift/pan sprite by 8 pixels</dd>
+                <dt>Drag and drop</dt>
+                <dd>Supported: .png files of any dimension</dd>
+              </dl>
+            </div>
+          </div>
+          <details id="change-log">
+            <summary>Change log</summary>
+            <div>
               <ul>
-                <li>Fix: pan sprites with cursors</li>
-                <li>Fix: tile map doesn't fill screen</li>
-                <li>Fix: better use of screen space</li>
-                <li>Fix: more tooltips on hover</li>
+                <li>2020 April 9
+                  <ul>
+                    <li>Fix: pan sprites with cursors</li>
+                    <li>Fix: tile map doesn't fill screen</li>
+                    <li>Fix: better use of screen space</li>
+                    <li>Fix: more tooltips on hover</li>
+                  </ul>
+                </li>
+                <li>2020 April 5
+                  <ul>
+                    <li>Add: png import tool</li>
+                  </ul>
+                </li>
+                <li>2020 April 2
+                  <ul>
+                    <li>Add: tile map editor</li>
+                    <li>Add: paste png support</li>
+                    <li>Add: drop multiple png files for new sprites</li>
+                  </ul>
+                </li>
+                <li>2020 March 25
+                  <ul>
+                    <li>Add: pan</li>
+                    <li>Add: select sprite from preview sheet</li>
+                    <li>Perf: refactor to use canvas over divs</li>
+                  </ul>
+                </li>
+                <li>2020 March 23
+                  <ul>
+                    <li>Add: fill</li>
+                    <li>Add: key shortcuts for Brush, Fill, Erase</li>
+                    <li>Add: support for arbitrary upload size</li>
+                    <li>Add: show coordinates on main draw area</li>
+                    <li>Fix: highlighting colours from 7-8</li>
+                  </ul>
+                </li>
               </ul>
-            </li>
-            <li>2020 April 5
-              <ul>
-                <li>Add: png import tool</li>
-              </ul>
-            </li>
-            <li>2020 April 2
-              <ul>
-                <li>Add: tile map editor</li>
-                <li>Add: paste png support</li>
-                <li>Add: drop multiple png files for new sprites</li>
-              </ul>
-            </li>
-            <li>2020 March 25
-              <ul>
-                <li>Add: pan</li>
-                <li>Add: select sprite from preview sheet</li>
-                <li>Perf: refactor to use canvas over divs</li>
-              </ul>
-            </li>
-            <li>2020 March 23
-              <ul>
-                <li>Add: fill</li>
-                <li>Add: key shortcuts for Brush, Fill, Erase</li>
-                <li>Add: support for arbitrary upload size</li>
-                <li>Add: show coordinates on main draw area</li>
-                <li>Fix: highlighting colours from 7-8</li>
-              </ul>
-            </li>
-          </ul>
+            </div>
+          </details>
         </section>
 
       </div>

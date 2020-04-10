@@ -188,9 +188,35 @@ canvas {
   width: calc(4 * var(--block-size));
 }
 
-@media screen and (min-width: 480px) {
+@media screen and (max-width: 1104px) {
+  main {
+    flex-direction: column;
+  }
+
   #sprites {
-    max-width: calc(64 * 16px);
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: row-reverse;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #sprites .container {
+    width: calc(32 * 16px);
+  }
+
+  #sprites button {
+    margin: 16px;
+    padding: 16px 32px;
+  }
+
+  #sprites button br {
+    white-space: nowrap;
+  }
+
+  .tabbed {
+    width: 100%;
   }
 }
 
@@ -466,4 +492,38 @@ details {
   margin: 16px auto;
   width: auto;
   font-size: 90%;
+}
+
+.keys {
+  list-style: none;
+  padding-left: 0;
+}
+
+.keys dd {
+  margin-bottom: 16px;
+  line-height: 1.2;
+}
+
+.keys dt {
+  font-weight: bold;
+  line-height: 1.2;
+}
+
+.col2 {
+  columns: 2;
+}
+
+.col2 dl {
+  break-inside: avoid;
+}
+
+#change-log {
+  margin-top: 32px;
+  padding-top: 32px;
+  font-size: 90%;
+  border-top: 1px solid #ccc;
+}
+
+#usage h2:before {
+  content: '# ';
 }
