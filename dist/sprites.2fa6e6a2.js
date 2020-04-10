@@ -3979,7 +3979,203 @@ class Tabs {
 }
 
 exports.default = Tabs;
-},{"./$.js":"lib/$.js"}],"sprites/index.js":[function(require,module,exports) {
+},{"./$.js":"lib/$.js"}],"lib/unpack/dataview-64.js":[function(require,module,exports) {
+if (!DataView.prototype.getUint64) DataView.prototype.getUint64 = function (byteOffset, littleEndian) {
+  // split 64-bit number into two 32-bit (4-byte) parts
+  const left = this.getUint32(byteOffset, littleEndian);
+  const right = this.getUint32(byteOffset + 4, littleEndian); // combine the two 32-bit values
+
+  const combined = littleEndian ? left + 2 ** 32 * right : 2 ** 32 * left + right;
+  if (!Number.isSafeInteger(combined)) console.warn(combined, 'exceeds MAX_SAFE_INTEGER. Precision may be lost');
+  return combined;
+};
+if (!DataView.prototype.getUint64) DataView.prototype.getInt64 = function (byteOffset, littleEndian) {
+  // split 64-bit number into two 32-bit (4-byte) parts
+  const left = this.getInt32(byteOffset, littleEndian);
+  const right = this.getInt32(byteOffset + 4, littleEndian); // combine the two 32-bit values
+
+  const combined = littleEndian ? left + 2 ** 32 * right : 2 ** 32 * left + right;
+  if (!Number.isSafeInteger(combined)) console.warn(combined, 'exceeds MAX_SAFE_INTEGER. Precision may be lost');
+  return combined;
+};
+},{}],"lib/unpack/unpack.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = exports.Unpack = void 0;
+
+require("./dataview-64.js");
+
+var _lib = require("./lib.js");
+
+function binarySlice(value, ptr, length) {
+  if (!length || isNaN(length)) {
+    length = 8 - ptr;
+  }
+
+  const mask = 2 ** length - 1;
+  const shift = 8 - (ptr + length);
+  const res = value >> shift & mask;
+  return res;
+}
+
+class Unpack {
+  constructor(data) {
+    this.data = data;
+    this.offset = 0;
+  }
+
+  parse(template) {
+    const res = unpack(template, this.data, this.offset);
+    this.last = res;
+
+    if (!res) {
+      return res;
+    }
+
+    this.offset = res.__offset;
+    delete res.__offset;
+    return res;
+  }
+
+}
+
+exports.Unpack = Unpack;
+
+function unpack(template, data, offset = 0) {
+  const result = {}; // return an object
+
+  if (Array.isArray(data)) {
+    data = Uint8Array.from(data);
+  }
+
+  if (typeof data === 'string') {
+    data = (0, _lib.encode)(data).buffer; // ?
+  } else if (typeof data === 'number') {
+    if ((data | 0) !== data) {
+      // float
+      data = Float64Array.from([data]).buffer;
+    } else {
+      data = Int32Array.from([data]).buffer;
+    }
+  } else if (ArrayBuffer.isView(data)) {
+    data = data.buffer;
+  }
+
+  if (offset >= data.byteLength) {
+    return null;
+  }
+
+  const re = new RegExp(_lib.pattern, 'g');
+  let m = [];
+  let bytePtr = 0;
+  const firstChr = template[0];
+  const defaultLittle = firstChr === '<' ? true : false;
+  let templateCounter = -1;
+
+  while (m = re.exec(template)) {
+    templateCounter++;
+    const index = m[4] || templateCounter;
+    let little = defaultLittle;
+    let length = null;
+
+    if (_lib.typeMap[m[2]]) {
+      length = _lib.typeMap[m[2]].length;
+    } else {
+      length = parseInt(m[2] || 1);
+    }
+
+    let c = m[1];
+
+    if (c.length === 2) {
+      little = c[1] === '<';
+      c = c[0];
+    }
+
+    const type = _lib.typeMap[c];
+
+    if (!type) {
+      throw new Error(`unsupported type "${c}"`);
+    }
+
+    if (type.little !== undefined) {
+      little = type.little;
+    }
+
+    const size = type.length; // ?
+
+    let end = c === 'b' ? 1 : size * length;
+
+    if (isNaN(length)) {
+      end = data.byteLength - offset;
+    }
+
+    if (offset + end > data.byteLength) {
+      // return result;
+      break;
+    }
+
+    const view = new DataView(data, offset, end);
+
+    if (c !== 'b') {
+      // reset the byte counter
+      bytePtr = 0;
+    }
+
+    switch (c) {
+      case 'b':
+        c = view.getUint8(0, little);
+        result[index] = binarySlice(c, bytePtr, length);
+        result[index]; // ? [index,result[index],c, bytePtr, length]
+
+        bytePtr += length;
+
+        if (bytePtr > 7) {
+          offset++;
+          bytePtr = 0;
+        }
+
+        break;
+
+      case 'x':
+        // x is skipped null bytes
+        templateCounter--;
+        offset += end;
+        break;
+
+      case 'a':
+      case 'A':
+        result[index] = (0, _lib.decode)(view).padEnd(length, c === 'A' ? ' ' : '\0');
+
+        if (c === 'a' && result[index].indexOf('\0') !== -1) {
+          result[index] = result[index].substring(0, result[index].indexOf('\0'));
+        }
+
+        offset += end;
+        break;
+
+      default:
+        if (length > 1) {
+          result[index] = new type.array(view.buffer.slice(offset, offset + end));
+        } else {
+          result[index] = view[`get${type.fn}`](0, little);
+        }
+
+        offset += end;
+        break;
+    }
+  }
+
+  result.__offset = offset;
+  return result;
+}
+
+var _default = unpack; // unpack('<I$length', Uint8Array.from([0xe7, 0x00, 0x00, 0x00])); // ?
+
+exports.default = _default;
+},{"./dataview-64.js":"lib/unpack/dataview-64.js","./lib.js":"lib/unpack/lib.js"}],"sprites/index.js":[function(require,module,exports) {
 "use strict";
 
 var _dnd = _interopRequireDefault(require("../lib/dnd.js"));
@@ -4005,6 +4201,8 @@ var _TileMap = _interopRequireDefault(require("./TileMap.js"));
 var _txt2bas = require("../bas/txt2bas.js");
 
 var _Tabs = _interopRequireDefault(require("../lib/Tabs.js"));
+
+var _unpack = require("../lib/unpack/unpack.js");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -4071,7 +4269,28 @@ function fileToImageWindow(file) {
   imageWindow.paint();
 }
 
+function fileToTile(file) {
+  const unpack = new _unpack.Unpack(file);
+  unpack.parse(`<A8$sig
+    C$marker
+    C$issue
+    C$version
+    I$length
+    C$hType
+    S$hFileLength
+    n$hLine
+    S$hOffset
+    x
+    x104
+    C$checksum`);
+  tileMap.bank = new Uint8Array(file.slice(unpack.offset));
+  tileMap.sprites = sprites; // just in case
+
+  tileMap.paint();
+}
+
 (0, _dnd.default)(document.querySelector('#png-importer'), fileToImageWindow);
+(0, _dnd.default)(document.querySelector('#tiles'), fileToTile);
 const importMask = document.querySelector('#png-container .focus');
 (0, _$.$)('#png-import-tools input[type=range]').on('input', e => {
   const v = parseInt(e.target.value);
@@ -4438,7 +4657,7 @@ render(Uint8Array.from({
   length: 256
 }, (_, i) => i), picker);
 buildStyleSheet();
-},{"../lib/dnd.js":"lib/dnd.js","./lib/colour.js":"sprites/lib/colour.js","../lib/save.js":"lib/save.js","./lib/parser.js":"sprites/lib/parser.js","./ImageWindow.js":"sprites/ImageWindow.js","../lib/$.js":"lib/$.js","./SpriteSheet.js":"sprites/SpriteSheet.js","./ColourPicker.js":"sprites/ColourPicker.js","./Tool.js":"sprites/Tool.js","./TileMap.js":"sprites/TileMap.js","../bas/txt2bas.js":"bas/txt2bas.js","../lib/Tabs.js":"lib/Tabs.js"}],"../node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"../lib/dnd.js":"lib/dnd.js","./lib/colour.js":"sprites/lib/colour.js","../lib/save.js":"lib/save.js","./lib/parser.js":"sprites/lib/parser.js","./ImageWindow.js":"sprites/ImageWindow.js","../lib/$.js":"lib/$.js","./SpriteSheet.js":"sprites/SpriteSheet.js","./ColourPicker.js":"sprites/ColourPicker.js","./Tool.js":"sprites/Tool.js","./TileMap.js":"sprites/TileMap.js","../bas/txt2bas.js":"bas/txt2bas.js","../lib/Tabs.js":"lib/Tabs.js","../lib/unpack/unpack.js":"lib/unpack/unpack.js"}],"../node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -4466,7 +4685,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "56988" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "51348" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
