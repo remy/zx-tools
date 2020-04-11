@@ -95,8 +95,24 @@ cm.on('keydown', (cm, event) => {
       if (removed) {
         cm.setCursor(cursor);
       } else {
-        cm.replaceRange('\n', { line: insertLine + 1, ch: 0 });
-        cm.setCursor({ line: insertLine + 1, ch: 0 });
+        let content = '\n';
+        if (event.shiftKey) {
+          const lineNumber = newLine.lineNumber;
+          const next =
+            lines.map((_) => _.lineNumber).find((_) => _ > lineNumber) ||
+            lineNumber + 20;
+
+          const d = lineNumber + (((next - lineNumber) / 2) | 0);
+          if ((d !== next) & (d !== lineNumber)) {
+            content = `${d}  `;
+            cm.replaceRange('\n', { line: insertLine + 1, ch: 0 });
+          }
+        }
+        cm.replaceRange(content, {
+          line: insertLine + 1,
+          ch: content.length - 1,
+        });
+        cm.setCursor({ line: insertLine + 1, ch: content.length - 1 });
       }
 
       event.preventDefault();
