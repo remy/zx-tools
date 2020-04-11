@@ -1,14 +1,14 @@
 import dnd from '../lib/dnd.js';
 import { $ } from '../lib/$.js';
 import Lexer, { asTap, plus3DOSHeader } from './txt2bas.js';
-import CodeMirror from './lib/cm.js';
+import CodeMirror from '../lib/cm.js';
 import { bas2txt, bas2txtLines, tap2txt } from './bas2txt.js';
 import './basic-syntax.js';
 import save from '../lib/save.js';
 import { decode } from '../lib/unpack/lib.js';
 import { generateBlock } from '../lib/audio/index.js';
 import { createWavFromBuffer } from '../lib/audio/make-wav.js';
-import { loadGist } from './lib/gist.js';
+import { loadGist } from '../lib/gist.js';
 
 function localSave() {
   sessionStorage.setItem('code', cm.getValue());
@@ -23,7 +23,9 @@ if (code) {
 
 const cm = CodeMirror.fromTextArea(ta, {
   mode: 'text/x-basic',
+  lineWrapping: true,
   viewportMargin: Infinity,
+  styleActiveLine: true,
 });
 
 cm.on('keydown', (cm, event) => {
@@ -44,7 +46,6 @@ cm.on('keydown', (cm, event) => {
       let inserted = false;
       let removed = false;
       cm.eachLine(({ text, line: lineNumber }) => {
-        // FIXME should thisn't be cm.line?
         if (lineNumber === line) {
           return; // skip the newly inserted line
         }

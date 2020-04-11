@@ -1,6 +1,6 @@
-import 'CodeMirror/lib/codemirror.css';
-
 import CodeMirror from 'CodeMirror';
+import 'CodeMirror/addon/selection/active-line';
+import 'CodeMirror/addon/mode/simple.js';
 window.CodeMirror = CodeMirror;
 
 export default CodeMirror;

@@ -1,5 +1,4 @@
-import CodeMirror from './lib/cm.js';
-import 'CodeMirror/addon/mode/simple.js';
+import CodeMirror from '../lib/cm.js';
 import codes from './codes.js';
 
 const keywords = Object.values(codes).filter(
@@ -15,6 +14,12 @@ CodeMirror.defineSimpleMode('basic', {
   start: [
     // The regex matches the token, the token property contains the type
     { regex: /"(?:[^\\]|\\.)*?(?:"|$)/, token: 'string' },
+    {
+      regex: /(\s*\d+)(\b\s*)(;.*)/,
+      token: ['variable-3 basic-line-number', null, 'comment'],
+      sol: true,
+      eol: true,
+    },
     { regex: /\s*\d+\b/, token: 'variable-3 basic-line-number', sol: true },
     { regex: /(GO TO)(\s+)(\d+)\b/, token: ['keyword', null, 'variable-3'] },
     { regex: /BIN\s[01]+/, token: 'number-binary number' },
@@ -30,7 +35,6 @@ CodeMirror.defineSimpleMode('basic', {
       regex: new RegExp(`\\b(?:${$keywords.join('|')})(?:[\\b|\\s|]|$)`),
       token: 'keyword',
     },
-    { regex: /;.*/, token: 'comment' },
     { regex: /\b(REM)\b(.*)/, token: ['keyword', 'comment comment-body'] },
     {
       regex: new RegExp('&|\\*|\\-|\\+|=|<>|<|>|\\|\\^|<<|>>|~'),
