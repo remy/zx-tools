@@ -28,7 +28,33 @@ const cm = CodeMirror.fromTextArea(ta, {
   styleActiveLine: true,
 });
 
+cm.getWrapperElement().addEventListener('click', (e) => {
+  if (e.altKey) {
+    let onToken = e.target.classList.contains('cm-goto');
+
+    if (onToken) {
+      const lineNumber = e.target.innerText.trim();
+      let target = null;
+      cm.eachLine((line) => {
+        const { text } = line;
+        if (text.startsWith(lineNumber + ' ')) {
+          target = cm.getLineNumber(line);
+        }
+      });
+
+      if (target) {
+        cm.setCursor({ line: target, ch: lineNumber.toString().length });
+      }
+    }
+  }
+});
+
 cm.on('keydown', (cm, event) => {
+  if (event.altKey) {
+    document.body.classList.add('goto');
+  } else {
+    document.body.classList.remove('goto');
+  }
   if (event.key === 'Enter') {
     const cursor = cm.getCursor();
     const line = cm.getLine(cursor.line);
@@ -46,6 +72,7 @@ cm.on('keydown', (cm, event) => {
       let inserted = false;
       let removed = false;
       cm.eachLine(({ text, line: lineNumber }) => {
+        // FIXME: line isn't a thing
         if (lineNumber === line) {
           return; // skip the newly inserted line
         }
