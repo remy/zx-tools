@@ -11664,7 +11664,7 @@ _cm.default.defineSimpleMode('basic', {
     regex: /BIN\s[01]+/,
     token: 'number-binary number'
   }, {
-    regex: /(?:0x[a-f\d]+|[-+]?(?:\.\d+|\d+\.?\d*)(?:e[-+]?\d+)?)/i,
+    regex: /(?:\$[a-f\d]+|[-+]?(?:\.\d+|\d+\.?\d*)(?:e[-+]?\d+)?)/i,
     token: 'number'
   }, {
     regex: new RegExp(`\\b(?:${keywords.join('|')})\\b`),
@@ -12476,8 +12476,12 @@ cm.getWrapperElement().addEventListener('click', e => {
           target = cm.getLineNumber(line);
         }
       });
+      console.log('goto', {
+        target,
+        lineNumber
+      });
 
-      if (target) {
+      if (target !== null) {
         cm.setCursor({
           line: target,
           ch: lineNumber.toString().length
@@ -12718,7 +12722,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "55164" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "56488" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
