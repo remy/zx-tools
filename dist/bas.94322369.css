@@ -46,14 +46,20 @@ body .CodeMirror {
 
 .cm-s-default .cm-variable-3 {
   color: grey;
+  text-decoration: underline;
 }
 
 .cm-s-default .cm-number {
   color: #90368a;
 }
 
-.cm-basic-line-number {
-  /* padding-left: 24px; */
+.cm-s-default .cm-basic-line-number {
+  color: grey;
+  text-decoration: none;
+}
+
+.goto .cm-goto {
+  cursor: pointer;
 }
 
 

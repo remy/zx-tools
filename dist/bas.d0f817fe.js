@@ -1048,7 +1048,7 @@ class Lexer {
   }
 
   static _isSymbol(c) {
-    return '!,;-+/*^()<>#%${}[]|'.includes(c);
+    return '!,;-+/*()<>#%${}[]|&^'.includes(c);
   }
 
   static _isAlpha(c) {
@@ -1284,80 +1284,7 @@ class Lexer {
 
 
 exports.default = Lexer;
-},{"./codes.js":"bas/codes.js","../lib/to.js":"lib/to.js","../lib/unpack/pack.js":"lib/unpack/pack.js"}],"../../../.nvm/versions/node/v12.16.1/lib/node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
-var bundleURL = null;
-
-function getBundleURLCached() {
-  if (!bundleURL) {
-    bundleURL = getBundleURL();
-  }
-
-  return bundleURL;
-}
-
-function getBundleURL() {
-  // Attempt to find the URL of the current script and use that as the base URL
-  try {
-    throw new Error();
-  } catch (err) {
-    var matches = ('' + err.stack).match(/(https?|file|ftp|chrome-extension|moz-extension):\/\/[^)\n]+/g);
-
-    if (matches) {
-      return getBaseURL(matches[0]);
-    }
-  }
-
-  return '/';
-}
-
-function getBaseURL(url) {
-  return ('' + url).replace(/^((?:https?|file|ftp|chrome-extension|moz-extension):\/\/.+)\/[^/]+$/, '$1') + '/';
-}
-
-exports.getBundleURL = getBundleURLCached;
-exports.getBaseURL = getBaseURL;
-},{}],"../../../.nvm/versions/node/v12.16.1/lib/node_modules/parcel-bundler/src/builtins/css-loader.js":[function(require,module,exports) {
-var bundle = require('./bundle-url');
-
-function updateLink(link) {
-  var newLink = link.cloneNode();
-
-  newLink.onload = function () {
-    link.remove();
-  };
-
-  newLink.href = link.href.split('?')[0] + '?' + Date.now();
-  link.parentNode.insertBefore(newLink, link.nextSibling);
-}
-
-var cssTimeout = null;
-
-function reloadCSS() {
-  if (cssTimeout) {
-    return;
-  }
-
-  cssTimeout = setTimeout(function () {
-    var links = document.querySelectorAll('link[rel="stylesheet"]');
-
-    for (var i = 0; i < links.length; i++) {
-      if (bundle.getBaseURL(links[i].href) === bundle.getBundleURL()) {
-        updateLink(links[i]);
-      }
-    }
-
-    cssTimeout = null;
-  }, 50);
-}
-
-module.exports = reloadCSS;
-},{"./bundle-url":"../../../.nvm/versions/node/v12.16.1/lib/node_modules/parcel-bundler/src/builtins/bundle-url.js"}],"../node_modules/CodeMirror/lib/codemirror.css":[function(require,module,exports) {
-
-        var reloadCSS = require('_css_loader');
-        module.hot.dispose(reloadCSS);
-        module.hot.accept(reloadCSS);
-      
-},{"_css_loader":"../../../.nvm/versions/node/v12.16.1/lib/node_modules/parcel-bundler/src/builtins/css-loader.js"}],"../node_modules/CodeMirror/lib/codemirror.js":[function(require,module,exports) {
+},{"./codes.js":"bas/codes.js","../lib/to.js":"lib/to.js","../lib/unpack/pack.js":"lib/unpack/pack.js"}],"../node_modules/CodeMirror/lib/codemirror.js":[function(require,module,exports) {
 var define;
 var global = arguments[3];
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
@@ -5510,6 +5437,8 @@ var global = arguments[3];
         update.visible = visibleLines(cm.display, cm.doc, viewport);
         if (update.visible.from >= cm.display.viewFrom && update.visible.to <= cm.display.viewTo)
           { break }
+      } else if (first) {
+        update.visible = visibleLines(cm.display, cm.doc, viewport);
       }
       if (!updateDisplayIfNeeded(cm, update)) { break }
       updateHeightsInViewport(cm);
@@ -10168,7 +10097,7 @@ var global = arguments[3];
 
   ContentEditableInput.prototype.prepareSelection = function () {
     var result = prepareSelection(this.cm, false);
-    result.focus = this.cm.state.focused;
+    result.focus = document.activeElement == this.div;
     return result
   };
 
@@ -10264,7 +10193,7 @@ var global = arguments[3];
 
   ContentEditableInput.prototype.focus = function () {
     if (this.cm.options.readOnly != "nocursor") {
-      if (!this.selectionInEditor())
+      if (!this.selectionInEditor() || document.activeElement != this.div)
         { this.showSelection(this.prepareSelection(), true); }
       this.div.focus();
     }
@@ -11096,13 +11025,307 @@ var global = arguments[3];
 
   addLegacyProps(CodeMirror);
 
-  CodeMirror.version = "5.52.0";
+  CodeMirror.version = "5.52.2";
 
   return CodeMirror;
 
 })));
 
-},{}],"bas/lib/cm.js":[function(require,module,exports) {
+},{}],"../node_modules/CodeMirror/addon/selection/active-line.js":[function(require,module,exports) {
+var define;
+// CodeMirror, copyright (c) by Marijn Haverbeke and others
+// Distributed under an MIT license: https://codemirror.net/LICENSE
+
+(function(mod) {
+  if (typeof exports == "object" && typeof module == "object") // CommonJS
+    mod(require("../../lib/codemirror"));
+  else if (typeof define == "function" && define.amd) // AMD
+    define(["../../lib/codemirror"], mod);
+  else // Plain browser env
+    mod(CodeMirror);
+})(function(CodeMirror) {
+  "use strict";
+  var WRAP_CLASS = "CodeMirror-activeline";
+  var BACK_CLASS = "CodeMirror-activeline-background";
+  var GUTT_CLASS = "CodeMirror-activeline-gutter";
+
+  CodeMirror.defineOption("styleActiveLine", false, function(cm, val, old) {
+    var prev = old == CodeMirror.Init ? false : old;
+    if (val == prev) return
+    if (prev) {
+      cm.off("beforeSelectionChange", selectionChange);
+      clearActiveLines(cm);
+      delete cm.state.activeLines;
+    }
+    if (val) {
+      cm.state.activeLines = [];
+      updateActiveLines(cm, cm.listSelections());
+      cm.on("beforeSelectionChange", selectionChange);
+    }
+  });
+
+  function clearActiveLines(cm) {
+    for (var i = 0; i < cm.state.activeLines.length; i++) {
+      cm.removeLineClass(cm.state.activeLines[i], "wrap", WRAP_CLASS);
+      cm.removeLineClass(cm.state.activeLines[i], "background", BACK_CLASS);
+      cm.removeLineClass(cm.state.activeLines[i], "gutter", GUTT_CLASS);
+    }
+  }
+
+  function sameArray(a, b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++)
+      if (a[i] != b[i]) return false;
+    return true;
+  }
+
+  function updateActiveLines(cm, ranges) {
+    var active = [];
+    for (var i = 0; i < ranges.length; i++) {
+      var range = ranges[i];
+      var option = cm.getOption("styleActiveLine");
+      if (typeof option == "object" && option.nonEmpty ? range.anchor.line != range.head.line : !range.empty())
+        continue
+      var line = cm.getLineHandleVisualStart(range.head.line);
+      if (active[active.length - 1] != line) active.push(line);
+    }
+    if (sameArray(cm.state.activeLines, active)) return;
+    cm.operation(function() {
+      clearActiveLines(cm);
+      for (var i = 0; i < active.length; i++) {
+        cm.addLineClass(active[i], "wrap", WRAP_CLASS);
+        cm.addLineClass(active[i], "background", BACK_CLASS);
+        cm.addLineClass(active[i], "gutter", GUTT_CLASS);
+      }
+      cm.state.activeLines = active;
+    });
+  }
+
+  function selectionChange(cm, sel) {
+    updateActiveLines(cm, sel.ranges);
+  }
+});
+
+},{"../../lib/codemirror":"../node_modules/CodeMirror/lib/codemirror.js"}],"../node_modules/CodeMirror/addon/mode/simple.js":[function(require,module,exports) {
+var define;
+// CodeMirror, copyright (c) by Marijn Haverbeke and others
+// Distributed under an MIT license: https://codemirror.net/LICENSE
+
+(function(mod) {
+  if (typeof exports == "object" && typeof module == "object") // CommonJS
+    mod(require("../../lib/codemirror"));
+  else if (typeof define == "function" && define.amd) // AMD
+    define(["../../lib/codemirror"], mod);
+  else // Plain browser env
+    mod(CodeMirror);
+})(function(CodeMirror) {
+  "use strict";
+
+  CodeMirror.defineSimpleMode = function(name, states) {
+    CodeMirror.defineMode(name, function(config) {
+      return CodeMirror.simpleMode(config, states);
+    });
+  };
+
+  CodeMirror.simpleMode = function(config, states) {
+    ensureState(states, "start");
+    var states_ = {}, meta = states.meta || {}, hasIndentation = false;
+    for (var state in states) if (state != meta && states.hasOwnProperty(state)) {
+      var list = states_[state] = [], orig = states[state];
+      for (var i = 0; i < orig.length; i++) {
+        var data = orig[i];
+        list.push(new Rule(data, states));
+        if (data.indent || data.dedent) hasIndentation = true;
+      }
+    }
+    var mode = {
+      startState: function() {
+        return {state: "start", pending: null,
+                local: null, localState: null,
+                indent: hasIndentation ? [] : null};
+      },
+      copyState: function(state) {
+        var s = {state: state.state, pending: state.pending,
+                 local: state.local, localState: null,
+                 indent: state.indent && state.indent.slice(0)};
+        if (state.localState)
+          s.localState = CodeMirror.copyState(state.local.mode, state.localState);
+        if (state.stack)
+          s.stack = state.stack.slice(0);
+        for (var pers = state.persistentStates; pers; pers = pers.next)
+          s.persistentStates = {mode: pers.mode,
+                                spec: pers.spec,
+                                state: pers.state == state.localState ? s.localState : CodeMirror.copyState(pers.mode, pers.state),
+                                next: s.persistentStates};
+        return s;
+      },
+      token: tokenFunction(states_, config),
+      innerMode: function(state) { return state.local && {mode: state.local.mode, state: state.localState}; },
+      indent: indentFunction(states_, meta)
+    };
+    if (meta) for (var prop in meta) if (meta.hasOwnProperty(prop))
+      mode[prop] = meta[prop];
+    return mode;
+  };
+
+  function ensureState(states, name) {
+    if (!states.hasOwnProperty(name))
+      throw new Error("Undefined state " + name + " in simple mode");
+  }
+
+  function toRegex(val, caret) {
+    if (!val) return /(?:)/;
+    var flags = "";
+    if (val instanceof RegExp) {
+      if (val.ignoreCase) flags = "i";
+      val = val.source;
+    } else {
+      val = String(val);
+    }
+    return new RegExp((caret === false ? "" : "^") + "(?:" + val + ")", flags);
+  }
+
+  function asToken(val) {
+    if (!val) return null;
+    if (val.apply) return val
+    if (typeof val == "string") return val.replace(/\./g, " ");
+    var result = [];
+    for (var i = 0; i < val.length; i++)
+      result.push(val[i] && val[i].replace(/\./g, " "));
+    return result;
+  }
+
+  function Rule(data, states) {
+    if (data.next || data.push) ensureState(states, data.next || data.push);
+    this.regex = toRegex(data.regex);
+    this.token = asToken(data.token);
+    this.data = data;
+  }
+
+  function tokenFunction(states, config) {
+    return function(stream, state) {
+      if (state.pending) {
+        var pend = state.pending.shift();
+        if (state.pending.length == 0) state.pending = null;
+        stream.pos += pend.text.length;
+        return pend.token;
+      }
+
+      if (state.local) {
+        if (state.local.end && stream.match(state.local.end)) {
+          var tok = state.local.endToken || null;
+          state.local = state.localState = null;
+          return tok;
+        } else {
+          var tok = state.local.mode.token(stream, state.localState), m;
+          if (state.local.endScan && (m = state.local.endScan.exec(stream.current())))
+            stream.pos = stream.start + m.index;
+          return tok;
+        }
+      }
+
+      var curState = states[state.state];
+      for (var i = 0; i < curState.length; i++) {
+        var rule = curState[i];
+        var matches = (!rule.data.sol || stream.sol()) && stream.match(rule.regex);
+        if (matches) {
+          if (rule.data.next) {
+            state.state = rule.data.next;
+          } else if (rule.data.push) {
+            (state.stack || (state.stack = [])).push(state.state);
+            state.state = rule.data.push;
+          } else if (rule.data.pop && state.stack && state.stack.length) {
+            state.state = state.stack.pop();
+          }
+
+          if (rule.data.mode)
+            enterLocalMode(config, state, rule.data.mode, rule.token);
+          if (rule.data.indent)
+            state.indent.push(stream.indentation() + config.indentUnit);
+          if (rule.data.dedent)
+            state.indent.pop();
+          var token = rule.token
+          if (token && token.apply) token = token(matches)
+          if (matches.length > 2 && rule.token && typeof rule.token != "string") {
+            state.pending = [];
+            for (var j = 2; j < matches.length; j++)
+              if (matches[j])
+                state.pending.push({text: matches[j], token: rule.token[j - 1]});
+            stream.backUp(matches[0].length - (matches[1] ? matches[1].length : 0));
+            return token[0];
+          } else if (token && token.join) {
+            return token[0];
+          } else {
+            return token;
+          }
+        }
+      }
+      stream.next();
+      return null;
+    };
+  }
+
+  function cmp(a, b) {
+    if (a === b) return true;
+    if (!a || typeof a != "object" || !b || typeof b != "object") return false;
+    var props = 0;
+    for (var prop in a) if (a.hasOwnProperty(prop)) {
+      if (!b.hasOwnProperty(prop) || !cmp(a[prop], b[prop])) return false;
+      props++;
+    }
+    for (var prop in b) if (b.hasOwnProperty(prop)) props--;
+    return props == 0;
+  }
+
+  function enterLocalMode(config, state, spec, token) {
+    var pers;
+    if (spec.persistent) for (var p = state.persistentStates; p && !pers; p = p.next)
+      if (spec.spec ? cmp(spec.spec, p.spec) : spec.mode == p.mode) pers = p;
+    var mode = pers ? pers.mode : spec.mode || CodeMirror.getMode(config, spec.spec);
+    var lState = pers ? pers.state : CodeMirror.startState(mode);
+    if (spec.persistent && !pers)
+      state.persistentStates = {mode: mode, spec: spec.spec, state: lState, next: state.persistentStates};
+
+    state.localState = lState;
+    state.local = {mode: mode,
+                   end: spec.end && toRegex(spec.end),
+                   endScan: spec.end && spec.forceEnd !== false && toRegex(spec.end, false),
+                   endToken: token && token.join ? token[token.length - 1] : token};
+  }
+
+  function indexOf(val, arr) {
+    for (var i = 0; i < arr.length; i++) if (arr[i] === val) return true;
+  }
+
+  function indentFunction(states, meta) {
+    return function(state, textAfter, line) {
+      if (state.local && state.local.mode.indent)
+        return state.local.mode.indent(state.localState, textAfter, line);
+      if (state.indent == null || state.local || meta.dontIndentStates && indexOf(state.state, meta.dontIndentStates) > -1)
+        return CodeMirror.Pass;
+
+      var pos = state.indent.length - 1, rules = states[state.state];
+      scan: for (;;) {
+        for (var i = 0; i < rules.length; i++) {
+          var rule = rules[i];
+          if (rule.data.dedent && rule.data.dedentIfLineStart !== false) {
+            var m = rule.regex.exec(textAfter);
+            if (m && m[0]) {
+              pos--;
+              if (rule.next || rule.push) rules = states[rule.next || rule.push];
+              textAfter = textAfter.slice(m[0].length);
+              continue scan;
+            }
+          }
+        }
+        break;
+      }
+      return pos < 0 ? 0 : state.indent[pos];
+    };
+  }
+});
+
+},{"../../lib/codemirror":"../node_modules/CodeMirror/lib/codemirror.js"}],"lib/cm.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -11110,16 +11333,18 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
-require("CodeMirror/lib/codemirror.css");
-
 var _CodeMirror = _interopRequireDefault(require("CodeMirror"));
+
+require("CodeMirror/addon/selection/active-line");
+
+require("CodeMirror/addon/mode/simple.js");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 window.CodeMirror = _CodeMirror.default;
 var _default = _CodeMirror.default;
 exports.default = _default;
-},{"CodeMirror/lib/codemirror.css":"../node_modules/CodeMirror/lib/codemirror.css","CodeMirror":"../node_modules/CodeMirror/lib/codemirror.js"}],"lib/unpack/dataview-64.js":[function(require,module,exports) {
+},{"CodeMirror":"../node_modules/CodeMirror/lib/codemirror.js","CodeMirror/addon/selection/active-line":"../node_modules/CodeMirror/addon/selection/active-line.js","CodeMirror/addon/mode/simple.js":"../node_modules/CodeMirror/addon/mode/simple.js"}],"lib/unpack/dataview-64.js":[function(require,module,exports) {
 if (!DataView.prototype.getUint64) DataView.prototype.getUint64 = function (byteOffset, littleEndian) {
   // split 64-bit number into two 32-bit (4-byte) parts
   const left = this.getUint32(byteOffset, littleEndian);
@@ -11405,231 +11630,10 @@ function bas2txtLines(data) {
 
   return lines.join('\n');
 }
-},{"./codes.js":"bas/codes.js","../lib/unpack/unpack.js":"lib/unpack/unpack.js"}],"../node_modules/CodeMirror/addon/mode/simple.js":[function(require,module,exports) {
-var define;
-// CodeMirror, copyright (c) by Marijn Haverbeke and others
-// Distributed under an MIT license: https://codemirror.net/LICENSE
-
-(function(mod) {
-  if (typeof exports == "object" && typeof module == "object") // CommonJS
-    mod(require("../../lib/codemirror"));
-  else if (typeof define == "function" && define.amd) // AMD
-    define(["../../lib/codemirror"], mod);
-  else // Plain browser env
-    mod(CodeMirror);
-})(function(CodeMirror) {
-  "use strict";
-
-  CodeMirror.defineSimpleMode = function(name, states) {
-    CodeMirror.defineMode(name, function(config) {
-      return CodeMirror.simpleMode(config, states);
-    });
-  };
-
-  CodeMirror.simpleMode = function(config, states) {
-    ensureState(states, "start");
-    var states_ = {}, meta = states.meta || {}, hasIndentation = false;
-    for (var state in states) if (state != meta && states.hasOwnProperty(state)) {
-      var list = states_[state] = [], orig = states[state];
-      for (var i = 0; i < orig.length; i++) {
-        var data = orig[i];
-        list.push(new Rule(data, states));
-        if (data.indent || data.dedent) hasIndentation = true;
-      }
-    }
-    var mode = {
-      startState: function() {
-        return {state: "start", pending: null,
-                local: null, localState: null,
-                indent: hasIndentation ? [] : null};
-      },
-      copyState: function(state) {
-        var s = {state: state.state, pending: state.pending,
-                 local: state.local, localState: null,
-                 indent: state.indent && state.indent.slice(0)};
-        if (state.localState)
-          s.localState = CodeMirror.copyState(state.local.mode, state.localState);
-        if (state.stack)
-          s.stack = state.stack.slice(0);
-        for (var pers = state.persistentStates; pers; pers = pers.next)
-          s.persistentStates = {mode: pers.mode,
-                                spec: pers.spec,
-                                state: pers.state == state.localState ? s.localState : CodeMirror.copyState(pers.mode, pers.state),
-                                next: s.persistentStates};
-        return s;
-      },
-      token: tokenFunction(states_, config),
-      innerMode: function(state) { return state.local && {mode: state.local.mode, state: state.localState}; },
-      indent: indentFunction(states_, meta)
-    };
-    if (meta) for (var prop in meta) if (meta.hasOwnProperty(prop))
-      mode[prop] = meta[prop];
-    return mode;
-  };
-
-  function ensureState(states, name) {
-    if (!states.hasOwnProperty(name))
-      throw new Error("Undefined state " + name + " in simple mode");
-  }
-
-  function toRegex(val, caret) {
-    if (!val) return /(?:)/;
-    var flags = "";
-    if (val instanceof RegExp) {
-      if (val.ignoreCase) flags = "i";
-      val = val.source;
-    } else {
-      val = String(val);
-    }
-    return new RegExp((caret === false ? "" : "^") + "(?:" + val + ")", flags);
-  }
-
-  function asToken(val) {
-    if (!val) return null;
-    if (val.apply) return val
-    if (typeof val == "string") return val.replace(/\./g, " ");
-    var result = [];
-    for (var i = 0; i < val.length; i++)
-      result.push(val[i] && val[i].replace(/\./g, " "));
-    return result;
-  }
-
-  function Rule(data, states) {
-    if (data.next || data.push) ensureState(states, data.next || data.push);
-    this.regex = toRegex(data.regex);
-    this.token = asToken(data.token);
-    this.data = data;
-  }
-
-  function tokenFunction(states, config) {
-    return function(stream, state) {
-      if (state.pending) {
-        var pend = state.pending.shift();
-        if (state.pending.length == 0) state.pending = null;
-        stream.pos += pend.text.length;
-        return pend.token;
-      }
-
-      if (state.local) {
-        if (state.local.end && stream.match(state.local.end)) {
-          var tok = state.local.endToken || null;
-          state.local = state.localState = null;
-          return tok;
-        } else {
-          var tok = state.local.mode.token(stream, state.localState), m;
-          if (state.local.endScan && (m = state.local.endScan.exec(stream.current())))
-            stream.pos = stream.start + m.index;
-          return tok;
-        }
-      }
-
-      var curState = states[state.state];
-      for (var i = 0; i < curState.length; i++) {
-        var rule = curState[i];
-        var matches = (!rule.data.sol || stream.sol()) && stream.match(rule.regex);
-        if (matches) {
-          if (rule.data.next) {
-            state.state = rule.data.next;
-          } else if (rule.data.push) {
-            (state.stack || (state.stack = [])).push(state.state);
-            state.state = rule.data.push;
-          } else if (rule.data.pop && state.stack && state.stack.length) {
-            state.state = state.stack.pop();
-          }
-
-          if (rule.data.mode)
-            enterLocalMode(config, state, rule.data.mode, rule.token);
-          if (rule.data.indent)
-            state.indent.push(stream.indentation() + config.indentUnit);
-          if (rule.data.dedent)
-            state.indent.pop();
-          var token = rule.token
-          if (token && token.apply) token = token(matches)
-          if (matches.length > 2 && rule.token && typeof rule.token != "string") {
-            state.pending = [];
-            for (var j = 2; j < matches.length; j++)
-              if (matches[j])
-                state.pending.push({text: matches[j], token: rule.token[j - 1]});
-            stream.backUp(matches[0].length - (matches[1] ? matches[1].length : 0));
-            return token[0];
-          } else if (token && token.join) {
-            return token[0];
-          } else {
-            return token;
-          }
-        }
-      }
-      stream.next();
-      return null;
-    };
-  }
-
-  function cmp(a, b) {
-    if (a === b) return true;
-    if (!a || typeof a != "object" || !b || typeof b != "object") return false;
-    var props = 0;
-    for (var prop in a) if (a.hasOwnProperty(prop)) {
-      if (!b.hasOwnProperty(prop) || !cmp(a[prop], b[prop])) return false;
-      props++;
-    }
-    for (var prop in b) if (b.hasOwnProperty(prop)) props--;
-    return props == 0;
-  }
-
-  function enterLocalMode(config, state, spec, token) {
-    var pers;
-    if (spec.persistent) for (var p = state.persistentStates; p && !pers; p = p.next)
-      if (spec.spec ? cmp(spec.spec, p.spec) : spec.mode == p.mode) pers = p;
-    var mode = pers ? pers.mode : spec.mode || CodeMirror.getMode(config, spec.spec);
-    var lState = pers ? pers.state : CodeMirror.startState(mode);
-    if (spec.persistent && !pers)
-      state.persistentStates = {mode: mode, spec: spec.spec, state: lState, next: state.persistentStates};
-
-    state.localState = lState;
-    state.local = {mode: mode,
-                   end: spec.end && toRegex(spec.end),
-                   endScan: spec.end && spec.forceEnd !== false && toRegex(spec.end, false),
-                   endToken: token && token.join ? token[token.length - 1] : token};
-  }
-
-  function indexOf(val, arr) {
-    for (var i = 0; i < arr.length; i++) if (arr[i] === val) return true;
-  }
-
-  function indentFunction(states, meta) {
-    return function(state, textAfter, line) {
-      if (state.local && state.local.mode.indent)
-        return state.local.mode.indent(state.localState, textAfter, line);
-      if (state.indent == null || state.local || meta.dontIndentStates && indexOf(state.state, meta.dontIndentStates) > -1)
-        return CodeMirror.Pass;
-
-      var pos = state.indent.length - 1, rules = states[state.state];
-      scan: for (;;) {
-        for (var i = 0; i < rules.length; i++) {
-          var rule = rules[i];
-          if (rule.data.dedent && rule.data.dedentIfLineStart !== false) {
-            var m = rule.regex.exec(textAfter);
-            if (m && m[0]) {
-              pos--;
-              if (rule.next || rule.push) rules = states[rule.next || rule.push];
-              textAfter = textAfter.slice(m[0].length);
-              continue scan;
-            }
-          }
-        }
-        break;
-      }
-      return pos < 0 ? 0 : state.indent[pos];
-    };
-  }
-});
-
-},{"../../lib/codemirror":"../node_modules/CodeMirror/lib/codemirror.js"}],"bas/basic-syntax.js":[function(require,module,exports) {
+},{"./codes.js":"bas/codes.js","../lib/unpack/unpack.js":"lib/unpack/unpack.js"}],"bas/basic-syntax.js":[function(require,module,exports) {
 "use strict";
 
-var _cm = _interopRequireDefault(require("./lib/cm.js"));
-
-require("CodeMirror/addon/mode/simple.js");
+var _cm = _interopRequireDefault(require("../lib/cm.js"));
 
 var _codes = _interopRequireDefault(require("./codes.js"));
 
@@ -11645,12 +11649,17 @@ _cm.default.defineSimpleMode('basic', {
     regex: /"(?:[^\\]|\\.)*?(?:"|$)/,
     token: 'string'
   }, {
+    regex: /(\s*\d+)(\b\s*)(;.*)/,
+    token: ['variable-3 basic-line-number', null, 'comment'],
+    sol: true,
+    eol: true
+  }, {
     regex: /\s*\d+\b/,
     token: 'variable-3 basic-line-number',
     sol: true
   }, {
-    regex: /(GO TO)(\s+)(\d+)\b/,
-    token: ['keyword', null, 'variable-3']
+    regex: /(GO SUB|GO TO)(\s+)(\d+)\b/,
+    token: ['keyword', null, 'variable-3 goto']
   }, {
     regex: /BIN\s[01]+/,
     token: 'number-binary number'
@@ -11663,9 +11672,6 @@ _cm.default.defineSimpleMode('basic', {
   }, {
     regex: new RegExp(`\\b(?:${$keywords.join('|')})(?:[\\b|\\s|]|$)`),
     token: 'keyword'
-  }, {
-    regex: /;.*/,
-    token: 'comment'
   }, {
     regex: /\b(REM)\b(.*)/,
     token: ['keyword', 'comment comment-body']
@@ -11680,7 +11686,7 @@ _cm.default.defineSimpleMode('basic', {
 });
 
 _cm.default.defineMIME('text/x-basic', 'basic');
-},{"./lib/cm.js":"bas/lib/cm.js","CodeMirror/addon/mode/simple.js":"../node_modules/CodeMirror/addon/mode/simple.js","./codes.js":"bas/codes.js"}],"lib/save.js":[function(require,module,exports) {
+},{"../lib/cm.js":"lib/cm.js","./codes.js":"bas/codes.js"}],"lib/save.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -12372,7 +12378,7 @@ function convertBlock(buffer) {
 
   return outputData;
 }
-},{}],"bas/lib/gist.js":[function(require,module,exports) {
+},{}],"lib/gist.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -12413,7 +12419,7 @@ var _$ = require("../lib/$.js");
 
 var _txt2bas = _interopRequireWildcard(require("./txt2bas.js"));
 
-var _cm = _interopRequireDefault(require("./lib/cm.js"));
+var _cm = _interopRequireDefault(require("../lib/cm.js"));
 
 var _bas2txt = require("./bas2txt.js");
 
@@ -12427,7 +12433,7 @@ var _index = require("../lib/audio/index.js");
 
 var _makeWav = require("../lib/audio/make-wav.js");
 
-var _gist = require("./lib/gist.js");
+var _gist = require("../lib/gist.js");
 
 function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
 
@@ -12449,10 +12455,44 @@ if (code) {
 
 const cm = _cm.default.fromTextArea(ta, {
   mode: 'text/x-basic',
-  viewportMargin: Infinity
+  lineWrapping: true,
+  viewportMargin: Infinity,
+  styleActiveLine: true
 });
 
+cm.getWrapperElement().addEventListener('click', e => {
+  if (e.altKey) {
+    let onToken = e.target.classList.contains('cm-goto');
+
+    if (onToken) {
+      const lineNumber = e.target.innerText.trim();
+      let target = null;
+      cm.eachLine(line => {
+        const {
+          text
+        } = line;
+
+        if (text.startsWith(lineNumber + ' ')) {
+          target = cm.getLineNumber(line);
+        }
+      });
+
+      if (target) {
+        cm.setCursor({
+          line: target,
+          ch: lineNumber.toString().length
+        });
+      }
+    }
+  }
+});
 cm.on('keydown', (cm, event) => {
+  if (event.altKey) {
+    document.body.classList.add('goto');
+  } else {
+    document.body.classList.remove('goto');
+  }
+
   if (event.key === 'Enter') {
     const cursor = cm.getCursor();
     const line = cm.getLine(cursor.line);
@@ -12473,7 +12513,7 @@ cm.on('keydown', (cm, event) => {
         text,
         line: lineNumber
       }) => {
-        // FIXME should thisn't be cm.line?
+        // FIXME: line isn't a thing
         if (lineNumber === line) {
           return; // skip the newly inserted line
         }
@@ -12525,13 +12565,29 @@ cm.on('keydown', (cm, event) => {
       if (removed) {
         cm.setCursor(cursor);
       } else {
-        cm.replaceRange('\n', {
+        let content = '\n';
+
+        if (event.shiftKey) {
+          const lineNumber = newLine.lineNumber;
+          const next = lines.map(_ => _.lineNumber).find(_ => _ > lineNumber) || lineNumber + 20;
+          const d = lineNumber + ((next - lineNumber) / 2 | 0);
+
+          if (d !== next & d !== lineNumber) {
+            content = `${d}  `;
+            cm.replaceRange('\n', {
+              line: insertLine + 1,
+              ch: 0
+            });
+          }
+        }
+
+        cm.replaceRange(content, {
           line: insertLine + 1,
-          ch: 0
+          ch: content.length - 1
         });
         cm.setCursor({
           line: insertLine + 1,
-          ch: 0
+          ch: content.length - 1
         });
       }
 
@@ -12634,7 +12690,7 @@ if (window.location.search) {
     if (file) cm.setValue(file);
   });
 }
-},{"../lib/dnd.js":"lib/dnd.js","../lib/$.js":"lib/$.js","./txt2bas.js":"bas/txt2bas.js","./lib/cm.js":"bas/lib/cm.js","./bas2txt.js":"bas/bas2txt.js","./basic-syntax.js":"bas/basic-syntax.js","../lib/save.js":"lib/save.js","../lib/unpack/lib.js":"lib/unpack/lib.js","../lib/audio/index.js":"lib/audio/index.js","../lib/audio/make-wav.js":"lib/audio/make-wav.js","./lib/gist.js":"bas/lib/gist.js"}],"../node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"../lib/dnd.js":"lib/dnd.js","../lib/$.js":"lib/$.js","./txt2bas.js":"bas/txt2bas.js","../lib/cm.js":"lib/cm.js","./bas2txt.js":"bas/bas2txt.js","./basic-syntax.js":"bas/basic-syntax.js","../lib/save.js":"lib/save.js","../lib/unpack/lib.js":"lib/unpack/lib.js","../lib/audio/index.js":"lib/audio/index.js","../lib/audio/make-wav.js":"lib/audio/make-wav.js","../lib/gist.js":"lib/gist.js"}],"../node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -12662,7 +12718,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "51348" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "55164" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
