@@ -42,7 +42,9 @@ cm.getWrapperElement().addEventListener('click', (e) => {
         }
       });
 
-      if (target) {
+      console.log('goto', { target, lineNumber });
+
+      if (target !== null) {
         cm.setCursor({ line: target, ch: lineNumber.toString().length });
       }
     }

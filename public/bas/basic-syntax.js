@@ -27,7 +27,7 @@ CodeMirror.defineSimpleMode('basic', {
     },
     { regex: /BIN\s[01]+/, token: 'number-binary number' },
     {
-      regex: /(?:0x[a-f\d]+|[-+]?(?:\.\d+|\d+\.?\d*)(?:e[-+]?\d+)?)/i,
+      regex: /(?:\$[a-f\d]+|[-+]?(?:\.\d+|\d+\.?\d*)(?:e[-+]?\d+)?)/i,
       token: 'number',
     },
     {
