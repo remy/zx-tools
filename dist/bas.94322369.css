@@ -46,7 +46,6 @@ body .CodeMirror {
 
 .cm-s-default .cm-variable-3 {
   color: grey;
-  text-decoration: underline;
 }
 
 .cm-s-default .cm-number {
@@ -56,6 +55,10 @@ body .CodeMirror {
 .cm-s-default .cm-basic-line-number {
   color: grey;
   text-decoration: none;
+}
+
+.cm-goto {
+  text-decoration: underline;
 }
 
 .goto .cm-goto {

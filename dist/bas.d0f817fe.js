@@ -11658,8 +11658,11 @@ _cm.default.defineSimpleMode('basic', {
     token: 'variable-3 basic-line-number',
     sol: true
   }, {
-    regex: /(GO SUB|GO TO)(\s+)(\d+)\b/,
-    token: ['keyword', null, 'variable-3 goto']
+    regex: /(GO SUB|GO TO|LINE)(\s+)(%?\d+)\b/,
+    token: ['keyword', null, 'number goto']
+  }, {
+    regex: /\b(PROC)(\s+)(.+)\(\)/,
+    token: ['keyword', null, 'goto goto-fn']
   }, {
     regex: /BIN\s[01]+/,
     token: 'number-binary number'
@@ -12465,27 +12468,41 @@ cm.getWrapperElement().addEventListener('click', e => {
     let onToken = e.target.classList.contains('cm-goto');
 
     if (onToken) {
-      const lineNumber = e.target.innerText.trim();
+      const fnSearch = e.target.classList.contains('cm-goto-fn');
+      let needle = e.target.innerText.trim();
+      const seed = needle;
+
+      if (fnSearch) {
+        needle = 'DEFPROC ' + needle + '(';
+      } else {
+        if (needle.startsWith('%')) {
+          needle = needle.substring(1);
+        }
+
+        console.log('num search');
+        needle += ' ';
+      }
+
       let target = null;
       cm.eachLine(line => {
         const {
           text
         } = line;
 
-        if (text.startsWith(lineNumber + ' ')) {
+        if (fnSearch) {
+          if (text.includes(needle)) target = cm.getLineNumber(line);
+        } else if (text.startsWith(needle)) {
           target = cm.getLineNumber(line);
         }
-      });
-      console.log('goto', {
-        target,
-        lineNumber
       });
 
       if (target !== null) {
         cm.setCursor({
           line: target,
-          ch: lineNumber.toString().length
+          ch: needle.toString().length
         });
+      } else {
+        console.log(`No ${fnSearch ? 'function' : 'line'} matching ${seed}`);
       }
     }
   }
@@ -12574,9 +12591,10 @@ cm.on('keydown', (cm, event) => {
         if (event.shiftKey) {
           const lineNumber = newLine.lineNumber;
           const next = lines.map(_ => _.lineNumber).find(_ => _ > lineNumber) || lineNumber + 20;
-          const d = lineNumber + ((next - lineNumber) / 2 | 0);
+          let d = lineNumber + ((next - lineNumber) / 2 | 0);
 
           if (d !== next & d !== lineNumber) {
+            if (d > 10) d = lineNumber + 10;
             content = `${d}  `;
             cm.replaceRange('\n', {
               line: insertLine + 1,
@@ -12722,7 +12740,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "56488" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "59053" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
