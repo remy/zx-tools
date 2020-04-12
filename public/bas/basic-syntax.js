@@ -22,8 +22,12 @@ CodeMirror.defineSimpleMode('basic', {
     },
     { regex: /\s*\d+\b/, token: 'variable-3 basic-line-number', sol: true },
     {
-      regex: /(GO SUB|GO TO)(\s+)(\d+)\b/,
-      token: ['keyword', null, 'variable-3 goto'],
+      regex: /(GO SUB|GO TO|LINE)(\s+)(%?\d+)\b/,
+      token: ['keyword', null, 'number goto'],
+    },
+    {
+      regex: /\b(PROC)(\s+)(.+)\(\)/,
+      token: ['keyword', null, 'goto goto-fn'],
     },
     { regex: /BIN\s[01]+/, token: 'number-binary number' },
     {
