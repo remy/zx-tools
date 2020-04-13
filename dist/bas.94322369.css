@@ -55,6 +55,9 @@ body .CodeMirror {
 .cm-s-default .cm-basic-line-number {
   color: grey;
   text-decoration: none;
+  display: inline-block;
+  width: 4ch;
+  text-align: right;
 }
 
 .cm-goto {
