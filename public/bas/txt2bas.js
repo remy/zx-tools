@@ -132,7 +132,6 @@ export default class Lexer {
     return res;
   }
 
-  // TODO arrays
   line(line) {
     this.input(line);
     this.inLiteral = false;
@@ -148,16 +147,12 @@ export default class Lexer {
         continue;
       }
 
+      // ast
       if (name === 'KEYWORD') {
         length++;
         tokens.push(token);
         if (codes[value] === 'REM') {
           token = this._processComment();
-          length += token.value.length;
-          tokens.push(token);
-        }
-        if (codes[value] === 'BIN') {
-          token = this._processBinary(); // ?
           length += token.value.length;
           tokens.push(token);
         }
@@ -275,11 +270,10 @@ export default class Lexer {
       } else if (c === '.' && Lexer._isDigit(_next)) {
         return this._processNumber();
       } else if (Lexer._isDigit(c)) {
-        return this._processNumber();
-      } else if (Lexer._isLiteralReset(c)) {
-        this.inLiteral = false;
-        return { name: 'SYMBOL', value: c, pos: this.pos++ };
-      } else if (Lexer._isStatementSep(c)) {
+        const res = this._processNumber();
+        this.inBinary = false;
+        return res;
+      } else if (Lexer._isLiteralReset(c) || Lexer._isStatementSep(c)) {
         this.inLiteral = false;
         return { name: 'SYMBOL', value: c, pos: this.pos++ };
       } else if (Lexer._isSymbol(c)) {
@@ -417,32 +411,14 @@ export default class Lexer {
       name = 'LITERAL_NUMBER';
     }
 
+    if (this.inBinary) {
+      numeric = parseInt(value, 2);
+    }
+
     var tok = {
       name,
       value,
       numeric,
-      pos: this.pos,
-    };
-    this.pos = endPos;
-    return tok;
-  }
-
-  _processBinary(start = '') {
-    this._skipNonTokens();
-
-    if (start.length) {
-      this.pos += start.length;
-    }
-
-    var endPos = this.pos;
-
-    while (endPos < this.bufLen && Lexer._isBinary(this.buf.charAt(endPos))) {
-      endPos++;
-    }
-
-    var tok = {
-      name: 'BINARY',
-      value: start + this.buf.substring(this.pos, endPos).trim(),
       pos: this.pos,
     };
     this.pos = endPos;
@@ -485,6 +461,10 @@ export default class Lexer {
       const peeked = this._peekToken(-1).toUpperCase();
       if (ignorePeek === false && curr !== peeked) {
         return false;
+      }
+
+      if (curr == 'BIN') {
+        this.inBinary = true;
       }
       this.pos = endPos;
 
@@ -574,9 +554,8 @@ export default class Lexer {
 // const l = new Lexer();
 // const res = l.line(
 //   `
-// 5 let b=@01111100
-
+//   10 ; one
 // `.trim()
 // ); // ?
 
-// bas2txtLines(res.basic); // ?
+// res.basic.slice(-8);
