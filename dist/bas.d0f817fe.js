@@ -951,7 +951,18 @@ class Lexer {
       // Not an operator - so it's the beginning of another token.
       // if alpha or starts with 0 (which can only be binary)
       if (Lexer._isAlpha(c) || c === '' || c === '.' && Lexer._isAlpha(_next)) {
-        return this._processIdentifier();
+        const res = this._processIdentifier();
+
+        if (res.name === 'KEYWORD') {
+          if (res.keyword === 'IF') {
+            this.inIf = true;
+          } else if (res.keyword === 'THEN') {
+            this.inIf = false;
+            this.inLiteral = false;
+          }
+        }
+
+        return res;
       } else if (Lexer._isStartOfComment(c)) {
         return this._processComment();
       } else if (Lexer._isLiteralNumeric(c)) {
@@ -969,7 +980,10 @@ class Lexer {
         this.inBinary = false;
         return res;
       } else if (Lexer._isLiteralReset(c) || Lexer._isStatementSep(c)) {
-        this.inLiteral = false;
+        if (!this.inIf) {
+          this.inLiteral = false;
+        }
+
         return {
           name: 'SYMBOL',
           value: c,
@@ -1151,8 +1165,15 @@ class Lexer {
       }
     }
 
+    if (_next === '$' && this.opTable[curr + _next]) {
+      curr = curr + _next;
+      endPos = endPos + 1 + _next.length;
+      ignorePeek = true;
+    }
+
     if (this.opTable[curr] !== undefined) {
-      const peeked = this._peekToken(-1).toUpperCase();
+      const peeked = this._peekToken(-1).toUpperCase(); // ?
+
 
       if (ignorePeek === false && curr !== peeked) {
         return false;
@@ -1166,7 +1187,8 @@ class Lexer {
       return {
         name: 'KEYWORD',
         value: this.opTable[curr],
-        pos: this.pos
+        pos: this.pos,
+        keyword: curr
       };
     }
 
@@ -1203,14 +1225,16 @@ class Lexer {
       endPos++;
     }
 
-    let tok = this._isOpCode(endPos);
+    let tok = this._isOpCode(endPos); // ?
+
 
     if (tok) {
       return tok;
     } // special case for GO<space>[TO|SUB]
 
 
-    let value = this.buf.substring(this.pos, endPos);
+    let value = this.buf.substring(this.pos, endPos); // ?
+
     tok = {
       name: 'IDENTIFIER',
       value,
@@ -1249,16 +1273,15 @@ class Lexer {
     }
   }
 
-} // const l = new Lexer();
-// const res = l.line(
-//   `
-//   10 ; one
-// `.trim()
-// ); // ?
-// res.basic.slice(-8);
-
+}
 
 exports.default = Lexer;
+const l = new Lexer();
+const res = l.line(`
+  280 IF %j&@1000=@1000 THEN GO SUB 7000: REM up
+`.trim()); // ?
+
+res.basic.slice(-8);
 },{"./codes.js":"bas/codes.js","../lib/to.js":"lib/to.js","../lib/unpack/pack.js":"lib/unpack/pack.js"}],"../node_modules/CodeMirror/lib/codemirror.js":[function(require,module,exports) {
 var define;
 var global = arguments[3];
@@ -11826,14 +11849,14 @@ _cm.default.defineSimpleMode('basic', {
     eol: true
   }, {
     regex: /(:)\s*(;.*)/,
-    token: [null, 'comment'],
-    eol: true
+    token: [null, 'comment'] // eol: true,
+
   }, {
     regex: /\s*\d+\b/,
     token: 'variable-3 basic-line-number',
     sol: true
   }, {
-    regex: /(GO SUB|GO TO|LINE)(\s+)(%?\d+)\b/,
+    regex: /(GO SUB|GO TO|LINE|THEN)(\s+)(%?\d+)\b/,
     token: ['keyword', null, 'number goto']
   }, {
     regex: /\b(PROC)(\s+)(.+)\(\)/,
@@ -12877,7 +12900,7 @@ function download(action) {
   }
 }
 
-_cm.default.commands.save = () => download('tap');
+_cm.default.commands.save = () => download('3dos');
 
 (0, _dnd.default)(document.body, file => {
   if (file[0] === 0x13) {
@@ -12925,7 +12948,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "59489" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "51263" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
