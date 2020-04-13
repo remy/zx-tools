@@ -20,6 +20,11 @@ CodeMirror.defineSimpleMode('basic', {
       sol: true,
       eol: true,
     },
+    {
+      regex: /(:)\s*(;.*)/,
+      token: [null, 'comment'],
+      eol: true,
+    },
     { regex: /\s*\d+\b/, token: 'variable-3 basic-line-number', sol: true },
     {
       regex: /(GO SUB|GO TO|LINE)(\s+)(%?\d+)\b/,

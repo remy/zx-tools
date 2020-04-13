@@ -26,6 +26,7 @@ const cm = CodeMirror.fromTextArea(ta, {
   lineWrapping: true,
   viewportMargin: Infinity,
   styleActiveLine: true,
+  autoCloseBrackets: true,
 });
 
 cm.getWrapperElement().addEventListener('click', (e) => {
@@ -133,7 +134,9 @@ cm.on('keydown', (cm, event) => {
       });
 
       const res = bas2txtLines(basic);
+
       cm.setValue(res);
+      const scroll = cm.getScrollerElement().scrollTop;
 
       // attempt to put the cursor back in the best spot
       if (removed) {
@@ -148,16 +151,26 @@ cm.on('keydown', (cm, event) => {
 
           let d = lineNumber + (((next - lineNumber) / 2) | 0);
           if ((d !== next) & (d !== lineNumber)) {
-            if (d > 10) d = lineNumber + 10;
+            console.log({ d, lineNumber });
+            if (d - lineNumber > 10) d = lineNumber + 10;
             content = `${d}  `;
             cm.replaceRange('\n', { line: insertLine + 1, ch: 0 });
           }
         }
+
         cm.replaceRange(content, {
           line: insertLine + 1,
           ch: content.length - 1,
         });
-        cm.setCursor({ line: insertLine + 1, ch: content.length - 1 });
+        cm.setCursor({
+          line: insertLine + 1,
+          ch: content.length - 1,
+        });
+
+        // microtick to put the scrollbar back
+        Promise.resolve(0).then(() => {
+          cm.getScrollerElement().scrollTop = scroll;
+        });
       }
 
       event.preventDefault();
