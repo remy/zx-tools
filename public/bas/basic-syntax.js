@@ -23,11 +23,11 @@ CodeMirror.defineSimpleMode('basic', {
     {
       regex: /(:)\s*(;.*)/,
       token: [null, 'comment'],
-      eol: true,
+      // eol: true,
     },
     { regex: /\s*\d+\b/, token: 'variable-3 basic-line-number', sol: true },
     {
-      regex: /(GO SUB|GO TO|LINE)(\s+)(%?\d+)\b/,
+      regex: /(GO SUB|GO TO|LINE|THEN)(\s+)(%?\d+)\b/,
       token: ['keyword', null, 'number goto'],
     },
     {

@@ -261,7 +261,16 @@ export default class Lexer {
         c === '' ||
         (c === '.' && Lexer._isAlpha(_next))
       ) {
-        return this._processIdentifier();
+        const res = this._processIdentifier();
+        if (res.name === 'KEYWORD') {
+          if (res.keyword === 'IF') {
+            this.inIf = true;
+          } else if (res.keyword === 'THEN') {
+            this.inIf = false;
+            this.inLiteral = false;
+          }
+        }
+        return res;
       } else if (Lexer._isStartOfComment(c)) {
         return this._processComment();
       } else if (Lexer._isLiteralNumeric(c)) {
@@ -274,7 +283,9 @@ export default class Lexer {
         this.inBinary = false;
         return res;
       } else if (Lexer._isLiteralReset(c) || Lexer._isStatementSep(c)) {
-        this.inLiteral = false;
+        if (!this.inIf) {
+          this.inLiteral = false;
+        }
         return { name: 'SYMBOL', value: c, pos: this.pos++ };
       } else if (Lexer._isSymbol(c)) {
         if (c === '<' || c === '>') {
@@ -457,8 +468,14 @@ export default class Lexer {
       }
     }
 
+    if (_next === '$' && this.opTable[curr + _next]) {
+      curr = curr + _next;
+      endPos = endPos + 1 + _next.length;
+      ignorePeek = true;
+    }
+
     if (this.opTable[curr] !== undefined) {
-      const peeked = this._peekToken(-1).toUpperCase();
+      const peeked = this._peekToken(-1).toUpperCase(); // ?
       if (ignorePeek === false && curr !== peeked) {
         return false;
       }
@@ -472,6 +489,7 @@ export default class Lexer {
         name: 'KEYWORD',
         value: this.opTable[curr],
         pos: this.pos,
+        keyword: curr,
       };
     }
     return false;
@@ -504,14 +522,14 @@ export default class Lexer {
       endPos++;
     }
 
-    let tok = this._isOpCode(endPos);
+    let tok = this._isOpCode(endPos); // ?
 
     if (tok) {
       return tok;
     }
 
     // special case for GO<space>[TO|SUB]
-    let value = this.buf.substring(this.pos, endPos);
+    let value = this.buf.substring(this.pos, endPos); // ?
 
     tok = {
       name: 'IDENTIFIER',
@@ -551,11 +569,11 @@ export default class Lexer {
   }
 }
 
-// const l = new Lexer();
-// const res = l.line(
-//   `
-//   10 ; one
-// `.trim()
-// ); // ?
+const l = new Lexer();
+const res = l.line(
+  `
+  280 IF %j&@1000=@1000 THEN GO SUB 7000: REM up
+`.trim()
+); // ?
 
-// res.basic.slice(-8);
+res.basic.slice(-8);

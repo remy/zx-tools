@@ -252,7 +252,7 @@ function download(action) {
   }
 }
 
-CodeMirror.commands.save = () => download('tap');
+CodeMirror.commands.save = () => download('3dos');
 
 dnd(document.body, (file) => {
   if (file[0] === 0x13) {
