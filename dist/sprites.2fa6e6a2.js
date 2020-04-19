@@ -2817,15 +2817,442 @@ class TileMap {
 }
 
 exports.default = TileMap;
-},{"./SpriteSheet.js":"sprites/SpriteSheet.js","../lib/$.js":"lib/$.js","../lib/track-down.js":"lib/track-down.js"}],"bas/codes.js":[function(require,module,exports) {
-"use strict";
+},{"./SpriteSheet.js":"sprites/SpriteSheet.js","../lib/$.js":"lib/$.js","../lib/track-down.js":"lib/track-down.js"}],"../node_modules/@remy/unpack/dist/index.js":[function(require,module,exports) {
+var define;
+var global = arguments[3];
+(function (global, factory) {
+  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) : typeof define === 'function' && define.amd ? define(['exports'], factory) : (global = global || self, factory(global.unpack = {}));
+})(this, function (exports) {
+  'use strict';
 
-Object.defineProperty(exports, "__esModule", {
-  value: true
+  if (!DataView.prototype.getUint64) DataView.prototype.getUint64 = function (byteOffset, littleEndian) {
+    // split 64-bit number into two 32-bit (4-byte) parts
+    const left = this.getUint32(byteOffset, littleEndian);
+    const right = this.getUint32(byteOffset + 4, littleEndian); // combine the two 32-bit values
+
+    const combined = littleEndian ? left + 2 ** 32 * right : 2 ** 32 * left + right;
+    if (!Number.isSafeInteger(combined)) console.warn(combined, 'exceeds MAX_SAFE_INTEGER. Precision may be lost');
+    return combined;
+  };
+  if (!DataView.prototype.getUint64) DataView.prototype.getInt64 = function (byteOffset, littleEndian) {
+    // split 64-bit number into two 32-bit (4-byte) parts
+    const left = this.getInt32(byteOffset, littleEndian);
+    const right = this.getInt32(byteOffset + 4, littleEndian); // combine the two 32-bit values
+
+    const combined = littleEndian ? left + 2 ** 32 * right : 2 ** 32 * left + right;
+    if (!Number.isSafeInteger(combined)) console.warn(combined, 'exceeds MAX_SAFE_INTEGER. Precision may be lost');
+    return combined;
+  };
+  const pattern = '([aAZbBhHcCWqQnNvVuUx@]|[sSlLiI][\\!><]?)(?:([\\d*]+)|(?:\\[(.*)\\]))?(?:\\$([a-zA-Z0-9_]+)\\b)?';
+  const typeMap = {
+    x: {
+      length: 1
+    },
+    b: {
+      length: 1
+    },
+    //B: { length: 1, fn: 'Uint8', little: true }, // bit
+    // h: { length: 2, fn: 'Uint16' },
+    // H: { length: 2, fn: 'Uint16', little: true }, // nibble
+    c: {
+      length: 1,
+      fn: 'Int8',
+      array: Int8Array
+    },
+    // char == byte
+    C: {
+      length: 1,
+      fn: 'Uint8',
+      array: Uint8Array
+    },
+    a: {
+      length: 1,
+      fn: 'Uint8'
+    },
+    // string with arbitrary, null padded
+    A: {
+      length: 1,
+      fn: 'Uint8'
+    },
+    // string with arbitrary, space padded
+    s: {
+      length: 2,
+      fn: 'Int16',
+      array: Int16Array
+    },
+    S: {
+      length: 2,
+      fn: 'Uint16',
+      array: Uint16Array
+    },
+    i: {
+      length: 4,
+      fn: 'Int32',
+      array: Int32Array
+    },
+    I: {
+      length: 4,
+      fn: 'Uint32',
+      array: Uint32Array
+    },
+    l: {
+      length: 8,
+      fn: 'Int64'
+    },
+    L: {
+      length: 8,
+      fn: 'Uint64'
+    },
+    n: {
+      length: 2,
+      fn: 'Uint16',
+      little: false
+    },
+    N: {
+      length: 4,
+      fn: 'Uint32',
+      little: false
+    },
+    f: {
+      length: 4,
+      fn: 'Float32',
+      array: Float32Array
+    },
+    d: {
+      length: 8,
+      fn: 'Float64',
+      array: Float64Array
+    }
+  };
+
+  const decode = a => new TextDecoder().decode(a);
+
+  const encode = a => new TextEncoder().encode(a);
+
+  function binarySlice(value, ptr, length) {
+    if (!length || isNaN(length)) {
+      length = 8 - ptr;
+    }
+
+    const mask = 2 ** length - 1;
+    const shift = 8 - (ptr + length);
+    const res = value >> shift & mask;
+    return res;
+  }
+
+  class Unpack {
+    constructor(data) {
+      this.data = data;
+      this.offset = 0;
+    }
+
+    parse(template) {
+      const res = unpack(template, this.data, this.offset);
+      this.last = res;
+
+      if (!res) {
+        return res;
+      }
+
+      this.offset = res.__offset;
+      delete res.__offset;
+      return res;
+    }
+
+  }
+
+  function unpack(template, data, offset = 0) {
+    const result = {}; // return an object
+
+    if (Array.isArray(data)) {
+      data = Uint8Array.from(data);
+    }
+
+    if (typeof data === 'string') {
+      data = encode(data).buffer; // ?
+    } else if (typeof data === 'number') {
+      if ((data | 0) !== data) {
+        // float
+        data = Float64Array.from([data]).buffer;
+      } else {
+        data = Int32Array.from([data]).buffer;
+      }
+    } else if (ArrayBuffer.isView(data)) {
+      data = data.buffer;
+    }
+
+    if (offset >= data.byteLength) {
+      return null;
+    }
+
+    const re = new RegExp(pattern, 'g');
+    let m = [];
+    let bytePtr = 0;
+    const firstChr = template[0];
+    const defaultLittle = firstChr === '<' ? true : false;
+    let templateCounter = -1;
+
+    while (m = re.exec(template)) {
+      templateCounter++;
+      const index = m[4] || templateCounter;
+      let little = defaultLittle;
+      let length = null;
+
+      if (typeMap[m[2]]) {
+        length = typeMap[m[2]].length;
+      } else {
+        length = parseInt(m[2] || 1);
+      }
+
+      let c = m[1];
+
+      if (c.length === 2) {
+        little = c[1] === '<';
+        c = c[0];
+      }
+
+      const type = typeMap[c];
+
+      if (!type) {
+        throw new Error(`unsupported type "${c}"`);
+      }
+
+      if (type.little !== undefined) {
+        little = type.little;
+      }
+
+      const size = type.length; // ?
+
+      let end = c === 'b' ? 1 : size * length;
+
+      if (isNaN(length)) {
+        end = data.byteLength - offset;
+      }
+
+      if (offset + end > data.byteLength) {
+        // return result;
+        break;
+      }
+
+      const view = new DataView(data, offset, end);
+
+      if (c !== 'b') {
+        // reset the byte counter
+        bytePtr = 0;
+      }
+
+      switch (c) {
+        case 'b':
+          c = view.getUint8(0, little);
+          result[index] = binarySlice(c, bytePtr, length);
+          bytePtr += length;
+
+          if (bytePtr > 7) {
+            offset++;
+            bytePtr = 0;
+          }
+
+          break;
+
+        case 'x':
+          // x is skipped null bytes
+          templateCounter--;
+          offset += end;
+          break;
+
+        case 'a':
+        case 'A':
+          result[index] = decode(view).padEnd(length, c === 'A' ? ' ' : '\0');
+
+          if (c === 'a' && result[index].indexOf('\0') !== -1) {
+            result[index] = result[index].substring(0, result[index].indexOf('\0'));
+          }
+
+          offset += end;
+          break;
+
+        default:
+          if (length > 1) {
+            result[index] = new type.array(view.buffer.slice(offset, offset + end));
+          } else {
+            result[index] = view[`get${type.fn}`](0, little);
+          }
+
+          offset += end;
+          break;
+      }
+    }
+
+    result.__offset = offset;
+    return result;
+  } // unpack('<I$length', Uint8Array.from([0xe7, 0x00, 0x00, 0x00])); // ?
+
+
+  var unpack$1 = /*#__PURE__*/Object.freeze({
+    __proto__: null,
+    Unpack: Unpack,
+    'default': unpack
+  });
+
+  function pack(template, data, offset = 0) {
+    if (ArrayBuffer.isView(data)) {
+      data = data.buffer;
+    }
+
+    const re = new RegExp(pattern, 'g');
+    let m = [];
+    let bytePtr = 0;
+    const firstChr = template[0];
+    const defaultLittle = firstChr === '<' ? true : false;
+    let templateCounter = -1;
+    let dataLength = 0;
+
+    while (m = re.exec(template)) {
+      let length = null;
+
+      if (typeMap[m[2]]) {
+        length = typeMap[m[2]].length;
+      } else {
+        length = parseInt(m[2] || 1);
+      }
+
+      let c = m[1];
+
+      if (c.length === 2) {
+        // little = c[1] === '<';
+        c = c[0];
+      }
+
+      const type = typeMap[c];
+
+      if (!type) {
+        throw new Error(`unsupported type "${c}"`);
+      }
+
+      const size = type.length;
+      let end = c === 'b' ? length / 8 : size * length;
+
+      if (isNaN(length)) {
+        end = data.byteLength - offset;
+      }
+
+      dataLength += end; // ?
+    }
+
+    const result = new DataView(new ArrayBuffer(dataLength));
+
+    while (m = re.exec(template)) {
+      templateCounter++;
+      const index = m[4] || templateCounter;
+      let little = defaultLittle;
+      let length = null;
+
+      if (typeMap[m[2]]) {
+        length = typeMap[m[2]].length;
+      } else {
+        length = parseInt(m[2] || 1);
+      }
+
+      let c = m[1];
+
+      if (c.length === 2) {
+        little = c[1] === '<';
+        c = c[0];
+      }
+
+      const type = typeMap[c];
+
+      if (!type) {
+        throw new Error(`unsupported type "${c}"`);
+      } // forced endianness
+
+
+      if (type.little !== undefined) {
+        little = type.little;
+      }
+
+      const size = type.length;
+      let end = c === 'b' ? 1 : size * length;
+
+      if (isNaN(length)) {
+        end = data.byteLength - offset;
+      }
+
+      if (offset + end > data.byteLength) {
+        // return result;
+        break;
+      }
+
+      if (c !== 'b') {
+        // reset the byte counter
+        bytePtr = 0;
+      }
+
+      switch (c) {
+        case 'b':
+          result.setUint8(offset, result.getUint8(offset) | data[index] << 8 - bytePtr - length);
+          bytePtr += length;
+
+          if (bytePtr > 7) {
+            offset++;
+            bytePtr = 0;
+          }
+
+          break;
+
+        case 'x':
+          // x is skipped null bytes
+          templateCounter--;
+          offset += end;
+          result.setUint8(offset, 0x00);
+          break;
+
+        case 'a':
+        case 'A':
+          // eslint-disable-next-line no-case-declarations
+          const value = new Uint8Array(result.buffer, offset, end);
+          value.set(encode(data[index]));
+          offset += end;
+          break;
+
+        default:
+          if (length > 1) {
+            for (let i = index; i < index + length; i++) {
+              result[`set${type.fn}`](offset, data[i], little);
+              templateCounter++;
+              offset += type.length;
+            }
+          } else {
+            result[`set${type.fn}`](offset, data[index], little);
+          }
+
+          offset += end;
+          break;
+      }
+    }
+
+    return new Uint8Array(result.buffer);
+  }
+
+  var pack$1 = /*#__PURE__*/Object.freeze({
+    __proto__: null,
+    'default': pack
+  });
+  exports.pack = pack$1;
+  exports.unpack = unpack$1;
+  Object.defineProperty(exports, '__esModule', {
+    value: true
+  });
 });
-exports.default = void 0;
+},{}],"../node_modules/txt2bas/dist/index.js":[function(require,module,exports) {
+'use strict';
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
+var unpack = require('@remy/unpack');
+
 // https://en.wikipedia.org/wiki/ZX_Spectrum_character_set
-var _default = {
+var BASIC = {
   // 0x3a: ':',
   // 0x2a: '*',
   0x87: 'PEEK$',
@@ -2904,8 +3331,8 @@ var _default = {
   0xd0: 'FORMAT',
   0xd1: 'MOVE',
   0xd2: 'ERASE',
-  0xd3: 'OPEN#',
-  0xd4: 'CLOSE#',
+  0xd3: 'OPEN',
+  0xd4: 'CLOSE',
   0xd5: 'MERGE',
   0xd6: 'VERIFY',
   0xd7: 'BEEP',
@@ -2948,49 +3375,18 @@ var _default = {
   0xfc: 'DRAW',
   0xfd: 'CLEAR',
   0xfe: 'RETURN',
-  0xff: 'COPY'
-};
-exports.default = _default;
-},{}],"lib/to.js":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.zxToFloat = exports.floatToZX = exports.toHex = exports.toBinary = void 0;
-
-const toBinary = (n, size = 8) => {
-  if (n < 0) {
-    return Array.from({
-      length: size
-    }, (_, i) => {
-      return (n >> i & 1) === 1 ? 1 : 0;
-    }).reverse().join('');
-  }
-
-  return n.toString(2).padStart(size, 0);
+  0xff: 'COPY',
 };
 
-exports.toBinary = toBinary;
-
-const toHex = (n, size = 8) => {
-  if (n < 0) {
-    n = parseInt(toBinary(n, size), 2);
-  }
-
-  return n.toString(16).padStart(size / (8 / 2), 0).toUpperCase();
-}; // https://www.facebook.com/groups/ZXNextBasic/permalink/792585537934454/?comment_id=792727721253569
+// https://www.facebook.com/groups/ZXNextBasic/permalink/792585537934454/?comment_id=792727721253569
 // by Daniel A. Nagy originally in C, bless his socks
-
-
-exports.toHex = toHex;
-
 const floatToZX = input => {
   const sign = input < 0;
   const out = new Uint8Array(5);
-  if (sign) input = -input;
-  out[0] = 0x80;
 
+  if (sign) input = -input;
+
+  out[0] = 0x80;
   while (input < 0.5) {
     input *= 2;
     out[0]--;
@@ -3003,7 +3399,9 @@ const floatToZX = input => {
 
   input *= 0x100000000;
   input += 0.5;
+
   let mantissa = input;
+
   out[1] = mantissa >> 24;
   mantissa &= 0xffffff;
   out[2] = mantissa >> 16;
@@ -3012,32 +3410,930 @@ const floatToZX = input => {
   mantissa &= 0xff;
   out[4] = mantissa;
   if (!sign) out[1] &= 0x7f;
+
   return out;
 };
 
-exports.floatToZX = floatToZX;
+const pack = unpack.pack.default;
 
-const zxToFloat = source => {
-  const view = new DataView(source.buffer);
-  const exp = view.getUint8(0) - 128;
-  let mantissa = view.getUint32(1, false);
-  let sign = mantissa >>> 31 ? -1 : 1;
-  mantissa = mantissa | 0x80000000;
-  let frac = 0;
+const encode = (a) => new TextEncoder().encode(a);
 
-  for (let i = 0; i < 32; i++) {
-    if (mantissa >> i & 1) {
-      const v = Math.pow(2, -(32 - i));
-      frac += v;
+const calculateXORChecksum = (array) =>
+  Uint8Array.of(array.reduce((checksum, item) => checksum ^ item, 0))[0];
+
+const opTable = Object.entries(BASIC).reduce(
+  (acc, [code, str]) => {
+    acc[str] = parseInt(code);
+    return acc;
+  },
+  {
+    GOTO: 0xec,
+  }
+);
+
+/*
+header unpack template:
+<S$headerLength
+C$flagByte
+C$type
+A10$filename
+S$length
+S$autostart
+S$varStart
+C$checksum
+
+S$nextBlockLength
+
+C$blockType
+C……$data
+C$blockChecksum
+*/
+
+const tapHeader = (basic, filename = 'BASIC') => {
+  // FIXME is this autostart actually correct?
+  const autostart = new DataView(basic.buffer).getUint16(0, false);
+  const res = pack(
+    '<S$headerLength C$flagByte C$type A10$filename S$length S$p1 S$p2 C$checksum',
+    {
+      headerLength: 19,
+      flagByte: 0x0, // header
+      type: 0x00, // program
+      filename: filename.slice(0, 10), // 10 chrs max
+      length: basic.length,
+      p1: autostart,
+      p2: basic.length,
+      checksum: 0, // solved later
+    }
+  );
+
+  const checksum = calculateXORChecksum(res.slice(2, 20));
+
+  res[res.length - 1] = checksum;
+
+  return res;
+};
+
+const asTap = (basic, filename = 'tap dot js') => {
+  const header = tapHeader(basic, filename);
+  const dataType = 0xff;
+  const checksum = calculateXORChecksum(Array.from([dataType, ...basic]));
+  const tapData = new Uint8Array(header.length + basic.length + 2 + 2); // ? [header.length, basic.length]
+  tapData.set(header, 0); // put header in tap
+  new DataView(tapData.buffer).setUint16(header.length, basic.length + 2, true); // set follow block length (plus 2 for flag + checksum)
+
+  tapData[header.length + 2] = dataType; // data follows
+  tapData.set(basic, header.length + 3); // put basic binary in tap
+  tapData[tapData.length - 1] = checksum; // finish with 8bit checksum
+
+  return tapData;
+};
+
+const plus3DOSHeader = (basic, opts = { autostart: 128 }) => {
+  let { hType = 0, hOffset = basic.length - 128, autostart } = opts;
+  const hFileLength = hOffset;
+  autostart = new DataView(Uint16Array.of(autostart).buffer).getUint16(
+    0,
+    false
+  );
+  const res = pack(
+    '< A8$sig C$eof C$issue C$version I$length C$hType S$hFileLength n$autostart S$hOffset',
+    {
+      sig: 'PLUS3DOS',
+      eof: 26,
+      issue: 1,
+      version: 0,
+      length: basic.length,
+      hType,
+      hFileLength,
+      autostart,
+      hOffset,
+    }
+  );
+
+  const checksum = Array.from(res).reduce((acc, curr) => (acc += curr), 0);
+
+  const result = new Uint8Array(128);
+  result.set(res, 0);
+  result[127] = checksum;
+
+  return result;
+};
+
+// Based on (with huge mods) https://eli.thegreenplace.net/2013/07/16/hand-written-lexer-in-javascript-compared-to-the-regex-based-ones
+class Lexer {
+  constructor() {
+    this.pos = 0;
+    this.buf = null;
+    this.bufLen = 0;
+    this.opTable = opTable;
+  }
+
+  // Operator table, mapping operator -> token name
+
+  // Initialize the Lexer's buffer. This resets the lexer's internal
+  // state and subsequent tokens will be returned starting with the
+  // beginning of the new buffer.
+  input(buf) {
+    this.pos = 0;
+    this.buf = buf;
+    this.bufLen = buf.length;
+  }
+
+  lines(lines) {
+    const data = lines.split('\n').map((line) => this.line(line).basic);
+    const len = data.reduce((acc, curr) => (acc += curr.length), 0);
+    const res = new Uint8Array(len);
+    let offset = 0;
+    data.forEach((line) => {
+      res.set(line, offset);
+      offset += line.length;
+    });
+    return res;
+  }
+
+  line(line) {
+    this.input(line);
+    this.inLiteral = false;
+    let lineNumber = null;
+    let tokens = [];
+    let length = 0;
+
+    let token = null;
+    while ((token = this.token())) {
+      const { name, value } = token;
+      if (!lineNumber && name === 'NUMBER') {
+        lineNumber = parseInt(value, 10);
+        this.startOfStatement = true;
+        continue;
+      }
+
+      this.startOfStatement = false;
+
+      // ast
+      if (name === 'KEYWORD') {
+        length++;
+        tokens.push(token);
+        if (BASIC[value] === 'REM') {
+          token = this._processComment();
+          length += token.value.length;
+          tokens.push(token);
+          this.startOfStatement = true;
+        }
+      } else if (name === 'NUMBER') {
+        length += value.toString().length;
+        const { numeric } = token;
+        tokens.push(token);
+
+        if (
+          (numeric | 0) === numeric &&
+          numeric >= -65535 &&
+          numeric <= 65535
+        ) {
+          const view = new DataView(new ArrayBuffer(6));
+          view.setUint8(0, 0x0e);
+          view.setUint8(1, 0x00);
+          view.setUint8(2, numeric < 0 ? 0xff : 0x00);
+          view.setUint16(3, numeric, true);
+          tokens.push({
+            name: 'NUMBER_DATA',
+            value: new Uint8Array(view.buffer),
+          });
+          length += 6;
+        } else {
+          const value = new Uint8Array(6);
+          value[0] = 0x0e;
+          value.set(floatToZX(numeric), 1);
+          tokens.push({
+            name: 'NUMBER_DATA',
+            value,
+          });
+          length += 6;
+        }
+      } else if (name === 'DIRECTIVE') {
+        // IMPORTANT there's only ever a single directive on a line
+        return {
+          basic: [],
+          token,
+          directive: token.directive,
+          value,
+        };
+      } else {
+        length += value.toString().length;
+        tokens.push(token);
+      }
+    }
+
+    // add the end of carriage to the line
+    tokens.push({ name: 'KEYWORD', value: 0x0d });
+    length++;
+
+    const buffer = new DataView(new ArrayBuffer(length + 4));
+
+    buffer.setUint16(0, lineNumber, false); // line number is stored as big endian
+    buffer.setUint16(2, length, true);
+
+    let offset = 4;
+
+    tokens.forEach(({ name, value }) => {
+      if (name === 'KEYWORD') {
+        buffer.setUint8(offset, value);
+        offset++;
+      } else if (name === 'NUMBER_DATA') {
+        const view = new Uint8Array(buffer.buffer);
+        view.set(value, offset);
+        offset += value.length;
+      } else {
+        const v = value.toString();
+        const view = new Uint8Array(buffer.buffer);
+        view.set(encode(v), offset);
+        offset += v.length;
+      }
+    });
+
+    return {
+      basic: new Uint8Array(buffer.buffer),
+      lineNumber,
+      tokens,
+      length,
+    };
+  }
+
+  // Get the next token from the current buffer. A token is an object with
+  // the following properties:
+  // - name: name of the pattern that this token matched (taken from rules).
+  // - value: actual string value of the token.
+  // - pos: offset in the current buffer where the token starts.
+  //
+  // If there are no more tokens in the buffer, returns null. In case of
+  // an error throws Error.
+  token() {
+    this._skipNonTokens();
+    if (this.pos >= this.bufLen) {
+      return null;
+    }
+
+    // The char at this.pos is part of a real token. Figure out which.
+    var c = this.buf.charAt(this.pos);
+    const _next = this.buf.charAt(this.pos + 1);
+
+    // comments are slurped elsewhere
+
+    // Look it up in the table of operators
+    var op = this.opTable[c];
+    if (op !== undefined) {
+      return { name: 'KEYWORD', value: op, pos: this.pos++ };
+    } else {
+      // Not an operator - so it's the beginning of another token.
+      // if alpha or starts with 0 (which can only be binary)
+      if (Lexer._isDirective(c) && this.pos === 0) {
+        return this._processDirective();
+      } else if (Lexer._isDotCommand(c)) {
+        return this._processDotCommand();
+      } else if (
+        Lexer._isAlpha(c) ||
+        c === '' ||
+        (c === '.' && Lexer._isAlpha(_next))
+      ) {
+        const res = this._processIdentifier();
+        if (res.name === 'KEYWORD') {
+          if (res.keyword === 'IF') {
+            this.inIf = true;
+          } else if (res.keyword === 'THEN') {
+            this.inIf = false;
+            this.inLiteral = false;
+          }
+        }
+        return res;
+      } else if (Lexer._isStartOfComment(c) && this.startOfStatement) {
+        return this._processComment();
+      } else if (Lexer._isLiteralNumeric(c)) {
+        this.inLiteral = true;
+        return { name: 'SYMBOL', value: c, pos: this.pos++ };
+      } else if (c === '.' && Lexer._isDigit(_next)) {
+        return this._processNumber();
+      } else if (Lexer._isDigit(c)) {
+        const res = this._processNumber();
+        this.inBinary = false;
+        return res;
+      } else if (Lexer._isLiteralReset(c) || Lexer._isStatementSep(c)) {
+        if (!this.inIf) {
+          this.inLiteral = false;
+        }
+        this.startOfStatement = true;
+        return { name: 'SYMBOL', value: c, pos: this.pos++ };
+      } else if (Lexer._isSymbol(c)) {
+        if (c === '<' || c === '>') {
+          // check if the next is a symbol
+          const value = this.opTable[
+            Object.keys(opTable).find((_) => _ === c + _next)
+          ];
+          if (value) {
+            return {
+              name: 'KEYWORD',
+              value,
+              pos: (this.pos += 2),
+            };
+          }
+        }
+        return { name: 'SYMBOL', value: c, pos: this.pos++ };
+      } else if (c === '"') {
+        return this._processQuote();
+      } else if (Lexer._isNumericSymbol(c)) {
+        return { name: 'SYMBOL', value: c, pos: this.pos++ };
+      } else {
+        throw Error(`Token error at ${this.pos} (${c})\n${this.buf}`);
+      }
     }
   }
 
-  frac = frac.toFixed(8);
-  const value = frac * Math.pow(2, exp);
-  return value * sign;
+  static _isDirective(c) {
+    return c === '#';
+  }
+
+  static _isNumericSymbol(c) {
+    return c === '@' || c === '$';
+  }
+
+  static _isLiteralNumeric(c) {
+    return c === '%';
+  }
+
+  static _isBinary(c) {
+    return c === '1' || c === '0';
+  }
+
+  static _isNewLine(c) {
+    return c === '\r' || c === '\n';
+  }
+
+  static _isDigit(c) {
+    return c >= '0' && c <= '9';
+  }
+
+  static _isStatementSep(c) {
+    return c === ':';
+  }
+
+  static _isLiteralReset(c) {
+    return c === '=' || c === ',';
+  }
+
+  static _isSymbol(c) {
+    return '!,;-+/*()<>#%${}[]|&^'.includes(c);
+  }
+
+  static _isAlpha(c) {
+    return (
+      (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c === '_' || c === '$'
+    );
+  }
+
+  static _isStartOfComment(c) {
+    return c === ';';
+  }
+
+  static _isAlphaNum(c) {
+    return (
+      (c >= 'a' && c <= 'z') ||
+      (c >= 'A' && c <= 'Z') ||
+      (c >= '0' && c <= '9') ||
+      c === '_'
+    );
+  }
+
+  static _isDotCommand(c) {
+    return c === '.';
+  }
+
+  _processDirective() {
+    this.pos++;
+    let endPos = this.pos + 1;
+    while (endPos < this.bufLen && Lexer._isAlphaNum(this.buf.charAt(endPos))) {
+      endPos++;
+    }
+
+    const directive = this.buf.substring(this.pos, endPos);
+    this.pos = endPos;
+    this._skipNonTokens();
+
+    while (endPos < this.bufLen && Lexer._isAlphaNum(this.buf.charAt(endPos))) {
+      endPos++;
+    }
+
+    const value = parseInt(this.buf.substring(this.pos, endPos), 10);
+    this.pos = endPos;
+
+    return {
+      name: 'DIRECTIVE',
+      value,
+      directive,
+    };
+  }
+
+  _processDotCommand() {
+    var start = this.pos;
+    this.pos++;
+    this._skipToEndOfStatement();
+    const value = this.buf.substring(start, this.pos);
+    return {
+      name: 'DOT_COMMAND',
+      value,
+    };
+  }
+
+  _processLiteralNumber() {
+    var endPos = this.pos + 1;
+    let needsClose = false;
+    while (
+      (endPos < this.bufLen &&
+        (Lexer._isDigit(this.buf.charAt(endPos)) ||
+          this.buf.charAt(endPos) === '(' ||
+          this.buf.charAt(endPos) === '!')) ||
+      (needsClose && this.buf.charAt(endPos) === ')')
+    ) {
+      if (this.buf.charAt(endPos) === '(') {
+        needsClose = true; // only allow this once
+      }
+      endPos++;
+    }
+
+    const value = this.buf.substring(this.pos, endPos);
+
+    var tok = {
+      name: 'LITERAL_NUMBER',
+      value,
+      pos: this.pos,
+    };
+    this.pos = endPos;
+    return tok;
+  }
+
+  _processNumber() {
+    var endPos = this.pos + 1;
+    let exp = false;
+    while (
+      (endPos < this.bufLen &&
+        (Lexer._isDigit(this.buf.charAt(endPos)) ||
+          this.buf.charAt(endPos) === '.' ||
+          this.buf.charAt(endPos) === 'e')) ||
+      (exp && this.buf.charAt(endPos) === '-')
+    ) {
+      if (this.buf.charAt(endPos) === 'e') {
+        exp = true; // only allow this once
+      } else {
+        exp = false;
+      }
+      endPos++;
+    }
+
+    const value = this.buf.substring(this.pos, endPos);
+    let numeric = 0;
+
+    if (value.includes('.')) {
+      numeric = parseFloat(value);
+    } else {
+      numeric = parseInt(value, 10);
+    }
+
+    let name = 'NUMBER';
+    if (this.inLiteral) {
+      name = 'LITERAL_NUMBER';
+    }
+
+    if (this.inBinary) {
+      numeric = parseInt(value, 2);
+    }
+
+    var tok = {
+      name,
+      value,
+      numeric,
+      pos: this.pos,
+    };
+    this.pos = endPos;
+    return tok;
+  }
+
+  _processComment() {
+    var endPos = this.pos;
+    // Skip until the end of the line
+    while (endPos < this.bufLen && !Lexer._isNewLine(this.buf.charAt(endPos))) {
+      endPos++;
+    }
+
+    var tok = {
+      name: 'COMMENT',
+      value: this.buf.substring(this.pos, endPos).trim(),
+      pos: this.pos,
+    };
+    this.pos = endPos + 1;
+    return tok;
+  }
+
+  _isOpCode(endPos) {
+    let curr = this.buf.substring(this.pos, endPos).toUpperCase();
+
+    const _next = this.buf.charAt(endPos, endPos + 1);
+
+    let ignorePeek = false;
+    if (_next == ' ' && curr === 'GO') {
+      // check if the next is "SUB" or "TO"
+      const next = this._peekToken(1).toUpperCase();
+      if (next === 'SUB' || next === 'TO') {
+        endPos = endPos + 1 + next.length;
+        curr = curr + ' ' + next;
+        ignorePeek = true;
+      }
+    }
+
+    if (_next === '$' && this.opTable[curr + _next]) {
+      curr = curr + _next;
+      endPos = endPos + 1 + _next.length;
+      ignorePeek = true;
+    }
+
+    if (this.opTable[curr] !== undefined) {
+      const peeked = this._peekToken(-1).toUpperCase(); // ?
+      if (ignorePeek === false && curr !== peeked) {
+        return false;
+      }
+
+      if (curr == 'BIN') {
+        this.inBinary = true;
+      }
+      this.pos = endPos;
+
+      return {
+        name: 'KEYWORD',
+        value: this.opTable[curr],
+        pos: this.pos,
+        keyword: curr,
+      };
+    }
+    return false;
+  }
+
+  _peekToken(offset = 0) {
+    const tmp = this.pos;
+    this.pos += offset + 1;
+    this._skipNonTokens();
+    let endPos = this.pos + 1;
+    while (endPos < this.bufLen && Lexer._isAlphaNum(this.buf.charAt(endPos))) {
+      endPos++;
+    }
+
+    const value = this.buf.substring(this.pos, endPos);
+
+    this.pos = tmp;
+
+    return value;
+  }
+
+  _processIdentifier() {
+    var endPos = this.pos + 1;
+    while (endPos < this.bufLen && Lexer._isAlphaNum(this.buf.charAt(endPos))) {
+      let tok = this._isOpCode(endPos);
+
+      if (tok) {
+        return tok;
+      }
+      endPos++;
+    }
+
+    let tok = this._isOpCode(endPos); // ?
+
+    if (tok) {
+      return tok;
+    }
+
+    // special case for GO<space>[TO|SUB]
+    let value = this.buf.substring(this.pos, endPos); // ?
+
+    tok = {
+      name: 'IDENTIFIER',
+      value,
+      pos: this.pos,
+    };
+    this.pos = endPos;
+    return tok;
+  }
+
+  _processQuote() {
+    // this.pos points at the opening quote. Find the ending quote.
+    var end_index = this.buf.indexOf('"', this.pos + 1);
+
+    if (end_index === -1) {
+      throw Error('Unterminated quote at ' + this.pos);
+    } else {
+      var tok = {
+        name: 'QUOTE',
+        value: this.buf.substring(this.pos, end_index + 1),
+        pos: this.pos,
+      };
+      this.pos = end_index + 1;
+      return tok;
+    }
+  }
+
+  _skipToEndOfStatement() {
+    while (this.pos < this.bufLen) {
+      var c = this.buf.charAt(this.pos);
+      if (c == ':' || c == '\n') {
+        break;
+      } else {
+        this.pos++;
+      }
+    }
+  }
+
+  _skipNonTokens() {
+    while (this.pos < this.bufLen) {
+      var c = this.buf.charAt(this.pos);
+      if (c == ' ' || c == '\t' || c == '\r' || c == '\n') {
+        this.pos++;
+      } else {
+        break;
+      }
+    }
+  }
+}
+
+const Unpack = unpack.unpack.Unpack;
+
+function tap2txt(data) {
+  const unpack = new Unpack(data);
+
+  unpack.parse(
+    `<S$headerLength C$flagByte C$type A10$filename S$length S$p1 S$p2 C$checksum x2`
+  );
+
+  return bas2txtLines(data.slice(24, data.length - 24));
+}
+
+function bas2txt(data) {
+  const unpack = new Unpack(data);
+
+  const header = unpack.parse(
+    `<A8$sig
+    C$marker
+    C$issue
+    C$version
+    I$length
+    C$hType
+    S$hFileLength
+    S$autostart
+    S$hOffset
+    x
+    x104
+    C$checksum`
+  );
+
+  let txt = bas2txtLines(data.slice(unpack.offset));
+
+  if (header.autostart && header.autostart != 0x8000) {
+    txt = `#autostart ${header.autostart}\n${txt}`;
+  }
+
+  return txt;
+}
+
+function bas2txtLines(data) {
+  const unpack = new Unpack(data);
+  let next;
+
+  const lines = [];
+
+  while ((next = unpack.parse('<n$line s$length'))) {
+    const { length, line: lineNumber } = next;
+    if (lineNumber > 9999) {
+      break;
+    }
+    const content = unpack.parse(`<C${length}$data`);
+    if (!content || !content.data) break;
+
+    let string = lineNumber + ' ';
+
+    let lastChr = null;
+
+    const data = Array.from(content.data);
+
+    while (data.length) {
+      let chr = data.shift();
+      if (chr === 0x0d) {
+        break;
+      }
+      if (BASIC[chr]) {
+        if (lastChr !== null && !BASIC[lastChr]) {
+          string += ' ' + BASIC[chr] + ' ';
+        } else {
+          string += BASIC[chr] + ' ';
+        }
+      } else if (chr === 0x0e) {
+        // move forward 5 bits - this contains the encoded numerical value
+        // which, since we're porting to text, we don't care about on the way in
+        data.splice(0, 5);
+      } else {
+        string += String.fromCharCode(chr);
+      }
+
+      lastChr = chr;
+    }
+
+    lines.push(string);
+  }
+
+  // note that the 0x0d (13) is dropped in the line, so we're putting it back here
+  return lines.join('\n');
+}
+
+const line2bas = (line) => {
+  const l = new Lexer();
+  const res = l.line(line.trim());
+
+  return res;
 };
 
-exports.zxToFloat = zxToFloat;
+const line2txt = (data) => {
+  return bas2txtLines(data);
+};
+
+const formatText = (line) => {
+  return line2txt(line2bas(line).basic);
+};
+
+const file2bas = (
+  src,
+  format = '3dos',
+  filename = 'UNTITLED',
+  includeHeader = true
+) => {
+  src = src.toString();
+  const lines = [];
+  let length = 0;
+  const lexer = new Lexer();
+  const directives = {
+    filename,
+    autostart: 0x8000,
+  };
+  src
+    .split('\n')
+    .filter(Boolean)
+    .forEach((text) => {
+      if (text.trim().length > 0) {
+        const data = lexer.line(text);
+
+        if (data.directive) {
+          directives[data.directive] = data.value || 0;
+          return;
+        }
+        if (data.basic.length === 1) {
+          // this is a bad line, throw it out
+          return;
+        }
+
+        if (directives.autostart === 0) {
+          directives.autostart = data.lineNumber;
+        }
+        lines.push(data);
+        length += data.basic.length;
+      }
+    });
+
+  lines.sort((a, b) => {
+    return a.lineNumber < b.lineNumber ? -1 : 1;
+  });
+
+  let offset = 0;
+  const basic = new Uint8Array(length);
+  lines.forEach((line) => {
+    basic.set(line.basic, offset);
+    offset += line.basic.length;
+  });
+
+  if (!includeHeader) {
+    return basic;
+  }
+
+  if (format === '3dos') {
+    const file = new Uint8Array(length + 128);
+    file.set(plus3DOSHeader(file, directives)); // set the header (128)
+    file.set(basic, 128);
+
+    return file;
+  } else if (format === 'tap') {
+    return asTap(basic, filename);
+  }
+};
+
+const file2txt = (src, format = '3dos') => {
+  if (format === '3dos') {
+    return bas2txt(new Uint8Array(src)) + '\n';
+  } else if (format === 'tap') {
+    return tap2txt(new Uint8Array(src)) + '\n';
+  }
+};
+
+exports.codes = BASIC;
+exports.file2bas = file2bas;
+exports.file2txt = file2txt;
+exports.formatText = formatText;
+exports.line2bas = line2bas;
+exports.line2txt = line2txt;
+exports.plus3DOSHeader = plus3DOSHeader;
+exports.tapHeader = tapHeader;
+
+},{"@remy/unpack":"../node_modules/@remy/unpack/dist/index.js"}],"lib/Tabs.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = exports.Tab = void 0;
+
+var _$ = require("./$.js");
+
+class Tab {
+  constructor(parent, root) {
+    this.root = root;
+    this.id = root.id;
+  }
+
+  hide() {
+    this.root.style.display = 'none';
+  }
+
+  show() {
+    this.root.setAttribute('style', '');
+  }
+
+}
+
+exports.Tab = Tab;
+
+class Tabs {
+  constructor(selector) {
+    this.root = document.querySelector(selector);
+    const panels = (0, _$.$)(selector + ' > section:not([hidden])');
+    this.panels = panels.map(el => new Tab(this, el));
+    const ids = panels.map(_ => _.id);
+    const tabNav = document.querySelector(selector + ' > .tabs ul');
+    panels.map(panel => {
+      const a = document.createElement('a');
+      a.href = '#' + panel.id;
+      a.innerText = panel.dataset.title;
+      const li = document.createElement('li');
+      li.appendChild(a);
+      tabNav.appendChild(li);
+    });
+    this.tabs = (0, _$.$)(selector + ' > .tabs a');
+    this.tabs.on('click', e => {
+      e.preventDefault();
+      this.show(e.target.hash.substring(1));
+      window.history.pushState(null, '', e.target.hash);
+    });
+    this.show(window.location.hash.substring(1) || this.panels[0].id);
+    window.addEventListener('hashchange', () => {
+      const id = window.location.hash.substring(1);
+      if (!ids.includes(id)) return; // ignore this
+
+      this.show(id);
+    });
+  }
+
+  show(id) {
+    this.hide();
+    this.panels.find(_ => _.id === id).show();
+    this.tabs.find(_ => _.hash === '#' + id).className = 'selected';
+    this.selected = id;
+  }
+
+  hide() {
+    this.tabs.className = '';
+    this.panels.forEach(_ => _.hide());
+  }
+
+}
+
+exports.default = Tabs;
+},{"./$.js":"lib/$.js"}],"lib/unpack/dataview-64.js":[function(require,module,exports) {
+if (!DataView.prototype.getUint64) DataView.prototype.getUint64 = function (byteOffset, littleEndian) {
+  // split 64-bit number into two 32-bit (4-byte) parts
+  const left = this.getUint32(byteOffset, littleEndian);
+  const right = this.getUint32(byteOffset + 4, littleEndian); // combine the two 32-bit values
+
+  const combined = littleEndian ? left + 2 ** 32 * right : 2 ** 32 * left + right;
+  if (!Number.isSafeInteger(combined)) console.warn(combined, 'exceeds MAX_SAFE_INTEGER. Precision may be lost');
+  return combined;
+};
+if (!DataView.prototype.getUint64) DataView.prototype.getInt64 = function (byteOffset, littleEndian) {
+  // split 64-bit number into two 32-bit (4-byte) parts
+  const left = this.getInt32(byteOffset, littleEndian);
+  const right = this.getInt32(byteOffset + 4, littleEndian); // combine the two 32-bit values
+
+  const combined = littleEndian ? left + 2 ** 32 * right : 2 ** 32 * left + right;
+  if (!Number.isSafeInteger(combined)) console.warn(combined, 'exceeds MAX_SAFE_INTEGER. Precision may be lost');
+  return combined;
+};
 },{}],"lib/unpack/lib.js":[function(require,module,exports) {
 "use strict";
 
@@ -3136,866 +4432,6 @@ exports.decode = decode;
 const encode = a => new TextEncoder().encode(a);
 
 exports.encode = encode;
-},{}],"lib/unpack/pack.js":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = pack;
-
-var _lib = require("./lib.js");
-
-function pack(template, data, offset = 0) {
-  if (ArrayBuffer.isView(data)) {
-    data = data.buffer;
-  }
-
-  const re = new RegExp(_lib.pattern, 'g');
-  let m = [];
-  let bytePtr = 0;
-  let little = false;
-  const firstChr = template[0];
-  const defaultLittle = firstChr === '<' ? true : false;
-  let templateCounter = -1;
-  let dataLength = 0;
-
-  while (m = re.exec(template)) {
-    let length = null;
-
-    if (_lib.typeMap[m[2]]) {
-      length = _lib.typeMap[m[2]].length;
-    } else {
-      length = parseInt(m[2] || 1);
-    }
-
-    let c = m[1];
-
-    if (c.length === 2) {
-      little = c[1] === '<';
-      c = c[0];
-    }
-
-    const type = _lib.typeMap[c];
-
-    if (!type) {
-      throw new Error(`unsupported type "${c}"`);
-    }
-
-    const size = type.length;
-    let end = c === 'b' ? length / 8 : size * length;
-
-    if (isNaN(length)) {
-      end = data.byteLength - offset;
-    }
-
-    dataLength += end; // ?
-  }
-
-  const result = new DataView(new ArrayBuffer(dataLength));
-
-  while (m = re.exec(template)) {
-    templateCounter++;
-    const index = m[4] || templateCounter;
-    let little = defaultLittle;
-    let length = null;
-
-    if (_lib.typeMap[m[2]]) {
-      length = _lib.typeMap[m[2]].length;
-    } else {
-      length = parseInt(m[2] || 1);
-    }
-
-    let c = m[1];
-
-    if (c.length === 2) {
-      little = c[1] === '<';
-      c = c[0];
-    }
-
-    const type = _lib.typeMap[c];
-
-    if (!type) {
-      throw new Error(`unsupported type "${c}"`);
-    } // forced endianness
-
-
-    if (type.little !== undefined) {
-      little = type.little;
-    }
-
-    const size = type.length;
-    let end = c === 'b' ? 1 : size * length;
-
-    if (isNaN(length)) {
-      end = data.byteLength - offset;
-    }
-
-    if (offset + end > data.byteLength) {
-      // return result;
-      break;
-    }
-
-    if (c !== 'b') {
-      // reset the byte counter
-      bytePtr = 0;
-    }
-
-    switch (c) {
-      case 'b':
-        result.setUint8(offset, result.getUint8(offset) | data[index] << 8 - bytePtr - length);
-        bytePtr += length;
-
-        if (bytePtr > 7) {
-          offset++;
-          bytePtr = 0;
-        }
-
-        break;
-
-      case 'x':
-        // x is skipped null bytes
-        templateCounter--;
-        offset += end;
-        result.setUint8(offset, 0x00);
-        break;
-
-      case 'a':
-      case 'A':
-        new Uint8Array(result.buffer, offset, end).set((0, _lib.encode)(data[index]));
-        offset += end;
-        break;
-
-      default:
-        if (length > 1) {
-          for (let i = index; i < index + length; i++) {
-            result[`set${type.fn}`](offset, data[i], little);
-            templateCounter++;
-            offset += type.length;
-          }
-        } else {
-          result[`set${type.fn}`](offset, data[index], little);
-        }
-
-        offset += end;
-        break;
-    }
-  }
-
-  return new Uint8Array(result.buffer);
-}
-},{"./lib.js":"lib/unpack/lib.js"}],"bas/txt2bas.js":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = exports.plus3DOSHeader = exports.asTap = exports.tapHeader = exports.calculateXORChecksum = exports.encode = void 0;
-
-var _codes = _interopRequireDefault(require("./codes.js"));
-
-var _to = require("../lib/to.js");
-
-var _pack = _interopRequireDefault(require("../lib/unpack/pack.js"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
-const encode = a => new TextEncoder().encode(a);
-
-exports.encode = encode;
-
-const calculateXORChecksum = array => Uint8Array.of(array.reduce((checksum, item) => checksum ^ item, 0))[0];
-
-exports.calculateXORChecksum = calculateXORChecksum;
-const opTable = Object.entries(_codes.default).reduce((acc, [code, str]) => {
-  acc[str] = parseInt(code);
-  return acc;
-}, {
-  GOTO: 0xec
-});
-/*
-header unpack template:
-<S$headerLength
-C$flagByte
-C$type
-A10$filename
-S$length
-S$autostart
-S$varStart
-C$checksum
-
-S$nextBlockLength
-
-C$blockType
-C……$data
-C$blockChecksum
-*/
-
-const tapHeader = (basic, filename = 'BASIC') => {
-  const autostart = new DataView(basic.buffer).getUint16(0, false);
-  const res = (0, _pack.default)('<S$headerLength C$flagByte C$type A10$filename S$length S$p1 S$p2 C$checksum', {
-    headerLength: 19,
-    flagByte: 0x0,
-    // header
-    type: 0x00,
-    // program
-    filename: filename.slice(0, 10),
-    // 10 chrs max
-    length: basic.length,
-    p1: autostart,
-    p2: basic.length,
-    checksum: 0 // solved later
-
-  });
-  const checksum = calculateXORChecksum(res.slice(2, 20));
-  res[res.length - 1] = checksum;
-  return res;
-};
-
-exports.tapHeader = tapHeader;
-
-const asTap = (basic, filename = 'tap dot js') => {
-  const header = tapHeader(basic, filename);
-  const dataType = 0xff;
-  const checksum = calculateXORChecksum(Array.from([dataType, ...basic]));
-  const tapData = new Uint8Array(header.length + basic.length + 2 + 2); // ? [header.length, basic.length]
-
-  tapData.set(header, 0); // put header in tap
-
-  new DataView(tapData.buffer).setUint16(header.length, basic.length + 2, true); // set follow block length (plus 2 for flag + checksum)
-
-  tapData[header.length + 2] = dataType; // data follows
-
-  tapData.set(basic, header.length + 3); // put basic binary in tap
-
-  tapData[tapData.length - 1] = checksum; // finish with 8bit checksum
-
-  return tapData;
-};
-
-exports.asTap = asTap;
-
-const plus3DOSHeader = (basic, opts = {
-  hType: 0,
-  hOffset: basic.length - 128
-}) => {
-  const {
-    hType,
-    hOffset
-  } = opts;
-  const res = (0, _pack.default)('< A8$sig C$eof C$issue C$version I$length C$hType S$hFileLength n$hLine S$hOffset', {
-    sig: 'PLUS3DOS',
-    eof: 26,
-    issue: 1,
-    version: 0,
-    length: basic.length,
-    hType,
-    hFileLength: basic.length - 128,
-    hLine: 128,
-    hOffset
-  });
-  const checksum = Array.from(res).reduce((acc, curr) => acc += curr, 0);
-  const result = new Uint8Array(128);
-  result.set(res, 0);
-  result[127] = checksum;
-  return result;
-}; // Based on (with huge mods) https://eli.thegreenplace.net/2013/07/16/hand-written-lexer-in-javascript-compared-to-the-regex-based-ones
-
-
-exports.plus3DOSHeader = plus3DOSHeader;
-
-class Lexer {
-  constructor() {
-    _defineProperty(this, "pos", 0);
-
-    _defineProperty(this, "buf", null);
-
-    _defineProperty(this, "bufLen", 0);
-
-    _defineProperty(this, "opTable", opTable);
-  }
-
-  // Initialize the Lexer's buffer. This resets the lexer's internal
-  // state and subsequent tokens will be returned starting with the
-  // beginning of the new buffer.
-  input(buf) {
-    this.pos = 0;
-    this.buf = buf;
-    this.bufLen = buf.length;
-  }
-
-  lines(lines) {
-    const data = lines.split('\n').map(line => this.line(line).basic);
-    const len = data.reduce((acc, curr) => acc += curr.length, 0);
-    const res = new Uint8Array(len);
-    let offset = 0;
-    data.forEach(line => {
-      res.set(line, offset);
-      offset += line.length;
-    });
-    return res;
-  }
-
-  line(line) {
-    this.input(line);
-    this.inLiteral = false;
-    let lineNumber = null;
-    let tokens = [];
-    let length = 0;
-    let token = null;
-
-    while (token = this.token()) {
-      const {
-        name,
-        value
-      } = token;
-
-      if (!lineNumber && name === 'NUMBER') {
-        lineNumber = parseInt(value, 10);
-        continue;
-      } // ast
-
-
-      if (name === 'KEYWORD') {
-        length++;
-        tokens.push(token);
-
-        if (_codes.default[value] === 'REM') {
-          token = this._processComment();
-          length += token.value.length;
-          tokens.push(token);
-        }
-      } else if (name === 'NUMBER') {
-        length += value.toString().length;
-        const {
-          numeric
-        } = token;
-        tokens.push(token);
-
-        if ((numeric | 0) === numeric && numeric >= -65535 && numeric <= 65535) {
-          const view = new DataView(new ArrayBuffer(6));
-          view.setUint8(0, 0x0e);
-          view.setUint8(1, 0x00);
-          view.setUint8(2, numeric < 0 ? 0xff : 0x00);
-          view.setUint16(3, numeric, true);
-          tokens.push({
-            name: 'NUMBER_DATA',
-            value: new Uint8Array(view.buffer)
-          });
-          length += 6;
-        } else {
-          const value = new Uint8Array(6);
-          value[0] = 0x0e;
-          value.set((0, _to.floatToZX)(numeric), 1);
-          tokens.push({
-            name: 'NUMBER_DATA',
-            value
-          });
-          length += 6;
-        }
-      } else {
-        length += value.toString().length;
-        tokens.push(token);
-      }
-    } // add the end of carriage to the line
-
-
-    tokens.push({
-      name: 'KEYWORD',
-      value: 0x0d
-    });
-    length++;
-    const buffer = new DataView(new ArrayBuffer(length + 4));
-    buffer.setUint16(0, lineNumber, false); // line number is stored as big endian
-
-    buffer.setUint16(2, length, true);
-    let offset = 4;
-    tokens.forEach(({
-      name,
-      value
-    }) => {
-      if (name === 'KEYWORD') {
-        buffer.setUint8(offset, value);
-        offset++;
-      } else if (name === 'NUMBER_DATA') {
-        const view = new Uint8Array(buffer.buffer);
-        view.set(value, offset);
-        offset += value.length;
-      } else {
-        const v = value.toString();
-        const view = new Uint8Array(buffer.buffer);
-        view.set(encode(v), offset);
-        offset += v.length;
-      }
-    }); // console.log(tokens);
-
-    return {
-      basic: new Uint8Array(buffer.buffer),
-      lineNumber,
-      tokens,
-      length
-    };
-  } // Get the next token from the current buffer. A token is an object with
-  // the following properties:
-  // - name: name of the pattern that this token matched (taken from rules).
-  // - value: actual string value of the token.
-  // - pos: offset in the current buffer where the token starts.
-  //
-  // If there are no more tokens in the buffer, returns null. In case of
-  // an error throws Error.
-
-
-  token() {
-    this._skipNonTokens();
-
-    if (this.pos >= this.bufLen) {
-      return null;
-    } // The char at this.pos is part of a real token. Figure out which.
-
-
-    var c = this.buf.charAt(this.pos);
-
-    const _next = this.buf.charAt(this.pos + 1); // comments are slurped elsewhere
-    // Look it up in the table of operators
-
-
-    var op = this.opTable[c];
-
-    if (op !== undefined) {
-      return {
-        name: 'KEYWORD',
-        value: op,
-        pos: this.pos++
-      };
-    } else {
-      // Not an operator - so it's the beginning of another token.
-      // if alpha or starts with 0 (which can only be binary)
-      if (Lexer._isAlpha(c) || c === '' || c === '.' && Lexer._isAlpha(_next)) {
-        const res = this._processIdentifier();
-
-        if (res.name === 'KEYWORD') {
-          if (res.keyword === 'IF') {
-            this.inIf = true;
-          } else if (res.keyword === 'THEN') {
-            this.inIf = false;
-            this.inLiteral = false;
-          }
-        }
-
-        return res;
-      } else if (Lexer._isStartOfComment(c)) {
-        return this._processComment();
-      } else if (Lexer._isLiteralNumeric(c)) {
-        this.inLiteral = true;
-        return {
-          name: 'SYMBOL',
-          value: c,
-          pos: this.pos++
-        };
-      } else if (c === '.' && Lexer._isDigit(_next)) {
-        return this._processNumber();
-      } else if (Lexer._isDigit(c)) {
-        const res = this._processNumber();
-
-        this.inBinary = false;
-        return res;
-      } else if (Lexer._isLiteralReset(c) || Lexer._isStatementSep(c)) {
-        if (!this.inIf) {
-          this.inLiteral = false;
-        }
-
-        return {
-          name: 'SYMBOL',
-          value: c,
-          pos: this.pos++
-        };
-      } else if (Lexer._isSymbol(c)) {
-        if (c === '<' || c === '>') {
-          // check if the next is a symbol
-          const value = this.opTable[Object.keys(opTable).find(_ => _ === c + _next)];
-
-          if (value) {
-            return {
-              name: 'KEYWORD',
-              value,
-              pos: this.pos += 2
-            };
-          }
-        }
-
-        return {
-          name: 'SYMBOL',
-          value: c,
-          pos: this.pos++
-        };
-      } else if (c === '"') {
-        return this._processQuote();
-      } else if (Lexer._isNumericSymbol(c)) {
-        return {
-          name: 'SYMBOL',
-          value: c,
-          pos: this.pos++
-        };
-      } else {
-        throw Error(`Token error at ${this.pos} (${c})\n${this.buf}`);
-      }
-    }
-  }
-
-  static _isNumericSymbol(c) {
-    return c === '@' || c === '$';
-  }
-
-  static _isLiteralNumeric(c) {
-    return c === '%';
-  }
-
-  static _isBinary(c) {
-    return c === '1' || c === '0';
-  }
-
-  static _isNewLine(c) {
-    return c === '\r' || c === '\n';
-  }
-
-  static _isDigit(c) {
-    return c >= '0' && c <= '9';
-  }
-
-  static _isStatementSep(c) {
-    return c === ':';
-  }
-
-  static _isLiteralReset(c) {
-    return c === '=' || c === ',';
-  }
-
-  static _isSymbol(c) {
-    return '!,;-+/*()<>#%${}[]|&^'.includes(c);
-  }
-
-  static _isAlpha(c) {
-    return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c === '_' || c === '$';
-  }
-
-  static _isStartOfComment(c) {
-    return c === ';';
-  }
-
-  static _isAlphaNum(c) {
-    return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9' || c === '_';
-  }
-
-  _processLiteralNumber() {
-    var endPos = this.pos + 1;
-    let needsClose = false;
-
-    while (endPos < this.bufLen && (Lexer._isDigit(this.buf.charAt(endPos)) || this.buf.charAt(endPos) === '(' || this.buf.charAt(endPos) === '!') || needsClose && this.buf.charAt(endPos) === ')') {
-      if (this.buf.charAt(endPos) === '(') {
-        needsClose = true; // only allow this once
-      }
-
-      endPos++;
-    }
-
-    const value = this.buf.substring(this.pos, endPos);
-    var tok = {
-      name: 'LITERAL_NUMBER',
-      value,
-      pos: this.pos
-    };
-    this.pos = endPos;
-    return tok;
-  }
-
-  _processNumber() {
-    var endPos = this.pos + 1;
-    let exp = false;
-
-    while (endPos < this.bufLen && (Lexer._isDigit(this.buf.charAt(endPos)) || this.buf.charAt(endPos) === '.' || this.buf.charAt(endPos) === 'e') || exp && this.buf.charAt(endPos) === '-') {
-      if (this.buf.charAt(endPos) === 'e') {
-        exp = true; // only allow this once
-      } else {
-        exp = false;
-      }
-
-      endPos++;
-    }
-
-    const value = this.buf.substring(this.pos, endPos);
-    let numeric = 0;
-
-    if (value.includes('.')) {
-      numeric = parseFloat(value);
-    } else {
-      numeric = parseInt(value, 10);
-    }
-
-    let name = 'NUMBER';
-
-    if (this.inLiteral) {
-      name = 'LITERAL_NUMBER';
-    }
-
-    if (this.inBinary) {
-      numeric = parseInt(value, 2);
-    }
-
-    var tok = {
-      name,
-      value,
-      numeric,
-      pos: this.pos
-    };
-    this.pos = endPos;
-    return tok;
-  }
-
-  _processComment() {
-    var endPos = this.pos; // Skip until the end of the line
-
-    while (endPos < this.bufLen && !Lexer._isNewLine(this.buf.charAt(endPos))) {
-      endPos++;
-    }
-
-    var tok = {
-      name: 'COMMENT',
-      value: this.buf.substring(this.pos, endPos).trim(),
-      pos: this.pos
-    };
-    this.pos = endPos + 1;
-    return tok;
-  }
-
-  _isOpCode(endPos) {
-    let curr = this.buf.substring(this.pos, endPos).toUpperCase();
-
-    const _next = this.buf.charAt(endPos, endPos + 1);
-
-    let ignorePeek = false;
-
-    if (_next == ' ' && curr === 'GO') {
-      // check if the next is "SUB" or "TO"
-      const next = this._peekToken(1).toUpperCase();
-
-      if (next === 'SUB' || next === 'TO') {
-        endPos = endPos + 1 + next.length;
-        curr = curr + ' ' + next;
-        ignorePeek = true;
-      }
-    }
-
-    if (_next === '$' && this.opTable[curr + _next]) {
-      curr = curr + _next;
-      endPos = endPos + 1 + _next.length;
-      ignorePeek = true;
-    }
-
-    if (this.opTable[curr] !== undefined) {
-      const peeked = this._peekToken(-1).toUpperCase(); // ?
-
-
-      if (ignorePeek === false && curr !== peeked) {
-        return false;
-      }
-
-      if (curr == 'BIN') {
-        this.inBinary = true;
-      }
-
-      this.pos = endPos;
-      return {
-        name: 'KEYWORD',
-        value: this.opTable[curr],
-        pos: this.pos,
-        keyword: curr
-      };
-    }
-
-    return false;
-  }
-
-  _peekToken(offset = 0) {
-    const tmp = this.pos;
-    this.pos += offset + 1;
-
-    this._skipNonTokens();
-
-    let endPos = this.pos + 1;
-
-    while (endPos < this.bufLen && Lexer._isAlphaNum(this.buf.charAt(endPos))) {
-      endPos++;
-    }
-
-    const value = this.buf.substring(this.pos, endPos);
-    this.pos = tmp;
-    return value;
-  }
-
-  _processIdentifier() {
-    var endPos = this.pos + 1;
-
-    while (endPos < this.bufLen && Lexer._isAlphaNum(this.buf.charAt(endPos))) {
-      let tok = this._isOpCode(endPos);
-
-      if (tok) {
-        return tok;
-      }
-
-      endPos++;
-    }
-
-    let tok = this._isOpCode(endPos); // ?
-
-
-    if (tok) {
-      return tok;
-    } // special case for GO<space>[TO|SUB]
-
-
-    let value = this.buf.substring(this.pos, endPos); // ?
-
-    tok = {
-      name: 'IDENTIFIER',
-      value,
-      pos: this.pos
-    };
-    this.pos = endPos;
-    return tok;
-  }
-
-  _processQuote() {
-    // this.pos points at the opening quote. Find the ending quote.
-    var end_index = this.buf.indexOf('"', this.pos + 1);
-
-    if (end_index === -1) {
-      throw Error('Unterminated quote at ' + this.pos);
-    } else {
-      var tok = {
-        name: 'QUOTE',
-        value: this.buf.substring(this.pos, end_index + 1),
-        pos: this.pos
-      };
-      this.pos = end_index + 1;
-      return tok;
-    }
-  }
-
-  _skipNonTokens() {
-    while (this.pos < this.bufLen) {
-      var c = this.buf.charAt(this.pos);
-
-      if (c == ' ' || c == '\t' || c == '\r' || c == '\n') {
-        this.pos++;
-      } else {
-        break;
-      }
-    }
-  }
-
-}
-
-exports.default = Lexer;
-const l = new Lexer();
-const res = l.line(`
-  280 IF %j&@1000=@1000 THEN GO SUB 7000: REM up
-`.trim()); // ?
-
-res.basic.slice(-8);
-},{"./codes.js":"bas/codes.js","../lib/to.js":"lib/to.js","../lib/unpack/pack.js":"lib/unpack/pack.js"}],"lib/Tabs.js":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = exports.Tab = void 0;
-
-var _$ = require("./$.js");
-
-class Tab {
-  constructor(parent, root) {
-    this.root = root;
-    this.id = root.id;
-  }
-
-  hide() {
-    this.root.style.display = 'none';
-  }
-
-  show() {
-    this.root.setAttribute('style', '');
-  }
-
-}
-
-exports.Tab = Tab;
-
-class Tabs {
-  constructor(selector) {
-    this.root = document.querySelector(selector);
-    const panels = (0, _$.$)(selector + ' > section:not([hidden])');
-    this.panels = panels.map(el => new Tab(this, el));
-    const ids = panels.map(_ => _.id);
-    const tabNav = document.querySelector(selector + ' > .tabs ul');
-    panels.map(panel => {
-      const a = document.createElement('a');
-      a.href = '#' + panel.id;
-      a.innerText = panel.dataset.title;
-      const li = document.createElement('li');
-      li.appendChild(a);
-      tabNav.appendChild(li);
-    });
-    this.tabs = (0, _$.$)(selector + ' > .tabs a');
-    this.tabs.on('click', e => {
-      e.preventDefault();
-      this.show(e.target.hash.substring(1));
-      window.history.pushState(null, '', e.target.hash);
-    });
-    this.show(window.location.hash.substring(1) || this.panels[0].id);
-    window.addEventListener('hashchange', () => {
-      const id = window.location.hash.substring(1);
-      if (!ids.includes(id)) return; // ignore this
-
-      this.show(id);
-    });
-  }
-
-  show(id) {
-    this.hide();
-    this.panels.find(_ => _.id === id).show();
-    this.tabs.find(_ => _.hash === '#' + id).className = 'selected';
-    this.selected = id;
-  }
-
-  hide() {
-    this.tabs.className = '';
-    this.panels.forEach(_ => _.hide());
-  }
-
-}
-
-exports.default = Tabs;
-},{"./$.js":"lib/$.js"}],"lib/unpack/dataview-64.js":[function(require,module,exports) {
-if (!DataView.prototype.getUint64) DataView.prototype.getUint64 = function (byteOffset, littleEndian) {
-  // split 64-bit number into two 32-bit (4-byte) parts
-  const left = this.getUint32(byteOffset, littleEndian);
-  const right = this.getUint32(byteOffset + 4, littleEndian); // combine the two 32-bit values
-
-  const combined = littleEndian ? left + 2 ** 32 * right : 2 ** 32 * left + right;
-  if (!Number.isSafeInteger(combined)) console.warn(combined, 'exceeds MAX_SAFE_INTEGER. Precision may be lost');
-  return combined;
-};
-if (!DataView.prototype.getUint64) DataView.prototype.getInt64 = function (byteOffset, littleEndian) {
-  // split 64-bit number into two 32-bit (4-byte) parts
-  const left = this.getInt32(byteOffset, littleEndian);
-  const right = this.getInt32(byteOffset + 4, littleEndian); // combine the two 32-bit values
-
-  const combined = littleEndian ? left + 2 ** 32 * right : 2 ** 32 * left + right;
-  if (!Number.isSafeInteger(combined)) console.warn(combined, 'exceeds MAX_SAFE_INTEGER. Precision may be lost');
-  return combined;
-};
 },{}],"lib/unpack/unpack.js":[function(require,module,exports) {
 "use strict";
 
@@ -4196,7 +4632,7 @@ var _Tool = _interopRequireDefault(require("./Tool.js"));
 
 var _TileMap = _interopRequireDefault(require("./TileMap.js"));
 
-var _txt2bas = require("../bas/txt2bas.js");
+var _txt2bas = require("txt2bas");
 
 var _Tabs = _interopRequireDefault(require("../lib/Tabs.js"));
 
@@ -4655,7 +5091,7 @@ render(Uint8Array.from({
   length: 256
 }, (_, i) => i), picker);
 buildStyleSheet();
-},{"../lib/dnd.js":"lib/dnd.js","./lib/colour.js":"sprites/lib/colour.js","../lib/save.js":"lib/save.js","./lib/parser.js":"sprites/lib/parser.js","./ImageWindow.js":"sprites/ImageWindow.js","../lib/$.js":"lib/$.js","./SpriteSheet.js":"sprites/SpriteSheet.js","./ColourPicker.js":"sprites/ColourPicker.js","./Tool.js":"sprites/Tool.js","./TileMap.js":"sprites/TileMap.js","../bas/txt2bas.js":"bas/txt2bas.js","../lib/Tabs.js":"lib/Tabs.js","../lib/unpack/unpack.js":"lib/unpack/unpack.js"}],"../node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"../lib/dnd.js":"lib/dnd.js","./lib/colour.js":"sprites/lib/colour.js","../lib/save.js":"lib/save.js","./lib/parser.js":"sprites/lib/parser.js","./ImageWindow.js":"sprites/ImageWindow.js","../lib/$.js":"lib/$.js","./SpriteSheet.js":"sprites/SpriteSheet.js","./ColourPicker.js":"sprites/ColourPicker.js","./Tool.js":"sprites/Tool.js","./TileMap.js":"sprites/TileMap.js","txt2bas":"../node_modules/txt2bas/dist/index.js","../lib/Tabs.js":"lib/Tabs.js","../lib/unpack/unpack.js":"lib/unpack/unpack.js"}],"../node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -4683,7 +5119,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "51263" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "60700" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
