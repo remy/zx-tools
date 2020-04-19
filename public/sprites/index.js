@@ -8,7 +8,7 @@ import SpriteSheet from './SpriteSheet.js';
 import ColourPicker from './ColourPicker.js';
 import Tool from './Tool.js';
 import TileMap from './TileMap.js';
-import { plus3DOSHeader } from '../bas/txt2bas.js';
+import { plus3DOSHeader } from 'txt2bas';
 import Tabs from '../lib/Tabs.js';
 import { Unpack } from '../lib/unpack/unpack.js';
 const container = document.querySelector('#container');
