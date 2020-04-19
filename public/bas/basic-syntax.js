@@ -1,5 +1,5 @@
 import CodeMirror from '../lib/cm.js';
-import codes from './codes.js';
+import { codes } from 'txt2bas';
 
 const keywords = Object.values(codes).filter(
   (_) => !['*', 'REM', '$'].includes(_)
@@ -23,6 +23,12 @@ CodeMirror.defineSimpleMode('basic', {
     {
       regex: /(:)\s*(;.*)/,
       token: [null, 'comment'],
+      // eol: true,
+    },
+    {
+      regex: /#\w+/,
+      sol: true,
+      token: ['pragma'],
       // eol: true,
     },
     { regex: /\s*\d+\b/, token: 'variable-3 basic-line-number', sol: true },

@@ -1,8 +1,7 @@
 import dnd from '../lib/dnd.js';
 import { $ } from '../lib/$.js';
-import Lexer, { asTap, plus3DOSHeader } from './txt2bas.js';
 import CodeMirror from '../lib/cm.js';
-import { bas2txt, bas2txtLines, tap2txt } from './bas2txt.js';
+import { line2bas, file2txt, line2txt, file2bas } from 'txt2bas';
 import './basic-syntax.js';
 import save from '../lib/save.js';
 import { decode } from '../lib/unpack/lib.js';
@@ -14,7 +13,6 @@ function localSave() {
   sessionStorage.setItem('code', cm.getValue());
 }
 
-const lexer = new Lexer();
 const ta = $('textarea')[0];
 const code = sessionStorage.getItem('code');
 if (code) {
@@ -76,11 +74,11 @@ cm.on('keydown', (cm, event) => {
     const cursor = cm.getCursor();
     const line = cm.getLine(cursor.line);
 
-    if (line.trim() === '') {
+    if (line.trim() === '' || cursor.ch === 0) {
       return;
     }
 
-    const newLine = lexer.line(line);
+    const newLine = line2bas(line);
 
     try {
       // then sort all the lines and put the cursor back in the right place
@@ -94,7 +92,7 @@ cm.on('keydown', (cm, event) => {
           return; // skip the newly inserted line
         }
         if (text.trim().length > 0) {
-          const data = lexer.line(text);
+          const data = line2bas(text);
           if (data.lineNumber === newLine.lineNumber) {
             inserted = true;
             // >1 because all lines include 0x0d
@@ -133,7 +131,7 @@ cm.on('keydown', (cm, event) => {
         offset += line.basic.length;
       });
 
-      const res = bas2txtLines(basic);
+      const res = line2txt(basic);
 
       cm.setValue(res);
       const scroll = cm.getScrollerElement().scrollTop;
@@ -151,7 +149,6 @@ cm.on('keydown', (cm, event) => {
 
           let d = lineNumber + (((next - lineNumber) / 2) | 0);
           if ((d !== next) & (d !== lineNumber)) {
-            console.log({ d, lineNumber });
             if (d - lineNumber > 10) d = lineNumber + 10;
             content = `${d}  `;
             cm.replaceRange('\n', { line: insertLine + 1, ch: 0 });
@@ -194,11 +191,11 @@ function download(action) {
     return;
   }
 
-  const lines = [];
+  /*   const lines = [];
   let length = 0;
   cm.eachLine(({ text }) => {
     if (text.trim().length > 0) {
-      const data = lexer.line(text);
+      const data = line2bas(text);
       lines.push(data);
       length += data.basic.length;
     }
@@ -214,24 +211,10 @@ function download(action) {
     basic.set(line.basic, offset);
     offset += line.basic.length;
   });
-
-  const res = bas2txtLines(basic);
-  cm.setValue(res);
-
-  if (action === '3dos') {
-    const file = new Uint8Array(length + 128);
-    file.set(plus3DOSHeader(file)); // set the header (128)
-    file.set(basic, 128);
-
-    save(file, filename + '.bas');
-  }
-
-  if (action === 'tap') {
-    const file = asTap(basic, filename);
-    save(file, filename + '.tap');
-  }
+ */
 
   if (action === 'wav') {
+    const basic = file2bas(cm.getValue(), action, filename, false);
     const param1 = new DataView(basic.buffer).getUint16(0, false); // ?
     const res = generateBlock({
       type: 'PROGRAM',
@@ -249,6 +232,11 @@ function download(action) {
     }
 
     save(bufferLists, filename + '.wav');
+    cm.setValue(line2txt(basic));
+  } else {
+    let file = file2bas(cm.getValue(), action, filename);
+    save(file, filename + (action === '3dos' ? '.bas' : '.tap'));
+    cm.setValue(file2txt(file));
   }
 }
 
@@ -257,9 +245,9 @@ CodeMirror.commands.save = () => download('3dos');
 dnd(document.body, (file) => {
   if (file[0] === 0x13) {
     console.log('decode from tap');
-    cm.setValue(tap2txt(file));
+    cm.setValue(file2txt(file, 'tap'));
   } else if (file[0] === 0x50) {
-    cm.setValue(bas2txt(file));
+    cm.setValue(file2txt(file, '3dos'));
   } else {
     cm.setValue(decode(file));
   }

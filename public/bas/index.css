@@ -25,6 +25,10 @@ body .CodeMirror {
   color: blue;
 }
 
+.cm-s-default .cm-pragma {
+  color: #b30197;
+}
+
 .cm-s-default .cm-comment {
   color: green;
   font-style: italic;

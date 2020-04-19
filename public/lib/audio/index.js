@@ -1,5 +1,3 @@
-import { calculateXORChecksum } from '../../bas/txt2bas.js';
-
 import {
   SAMPLE_RATE,
   T,
@@ -16,6 +14,9 @@ import {
   SYN_ON,
   SYN_OFF,
 } from './audio-consts.js';
+
+const calculateXORChecksum = (array) =>
+  Uint8Array.of(array.reduce((checksum, item) => checksum ^ item, 0))[0];
 
 const zeroBit = generateBit(ZERO);
 const oneBit = generateBit(ONE);
@@ -299,7 +300,7 @@ export function generateScreenBlock({ ctx, data, filename = 'image.scr' }) {
 
 export function combineTapImages(ctx, ...taps) {
   let length = 0;
-  const buffers = taps.map(tap => {
+  const buffers = taps.map((tap) => {
     const buffer = tap.getChannelData(0);
     length += buffer.length;
     return buffer;
@@ -310,7 +311,7 @@ export function combineTapImages(ctx, ...taps) {
 
   let offset = 0;
 
-  buffers.forEach(buffer => {
+  buffers.forEach((buffer) => {
     output.set(buffer, offset);
     offset += buffer.length;
   });
