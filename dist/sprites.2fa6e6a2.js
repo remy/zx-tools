@@ -2817,7 +2817,7 @@ class TileMap {
 }
 
 exports.default = TileMap;
-},{"./SpriteSheet.js":"sprites/SpriteSheet.js","../lib/$.js":"lib/$.js","../lib/track-down.js":"lib/track-down.js"}],"../node_modules/@remy/unpack/dist/index.js":[function(require,module,exports) {
+},{"./SpriteSheet.js":"sprites/SpriteSheet.js","../lib/$.js":"lib/$.js","../lib/track-down.js":"lib/track-down.js"}],"../node_modules/txt2bas/node_modules/@remy/unpack/dist/index.js":[function(require,module,exports) {
 var define;
 var global = arguments[3];
 (function (global, factory) {
@@ -3567,7 +3567,9 @@ class Lexer {
         continue;
       }
 
-      this.startOfStatement = false;
+      if (name !== 'STATEMENT_SEP') {
+        this.startOfStatement = false;
+      }
 
       // ast
       if (name === 'KEYWORD') {
@@ -3720,7 +3722,7 @@ class Lexer {
           this.inLiteral = false;
         }
         this.startOfStatement = true;
-        return { name: 'SYMBOL', value: c, pos: this.pos++ };
+        return { name: 'STATEMENT_SEP', value: c, pos: this.pos++ };
       } else if (Lexer._isSymbol(c)) {
         if (c === '<' || c === '>') {
           // check if the next is a symbol
@@ -4242,7 +4244,7 @@ exports.line2txt = line2txt;
 exports.plus3DOSHeader = plus3DOSHeader;
 exports.tapHeader = tapHeader;
 
-},{"@remy/unpack":"../node_modules/@remy/unpack/dist/index.js"}],"lib/Tabs.js":[function(require,module,exports) {
+},{"@remy/unpack":"../node_modules/txt2bas/node_modules/@remy/unpack/dist/index.js"}],"lib/Tabs.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -5119,7 +5121,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "60700" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "61975" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

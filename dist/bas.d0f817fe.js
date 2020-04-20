@@ -10451,7 +10451,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 window.CodeMirror = _CodeMirror.default;
 var _default = _CodeMirror.default;
 exports.default = _default;
-},{"CodeMirror":"../node_modules/CodeMirror/lib/codemirror.js","CodeMirror/addon/selection/active-line":"../node_modules/CodeMirror/addon/selection/active-line.js","CodeMirror/addon/edit/closebrackets":"../node_modules/CodeMirror/addon/edit/closebrackets.js","CodeMirror/addon/mode/simple.js":"../node_modules/CodeMirror/addon/mode/simple.js"}],"../node_modules/@remy/unpack/dist/index.js":[function(require,module,exports) {
+},{"CodeMirror":"../node_modules/CodeMirror/lib/codemirror.js","CodeMirror/addon/selection/active-line":"../node_modules/CodeMirror/addon/selection/active-line.js","CodeMirror/addon/edit/closebrackets":"../node_modules/CodeMirror/addon/edit/closebrackets.js","CodeMirror/addon/mode/simple.js":"../node_modules/CodeMirror/addon/mode/simple.js"}],"../node_modules/txt2bas/node_modules/@remy/unpack/dist/index.js":[function(require,module,exports) {
 var define;
 var global = arguments[3];
 (function (global, factory) {
@@ -11201,7 +11201,9 @@ class Lexer {
         continue;
       }
 
-      this.startOfStatement = false;
+      if (name !== 'STATEMENT_SEP') {
+        this.startOfStatement = false;
+      }
 
       // ast
       if (name === 'KEYWORD') {
@@ -11354,7 +11356,7 @@ class Lexer {
           this.inLiteral = false;
         }
         this.startOfStatement = true;
-        return { name: 'SYMBOL', value: c, pos: this.pos++ };
+        return { name: 'STATEMENT_SEP', value: c, pos: this.pos++ };
       } else if (Lexer._isSymbol(c)) {
         if (c === '<' || c === '>') {
           // check if the next is a symbol
@@ -11876,7 +11878,7 @@ exports.line2txt = line2txt;
 exports.plus3DOSHeader = plus3DOSHeader;
 exports.tapHeader = tapHeader;
 
-},{"@remy/unpack":"../node_modules/@remy/unpack/dist/index.js"}],"bas/basic-syntax.js":[function(require,module,exports) {
+},{"@remy/unpack":"../node_modules/txt2bas/node_modules/@remy/unpack/dist/index.js"}],"bas/basic-syntax.js":[function(require,module,exports) {
 "use strict";
 
 var _cm = _interopRequireDefault(require("../lib/cm.js"));
@@ -13082,7 +13084,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "60700" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "61975" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
