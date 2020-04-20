@@ -1882,6 +1882,53 @@ class Sprite {
     this.render();
   }
 
+  mirror(horizontal = true) {
+    return new Promise(resolve => {
+      const i = new Image();
+      const url = this.canvas.toDataURL(); // needed over a blob because blob is apparently a reference
+
+      i.src = url;
+
+      i.onload = () => {
+        this.ctx.clearRect(0, 0, width, width);
+        this.ctx.save();
+
+        if (horizontal) {
+          this.ctx.scale(-1, 1);
+          this.ctx.drawImage(i, 0, 0, -width, width); //, -width, 0);
+        } else {
+          this.ctx.scale(1, -1);
+          this.ctx.drawImage(i, 0, 0, width, -width);
+        }
+
+        this.ctx.restore();
+        this.canvasToPixels();
+        resolve();
+      };
+    });
+  }
+
+  rotate() {
+    return new Promise(resolve => {
+      const i = new Image();
+      const url = this.canvas.toDataURL(); // needed over a blob because blob is apparently a reference
+
+      i.src = url;
+
+      i.onload = () => {
+        this.ctx.clearRect(0, 0, width, width);
+        this.ctx.translate(width / 2, width / 2);
+        this.ctx.rotate(90 * Math.PI / 180); // 90deg
+
+        this.ctx.drawImage(i, -width / 2, -width / 2);
+        this.ctx.rotate(-90 * Math.PI / 180);
+        this.ctx.translate(-width / 2, -width / 2);
+        this.canvasToPixels();
+        resolve();
+      };
+    });
+  }
+
   canvasToPixels() {
     const imageData = this.ctx.getImageData(0, 0, width, width);
 
@@ -2013,6 +2060,20 @@ class SpriteSheet {
     this.history.push(new Uint8Array(this.data));
     this._undoPtr = this.history.length - 1;
     console.log(`history: ${this.history.length}`);
+  }
+
+  async rotate() {
+    this.snapshot();
+    await this.sprite.rotate();
+    this.trigger();
+    this.paint();
+  }
+
+  async mirror(horizontal = true) {
+    this.snapshot();
+    await this.sprite.mirror(horizontal);
+    this.trigger();
+    this.paint();
   }
 
   undo() {
@@ -4866,6 +4927,21 @@ document.documentElement.addEventListener('keydown', e => {
     return;
   }
 
+  if (e.key === 'r') {
+    sprites.rotate();
+    return;
+  }
+
+  if (e.key === 'h') {
+    sprites.mirror(true);
+    return;
+  }
+
+  if (e.key === 'v') {
+    sprites.mirror(false);
+    return;
+  }
+
   if (e.shiftKey === false && e.key === 'z' && (e.metaKey || e.ctrlKey)) {
     sprites.undo();
     tool.resetState();
@@ -5121,7 +5197,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "61975" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "54871" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
