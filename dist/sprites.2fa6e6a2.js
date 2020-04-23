@@ -1713,6 +1713,16 @@ class ArrayNode extends Array {
     super(); // allow setting any node property via proxy
 
     return new Proxy(this, {
+      get(obj, prop) {
+        const type = obj[0];
+
+        if (type && prop in type) {
+          return type[prop];
+        }
+
+        return obj[prop];
+      },
+
       set(obj, prop, value) {
         const type = obj[0];
 
@@ -2135,6 +2145,7 @@ class SpriteSheet {
 
   set current(value) {
     this._current = value;
+    this.trigger();
     this.paint();
   }
 
@@ -2776,14 +2787,12 @@ class TileMap {
       bank,
       w,
       h
-    } = sizes.get(size);
-    this.width = w;
-    this.height = h;
+    } = sizes.get(size); // max bank size: 16k
+
     this.bank = new Uint8Array(bank);
     this.bank.fill(1024 / size - 1);
     this.ctx = document.createElement('canvas').getContext('2d');
     const el = this.ctx.canvas;
-    el.style.maxWidth = `${w * size * scale}px`;
     el.width = w * size * scale;
     el.height = h * size * scale;
     const cancel = (0, _trackDown.default)(el, {
@@ -2802,13 +2811,60 @@ class TileMap {
       this.clearHover();
     });
     this.sprites = sprites;
-    this.active = true;
+    (0, _$.$)(`.tile-controls input[name="size"][value="${this.size}"]`).checked = true;
+    this.elements = {
+      width: (0, _$.$)(`.tile-controls input[name="width"]`),
+      height: (0, _$.$)(`.tile-controls input[name="height"]`)
+    };
+    (0, _$.$)('.tile-controls input').on('change', () => {
+      this.resize(parseInt(this.elements.width.value, 10), parseInt(this.elements.height.value, 10));
+    }); // triggers dom changes
+
+    this.setDimensions(w, h);
   }
 
-  set active(value) {
-    (0, _$.$)(`.tile-controls input[name="size"][value="${this.size}"]`).checked = true;
-    (0, _$.$)(`.tile-controls input[name="width"]`).value = this.width;
-    (0, _$.$)(`.tile-controls input[name="height"]`).value = this.height;
+  setDimensions(width, height) {
+    this.elements.width.value = width;
+    this.elements.height.value = height;
+    this.width = width;
+    this.height = height;
+    const {
+      size,
+      scale
+    } = this;
+    const el = this.ctx.canvas;
+    el.width = width * size * scale;
+    el.height = height * size * scale;
+  }
+
+  resize(w, h) {
+    const {
+      width,
+      height
+    } = this;
+    this.width = w;
+    this.height = h;
+    const size = this.size;
+    const el = this.ctx.canvas; // max bank size: 16k
+
+    const bank = new Uint8Array(w * h);
+    bank.fill(1024 / size - 1);
+
+    if (w !== width) {
+      const adjust = w > width ? width : w;
+
+      for (let i = 0; i < height; i++) {
+        // note: i * w = row length
+        bank.set(this.bank.slice(i * width, i * width + adjust), i * w);
+      }
+    } else {
+      bank.set(this.bank.slice(0, bank.length));
+    }
+
+    this.bank = bank;
+    el.width = w * size * this.scale;
+    el.height = h * size * this.scale;
+    this.paint();
   }
 
   set sprites(sprites) {
@@ -2831,15 +2887,7 @@ class TileMap {
       const {
         x,
         y
-      } = this.getXY(index); // if (this.bank[index] === -1) {
-      //   this.ctx.clearRect(
-      //     x * this.size * this.scale,
-      //     y * this.size * this.scale,
-      //     this.size * this.scale,
-      //     this.size * this.scale
-      //   );
-      // } else {
-
+      } = this.getXY(index);
       const sprite = this.sprites.get(this.bank[index]);
       sprite.paint(this.ctx, x * this.size * this.scale, y * this.size * this.scale, this.size * this.scale, false); // }
 
@@ -2865,13 +2913,12 @@ class TileMap {
 
   paint() {
     for (let i = 0; i < this.bank.length; i++) {
-      // if (this.bank[i] > -1) {
       const {
         x,
         y
       } = this.getXY(i);
       const sprite = this.sprites.get(this.bank[i]);
-      sprite.paint(this.ctx, x * this.size * this.scale, y * this.size * this.scale, this.size * this.scale, false); // }
+      sprite.paint(this.ctx, x * this.size * this.scale, y * this.size * this.scale, this.size * this.scale, false);
     }
   }
 
@@ -4709,9 +4756,10 @@ const spritesContainer = document.querySelector('#sprites .container');
 const debug = document.querySelector('#debug');
 const picker = document.querySelector('.picker');
 const upload = document.querySelector('#upload input');
+const mapUpload = document.querySelector('#upload-map input');
+const currentSpriteId = document.querySelector('#current-sprite');
 const pickerColour = document.querySelector('.pickerColour div');
 const buttons = (0, _$.$)('button[data-action]');
-const tileDownloads = (0, _$.$)('#tiles button');
 let sprites = null;
 
 function newSpriteSheet(check = true) {
@@ -4726,7 +4774,12 @@ function newSpriteSheet(check = true) {
   }, (_, i) => {
     if (check == false && i < 256) return i;
     return _colour.transparent;
-  }), ctx); // FIXME not quite right…
+  }), ctx);
+  sprites.hook(() => {
+    currentSpriteId.textContent = `sprite #${sprites.current}`;
+  });
+  sprites.current = 0; // triggers complete draw
+  // FIXME not quite right…
 
   tileMap.sprites = sprites;
   tileMap.paint();
@@ -4768,18 +4821,28 @@ function fileToImageWindow(file) {
 
 function fileToTile(file) {
   const unpack = new _unpack.Unpack(file);
-  unpack.parse(`<A8$sig
+  const header = unpack.parse(`<A8$sig
     C$marker
     C$issue
     C$version
     I$length
     C$hType
     S$hFileLength
-    n$hLine
+    S$autostart
     S$hOffset
     x
     x104
     C$checksum`);
+
+  if (header.hOffset !== 0x8000) {
+    // then we've got a version where I tucked the dimensions in the file
+    const width = header.autostart; // aka autostart
+
+    const height = (header.length - 128) / width; // header is 128 bytes
+
+    tileMap.setDimensions(width, height);
+  }
+
   tileMap.bank = new Uint8Array(file.slice(unpack.offset));
   tileMap.sprites = sprites; // just in case
 
@@ -4808,8 +4871,20 @@ const importMask = document.querySelector('#png-container .focus');
     imageWindow.copy();
   }
 });
-buttons.on('click', e => {
+buttons.on('click', async e => {
   const action = e.target.dataset.action;
+
+  if (action === 'debug-sprites') {
+    if (confirm('This will replace your current spritesheet, continue?')) {
+      const res = await fetch('/assets/numbers.spr');
+      const file = await res.arrayBuffer();
+      fileHandler(new Uint8Array(file));
+    }
+  }
+
+  if (action === 'download-map') {
+    downloadTiles();
+  }
 
   if (action === 'new') {
     newSpriteSheet(true);
@@ -5063,6 +5138,16 @@ spritesContainer.addEventListener('click', e => {
     sprites.current = Array.from(node.parentNode.childNodes).indexOf(node);
   }
 });
+spritesContainer.addEventListener('mousemove', e => {
+  const node = e.target;
+
+  if (node.nodeName === 'CANVAS') {
+    currentSpriteId.textContent = `sprite #${Array.from(node.parentNode.childNodes).indexOf(node)}`;
+  }
+});
+spritesContainer.addEventListener('mouseout', () => {
+  currentSpriteId.textContent = `sprite #${sprites.current}`;
+});
 (0, _dnd.default)(document.documentElement, fileHandler);
 
 document.documentElement.ondrop = async e => {
@@ -5111,23 +5196,35 @@ upload.addEventListener('change', e => {
 
   reader.readAsArrayBuffer(droppedFile);
 });
+mapUpload.addEventListener('change', e => {
+  const droppedFile = e.target.files[0];
+  const reader = new FileReader();
+
+  reader.onload = event => {
+    fileToTile(new Uint8Array(event.target.result));
+  };
+
+  reader.readAsArrayBuffer(droppedFile);
+});
 (0, _$.$)('input[name="transparency"]').on('change', e => {
   document.documentElement.dataset.transparency = e.target.value;
 });
-tileDownloads.on('click', e => {
-  console.log(e.target.dataset.type);
+
+function downloadTiles() {
   const filename = prompt('Filename:', 'untitled.map');
 
   if (filename) {
-    const data = new Uint8Array(tileMap.bank.length + 128);
+    const data = new Uint8Array(tileMap.bank.length + 128); // this is naughty, but I'm putting the height and width in the +3dos header
+
     data.set((0, _txt2bas.plus3DOSHeader)(data, {
       hType: 3,
-      hOffset: 0x8000
+      autostart: tileMap.width
     }));
     data.set(tileMap.bank, 128);
     (0, _save.default)(data, filename);
   }
-}); // support native paste of pngs
+} // support native paste of pngs
+
 
 document.onpaste = async event => {
   const items = (event.clipboardData || event.originalEvent.clipboardData).items;
@@ -5197,7 +5294,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "54871" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "53340" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

@@ -157,6 +157,16 @@ class ArrayNode extends Array {
     super(); // allow setting any node property via proxy
 
     return new Proxy(this, {
+      get(obj, prop) {
+        const type = obj[0];
+
+        if (type && prop in type) {
+          return type[prop];
+        }
+
+        return obj[prop];
+      },
+
       set(obj, prop, value) {
         const type = obj[0];
 
@@ -13084,7 +13094,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "54871" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "53340" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
