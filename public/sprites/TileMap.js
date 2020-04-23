@@ -33,16 +33,13 @@ export default class TileMap {
     const scale = this.scale;
     this.size = size;
     const { bank, w, h } = sizes.get(size);
-    this.width = w;
-    this.height = h;
-
+    // max bank size: 16k
     this.bank = new Uint8Array(bank);
     this.bank.fill(1024 / size - 1);
 
     this.ctx = document.createElement('canvas').getContext('2d');
 
     const el = this.ctx.canvas;
-    el.style.maxWidth = `${w * size * scale}px`;
 
     el.width = w * size * scale;
     el.height = h * size * scale;
@@ -63,13 +60,62 @@ export default class TileMap {
     });
 
     this.sprites = sprites;
-    this.active = true;
+
+    $(`.tile-controls input[name="size"][value="${this.size}"]`).checked = true;
+    this.elements = {
+      width: $(`.tile-controls input[name="width"]`),
+      height: $(`.tile-controls input[name="height"]`),
+    };
+
+    $('.tile-controls input').on('change', () => {
+      this.resize(
+        parseInt(this.elements.width.value, 10),
+        parseInt(this.elements.height.value, 10)
+      );
+    });
+
+    // triggers dom changes
+    this.setDimensions(w, h);
   }
 
-  set active(value) {
-    $(`.tile-controls input[name="size"][value="${this.size}"]`).checked = true;
-    $(`.tile-controls input[name="width"]`).value = this.width;
-    $(`.tile-controls input[name="height"]`).value = this.height;
+  setDimensions(width, height) {
+    this.elements.width.value = width;
+    this.elements.height.value = height;
+    this.width = width;
+    this.height = height;
+
+    const { size, scale } = this;
+    const el = this.ctx.canvas;
+    el.width = width * size * scale;
+    el.height = height * size * scale;
+  }
+
+  resize(w, h) {
+    const { width, height } = this;
+    this.width = w;
+    this.height = h;
+    const size = this.size;
+    const el = this.ctx.canvas;
+
+    // max bank size: 16k
+    const bank = new Uint8Array(w * h);
+    bank.fill(1024 / size - 1);
+
+    if (w !== width) {
+      const adjust = w > width ? width : w;
+      for (let i = 0; i < height; i++) {
+        // note: i * w = row length
+        bank.set(this.bank.slice(i * width, i * width + adjust), i * w);
+      }
+    } else {
+      bank.set(this.bank.slice(0, bank.length));
+    }
+
+    this.bank = bank;
+
+    el.width = w * size * this.scale;
+    el.height = h * size * this.scale;
+    this.paint();
   }
 
   set sprites(sprites) {
@@ -97,14 +143,6 @@ export default class TileMap {
     if (this._tmp !== null) {
       const index = this._tmp;
       const { x, y } = this.getXY(index);
-      // if (this.bank[index] === -1) {
-      //   this.ctx.clearRect(
-      //     x * this.size * this.scale,
-      //     y * this.size * this.scale,
-      //     this.size * this.scale,
-      //     this.size * this.scale
-      //   );
-      // } else {
       const sprite = this.sprites.get(this.bank[index]);
 
       sprite.paint(
@@ -140,7 +178,6 @@ export default class TileMap {
 
   paint() {
     for (let i = 0; i < this.bank.length; i++) {
-      // if (this.bank[i] > -1) {
       const { x, y } = this.getXY(i);
       const sprite = this.sprites.get(this.bank[i]);
       sprite.paint(
@@ -150,7 +187,6 @@ export default class TileMap {
         this.size * this.scale,
         false
       );
-      // }
     }
   }
 }

@@ -17,9 +17,10 @@ const spritesContainer = document.querySelector('#sprites .container');
 const debug = document.querySelector('#debug');
 const picker = document.querySelector('.picker');
 const upload = document.querySelector('#upload input');
+const mapUpload = document.querySelector('#upload-map input');
+const currentSpriteId = document.querySelector('#current-sprite');
 const pickerColour = document.querySelector('.pickerColour div');
 const buttons = $('button[data-action]');
-const tileDownloads = $('#tiles button');
 
 let sprites = null;
 
@@ -37,6 +38,12 @@ function newSpriteSheet(check = true) {
     }),
     ctx
   );
+
+  sprites.hook(() => {
+    currentSpriteId.textContent = `sprite #${sprites.current}`;
+  });
+
+  sprites.current = 0; // triggers complete draw
 
   // FIXME not quite right…
   tileMap.sprites = sprites;
@@ -75,7 +82,7 @@ function fileToImageWindow(file) {
 function fileToTile(file) {
   const unpack = new Unpack(file);
 
-  unpack.parse(
+  const header = unpack.parse(
     `<A8$sig
     C$marker
     C$issue
@@ -83,13 +90,19 @@ function fileToTile(file) {
     I$length
     C$hType
     S$hFileLength
-    n$hLine
+    S$autostart
     S$hOffset
     x
     x104
     C$checksum`
   );
 
+  if (header.hOffset !== 0x8000) {
+    // then we've got a version where I tucked the dimensions in the file
+    const width = header.autostart; // aka autostart
+    const height = (header.length - 128) / width; // header is 128 bytes
+    tileMap.setDimensions(width, height);
+  }
   tileMap.bank = new Uint8Array(file.slice(unpack.offset));
   tileMap.sprites = sprites; // just in case
   tileMap.paint();
@@ -119,8 +132,20 @@ $('#png-import-tools button').on('click', (e) => {
   }
 });
 
-buttons.on('click', (e) => {
+buttons.on('click', async (e) => {
   const action = e.target.dataset.action;
+
+  if (action === 'debug-sprites') {
+    if (confirm('This will replace your current spritesheet, continue?')) {
+      const res = await fetch('/assets/numbers.spr');
+      const file = await res.arrayBuffer();
+      fileHandler(new Uint8Array(file));
+    }
+  }
+
+  if (action === 'download-map') {
+    downloadTiles();
+  }
 
   if (action === 'new') {
     newSpriteSheet(true);
@@ -253,6 +278,21 @@ document.documentElement.addEventListener('keydown', (e) => {
     return;
   }
 
+  if (e.key === 'r') {
+    sprites.rotate();
+    return;
+  }
+
+  if (e.key === 'h') {
+    sprites.mirror(true);
+    return;
+  }
+
+  if (e.key === 'v') {
+    sprites.mirror(false);
+    return;
+  }
+
   if (e.shiftKey === false && e.key === 'z' && (e.metaKey || e.ctrlKey)) {
     sprites.undo();
     tool.resetState();
@@ -307,6 +347,7 @@ function renderCurrentSprite() {
     `#sprites > :nth-child(${sprites.current + 1})`
   );
   if (focused) focused.classList.add('focus');
+
   sprites.paint();
 }
 
@@ -365,6 +406,19 @@ spritesContainer.addEventListener('click', (e) => {
   }
 });
 
+spritesContainer.addEventListener('mousemove', (e) => {
+  const node = e.target;
+  if (node.nodeName === 'CANVAS') {
+    currentSpriteId.textContent = `sprite #${Array.from(
+      node.parentNode.childNodes
+    ).indexOf(node)}`;
+  }
+});
+
+spritesContainer.addEventListener('mouseout', () => {
+  currentSpriteId.textContent = `sprite #${sprites.current}`;
+});
+
 drop(document.documentElement, fileHandler);
 
 document.documentElement.ondrop = async (e) => {
@@ -411,20 +465,34 @@ upload.addEventListener('change', (e) => {
   reader.readAsArrayBuffer(droppedFile);
 });
 
+mapUpload.addEventListener('change', (e) => {
+  const droppedFile = e.target.files[0];
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    fileToTile(new Uint8Array(event.target.result));
+  };
+  reader.readAsArrayBuffer(droppedFile);
+});
+
 $('input[name="transparency"]').on('change', (e) => {
   document.documentElement.dataset.transparency = e.target.value;
 });
 
-tileDownloads.on('click', (e) => {
-  console.log(e.target.dataset.type);
+function downloadTiles() {
   const filename = prompt('Filename:', 'untitled.map');
   if (filename) {
     const data = new Uint8Array(tileMap.bank.length + 128);
-    data.set(plus3DOSHeader(data, { hType: 3, hOffset: 0x8000 }));
+    // this is naughty, but I'm putting the height and width in the +3dos header
+    data.set(
+      plus3DOSHeader(data, {
+        hType: 3,
+        autostart: tileMap.width,
+      })
+    );
     data.set(tileMap.bank, 128);
     save(data, filename);
   }
-});
+}
 
 // support native paste of pngs
 document.onpaste = async (event) => {

@@ -4,11 +4,21 @@ class ArrayNode extends Array {
 
     // allow setting any node property via proxy
     return new Proxy(this, {
+      get(obj, prop) {
+        const type = obj[0];
+
+        if (type && prop in type) {
+          return type[prop];
+        }
+
+        return obj[prop];
+      },
+
       set(obj, prop, value) {
         const type = obj[0];
 
         if (type && prop in type) {
-          return obj.filter(el => (el[prop] = value));
+          return obj.filter((el) => (el[prop] = value));
         }
 
         const res = (this[prop] = value);
@@ -18,12 +28,12 @@ class ArrayNode extends Array {
   }
 
   on(event, handler, options) {
-    return this.filter(el => el.addEventListener(event, handler, options));
+    return this.filter((el) => el.addEventListener(event, handler, options));
   }
 
   emit(type, data) {
     const event = new Event(type, { data });
-    return this.filter(el => el.dispatchEvent(event));
+    return this.filter((el) => el.dispatchEvent(event));
   }
 }
 

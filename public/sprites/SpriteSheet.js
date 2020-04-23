@@ -87,6 +87,46 @@ export class Sprite {
     this.render();
   }
 
+  mirror(horizontal = true) {
+    return new Promise((resolve) => {
+      const i = new Image();
+      const url = this.canvas.toDataURL(); // needed over a blob because blob is apparently a reference
+      i.src = url;
+      i.onload = () => {
+        this.ctx.clearRect(0, 0, width, width);
+        this.ctx.save();
+        if (horizontal) {
+          this.ctx.scale(-1, 1);
+          this.ctx.drawImage(i, 0, 0, -width, width); //, -width, 0);
+        } else {
+          this.ctx.scale(1, -1);
+          this.ctx.drawImage(i, 0, 0, width, -width);
+        }
+        this.ctx.restore();
+        this.canvasToPixels();
+        resolve();
+      };
+    });
+  }
+
+  rotate() {
+    return new Promise((resolve) => {
+      const i = new Image();
+      const url = this.canvas.toDataURL(); // needed over a blob because blob is apparently a reference
+      i.src = url;
+      i.onload = () => {
+        this.ctx.clearRect(0, 0, width, width);
+        this.ctx.translate(width / 2, width / 2);
+        this.ctx.rotate((90 * Math.PI) / 180); // 90deg
+        this.ctx.drawImage(i, -width / 2, -width / 2);
+        this.ctx.rotate((-90 * Math.PI) / 180);
+        this.ctx.translate(-width / 2, -width / 2);
+        this.canvasToPixels();
+        resolve();
+      };
+    });
+  }
+
   canvasToPixels() {
     const imageData = this.ctx.getImageData(0, 0, width, width);
     for (let i = 0; i < imageData.data.length / 4; i++) {
@@ -196,7 +236,7 @@ export default class SpriteSheet {
   }
 
   trigger() {
-    this.hooks.forEach(callback => callback());
+    this.hooks.forEach((callback) => callback());
   }
 
   copy() {
@@ -221,6 +261,20 @@ export default class SpriteSheet {
     this.history.push(new Uint8Array(this.data));
     this._undoPtr = this.history.length - 1;
     console.log(`history: ${this.history.length}`);
+  }
+
+  async rotate() {
+    this.snapshot();
+    await this.sprite.rotate();
+    this.trigger();
+    this.paint();
+  }
+
+  async mirror(horizontal = true) {
+    this.snapshot();
+    await this.sprite.mirror(horizontal);
+    this.trigger();
+    this.paint();
   }
 
   undo() {
@@ -251,7 +305,7 @@ export default class SpriteSheet {
   }
 
   getPreviewElements() {
-    return this.previewCtx.map(_ => _.canvas);
+    return this.previewCtx.map((_) => _.canvas);
   }
 
   canvasToPixels() {
@@ -278,6 +332,7 @@ export default class SpriteSheet {
 
   set current(value) {
     this._current = value;
+    this.trigger();
     this.paint();
   }
 
@@ -301,7 +356,7 @@ export default class SpriteSheet {
     sprite.paint(this.ctx);
     sprite.paint(this.previewCtx[this._current]);
 
-    this.getPreviewElements().map(_ => _.classList.remove('focus'));
+    this.getPreviewElements().map((_) => _.classList.remove('focus'));
     this.previewCtx[this._current].canvas.classList.add('focus');
   }
 }

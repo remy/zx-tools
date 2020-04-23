@@ -4,4 +4,4 @@ tmp/
 web_modules/
 /**/data/
 .nyc_output/
-assets/
+/assets/

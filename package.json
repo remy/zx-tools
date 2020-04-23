@@ -10,6 +10,10 @@
     "serve-dist": "serve dist -p 8080",
     "test": "tap  --no-coverage-report --watch __tests__/**/*.test.js"
   },
+  "staticFiles": {
+    "staticPath": "public/static",
+    "watcherGlob": "**"
+  },
   "browserslist": [
     "last 1 Chrome versions"
   ],
@@ -19,7 +23,8 @@
   "dependencies": {
     "@remy/unpack": "^2.1.0",
     "codemirror": "^5.52.0",
-    "esm": "^3.2.25"
+    "esm": "^3.2.25",
+    "txt2bas": "^1.2.3"
   },
   "devDependencies": {
     "@babel/core": "^7.0.0-0",
@@ -29,7 +34,8 @@
     "babel-preset-env": "^1.7.0",
     "cssnano": "^4.1.10",
     "eslint": "^6.8.0",
-    "parcel-bundler": "1.12.4",
+    "parcel-bundler": "^1.12.4",
+    "parcel-plugin-static-files-copy": "^2.3.1",
     "sass": "^1.26.3",
     "tap": "^14.10.7"
   },

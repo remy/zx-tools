@@ -22,7 +22,7 @@
       <div id="sprites">
         <button title="[D]ownload" class="button--download" data-action="download">Download<br>spritesheet</button>
         <div class="container"></div>
-
+        <div id="current-sprite">&nbsp;</div>
       </div>
 
 
@@ -88,7 +88,7 @@
                 <button data-action="rol">&lt;&lt;</button>
                 <button data-action="ror">&gt;&gt;</button>
               </div>
-              <span class="button" id="upload"><input type="file">Upload .png / .spr</span>
+              <span class="button input-button" id="upload"><input type="file">Upload .png / .spr</span>
               <button data-action="new">New sprite sheet</button>
             </div>
             <div class="picker sprite"></div>
@@ -107,18 +107,19 @@
               <label><input type="radio" value="16" name="size"> 16px</label>
               <label><input type="radio" value="8" name="size"> 8px</label>
             </div>
-            <div hidden>
+            <div>
               <strong>Dimensions</strong>
-              <label><input type="number" min="1" max="32" value="32" name="width"> width</label>
-              <label><input type="number" min="1" max="24" value="24" name="height"> height</label>
+              <label><input type="number" min="1" value="32" name="width"> width</label>
+              <label><input type="number" min="1" value="24" name="height"> height</label>
             </div>
             <div>
               <strong>UI transparency</strong>
               <label><input type="radio" value="hatched" checked name="transparency"> hatched</label>
               <label><input type="radio" value="black" name="transparency"> black</label>
             </div>
-            <button class="download-btn" data-type="bin">Download .bin</button>
-            <!-- <button class="download-btn" data-type="bas">Download .bas</button> -->
+            <span class="button input-button" id="upload-map"><input type="file">Upload map</span>
+            <button class="download-btn" data-action="download-map">Download map</button>
+            <button class="debug-sprite-btn" data-action="debug-sprites">Load debug sprites</button>
             <a href="/bas/?id=0a51ba71408dbeff08baad3acaf1d533" target="_blank">Example BASIC code</a>
           </div>
           <div id="tile-map-container"></div>
@@ -179,6 +180,12 @@
               <dl class="keys">
                 <dt>D</dt>
                 <dd>download spritesheet .spr file</dd>
+                <dt>r</dt>
+                <dd>rotate sprite</dd>
+                <dt>v</dt>
+                <dd>vertically mirror sprite</dd>
+                <dt>h</dt>
+                <dd>horizontally mirror sprite</dd>
                 <dt>b</dt>
                 <dd>select brush tool</dd>
                 <dt>f</dt>
@@ -222,6 +229,12 @@
             <summary>Change log</summary>
             <div>
               <ul>
+                <li>2020 April 20
+                  <ul>
+                    <li>Add: rotate sprite</li>
+                    <li>Add: mirror sprite on X &amp; Y axis</li>
+                  </ul>
+                </li>
                 <li>2020 April 9
                   <ul>
                     <li>Fix: pan sprites with cursors</li>
