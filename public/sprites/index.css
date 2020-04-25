@@ -544,6 +544,10 @@ details {
   border-top: 1px solid #ccc;
 }
 
+#usage > div {
+  max-width: 960px;
+}
+
 #usage h2:before {
   content: '# ';
 }
