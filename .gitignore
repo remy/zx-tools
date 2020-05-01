@@ -6,3 +6,4 @@ web_modules/
 .nyc_output/
 /assets/
 /dist
+.netlify
