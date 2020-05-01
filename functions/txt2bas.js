@@ -8,8 +8,8 @@ exports.handler = async (event) => {
     };
   }
 
+  const src = event.body.text;
   try {
-    const src = event.body.text;
     const body = file2bas(src);
 
     return {
@@ -23,7 +23,12 @@ exports.handler = async (event) => {
     console.log(err); // output to netlify function log
     return {
       statusCode: 500,
-      body: JSON.stringify({ msg: err.message, stack: err.stack }),
+      body: JSON.stringify({
+        msg: err.message,
+        stack: err.stack,
+        src,
+        body: JSON.stringify(event.body),
+      }),
     };
   }
 };
