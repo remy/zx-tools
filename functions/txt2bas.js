@@ -8,7 +8,7 @@ exports.handler = async (event) => {
     };
   }
 
-  const src = JSON.parse(event.body);
+  const src = event.body;
   try {
     const body = file2bas(src);
 
