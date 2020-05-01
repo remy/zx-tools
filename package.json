@@ -7,7 +7,7 @@
     "dev": "rm -rf dist; parcel watch public/index.html public/**/index.html",
     "serve": "serve dist -p 8080",
     "deploy": "npm run build; git add dist; git commit -m'new build'; git push origin master",
-    "_start": "rm -rf dist; parcel  public/index.html public/**/index.html",
+    "build": "rm -rf dist; parcel build public/index.html public/**/index.html",
     "serve-dist": "serve dist -p 8080",
     "test": "tap  --no-coverage-report --watch __tests__/**/*.test.js"
   },
