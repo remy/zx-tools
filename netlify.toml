@@ -1,2 +1,12 @@
 [build]
-  functions = "./functions"
+  publish = "dist"
+  functions = 'functions'
+[[redirects]]
+  from = "/txt2bas"
+  to = "/.netlify/functions/txt2bas"
+  status = 200
+
+[[redirects]]
+  from = "/bas2txt"
+  to = "/.netlify/functions/bas2txt"
+  status = 200
