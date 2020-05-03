@@ -34,6 +34,11 @@ module.exports = (req, res) => {
         }
       }
 
+      if (!src) {
+        console.log(req.headers);
+        return res.status(400).send({ error: 'Missing submitted content' });
+      }
+
       const body = file2bas(src);
 
       res.setHeader('Access-Control-Allow-Origin', '*');
