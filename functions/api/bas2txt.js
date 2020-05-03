@@ -5,6 +5,7 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 module.exports = (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method !== 'POST') {
     return res.status(405).json({
       error: 'Method Not Allowed (please POST data=+3dos binary only)',
@@ -29,7 +30,6 @@ module.exports = (req, res) => {
       const body = file2txt(src);
 
       res.status(200);
-      res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('Content-Type', 'text/plain');
       res.send(body);
     } catch (err) {
