@@ -71,3 +71,30 @@ body .CodeMirror {
 .goto .cm-goto {
   cursor: pointer;
 }
+
+details,
+p {
+  max-width: 720px;
+}
+
+details {
+  margin-bottom: 40px;
+}
+
+details summary {
+  font-weight: bold;
+}
+
+details summary:after {
+  content: ' (click to expand)';
+  color: #999;
+  font-weight: normal;
+}
+
+details[open] summary:after {
+  content: '';
+}
+
+li strong {
+  font-weight: 500;
+}
