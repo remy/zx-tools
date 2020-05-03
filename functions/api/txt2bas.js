@@ -31,12 +31,17 @@ module.exports = (req, res) => {
         if (req.headers['content-type'].toLowerCase().includes('text/plain')) {
           src = req.body;
         } else {
-          src = req.body.text;
+          if (req.body.text) {
+            src = req.body.text;
+          } else {
+            // god, it's in the body as plain - this is hard
+            const key = Object.keys(req.body)[0];
+            src = key + '=' + req.body[key].split('\\n').join('\n');
+          }
         }
       }
 
       if (!src) {
-        console.log(req.headers);
         return res.status(400).send({ error: 'Missing submitted content' });
       }
 
