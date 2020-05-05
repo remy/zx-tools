@@ -7,7 +7,7 @@
     "serve": "serve dist -p 8080",
     "deploy": "npm run build; git add dist; git commit -m'new build'; git push origin master",
     "functions": "now --prod",
-    "now-build": "ncc build functions/api/txt2bas.js -o dist/api/txt2bas/; ncc build functions/api/bas2txt.js -o dist/api/bas2txt/",
+    "__now-build": "ncc build functions/api/txt2bas.js -o dist/api/txt2bas/; ncc build functions/api/bas2txt.js -o dist/api/bas2txt/",
     "build": "rm -rf dist; parcel build public/index.html public/**/index.html",
     "serve-dist": "serve dist -p 8080",
     "test": "tap  --no-coverage-report --watch __tests__/**/*.test.js"
