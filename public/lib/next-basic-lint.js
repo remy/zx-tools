@@ -33,11 +33,8 @@ CodeMirror.registerHelper('lint', 'basic', function (text, _, cm) {
       if (data) {
         let { line, start, end, message } = data;
         if (!end) {
-          console.log(cm.getLine(line - 1));
-
           end = cm.getLine(line - 1).length;
         }
-        console.log({ message, start, end });
         found.push({
           from: CodeMirror.Pos(line - 1, start - 1),
           to: CodeMirror.Pos(line - 1, end - 1),
