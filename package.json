@@ -6,7 +6,8 @@
     "dev": "rm -rf dist; parcel watch public/index.html public/**/index.html",
     "serve": "serve dist -p 8080",
     "deploy": "npm run build; git add dist; git commit -m'new build'; git push origin master",
-    "functions": "now --prod functions",
+    "functions": "now --prod",
+    "now-build": "ncc build functions/api/txt2bas.js -o dist/api/txt2bas/; ncc build functions/api/bas2txt.js -o dist/api/bas2txt/",
     "build": "rm -rf dist; parcel build public/index.html public/**/index.html",
     "serve-dist": "serve dist -p 8080",
     "test": "tap  --no-coverage-report --watch __tests__/**/*.test.js"
@@ -25,11 +26,13 @@
     "@remy/unpack": "^2.1.0",
     "codemirror": "^5.52.0",
     "esm": "^3.2.25",
-    "txt2bas": "^1.4.1"
+    "multer": "^1.4.2",
+    "txt2bas": "^1.6.3"
   },
   "devDependencies": {
     "@babel/core": "^7.0.0-0",
     "@babel/plugin-proposal-class-properties": "^7.8.3",
+    "@zeit/ncc": "^0.22.1",
     "babel-core": "^6.26.3",
     "babel-eslint": "^10.1.0",
     "babel-preset-env": "^1.7.0",

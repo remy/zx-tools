@@ -98,3 +98,9 @@ details[open] summary:after {
 li strong {
   font-weight: 500;
 }
+
+.CodeMirror-lint-message-error {
+  background-image: url('data:image/svg+xml;utf8,<svg width="10" height="10" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd"><path d="M5 9.64c2.56 0 4.64-2.08 4.64-4.64C9.64 2.44 7.56.36 5 .36 2.44.36.36 2.44.36 5 .36 7.56 2.44 9.64 5 9.64z" fill="%23EB3941"/><path d="M3 3l4 4M7 3L3 7" stroke="%23FFF" fill="%23000"/></g></svg>') !important;
+  background-size: 12px;
+  background-position: left center;
+}

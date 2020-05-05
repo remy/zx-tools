@@ -1,5 +1,5 @@
 /* eslint-env node */
-const { file2bas } = require('txt2bas');
+const { file2bas, validateTxt } = require('txt2bas');
 const multer = require('multer');
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
@@ -14,7 +14,7 @@ module.exports = (req, res) => {
 
   upload.single('file')(req, res, (err) => {
     if (err) {
-      return res.status(400).send({
+      return res.status(500).send({
         error: err.message,
       });
     }
@@ -45,12 +45,19 @@ module.exports = (req, res) => {
         return res.status(400).send({ error: 'Missing submitted content' });
       }
 
+      // look for errors first
+      const errors = validateTxt(src);
+
+      if (errors.length) {
+        return res.status(400).json({ error: 'Syntax errors found', errors });
+      }
+
       const body = file2bas(src);
 
       res.send(Buffer.from(body), 'binary');
     } catch (err) {
       console.log(err); // output to netlify function log
-      res.status(500).json({ error: err.message });
+      res.status(400).json({ error: err.message });
     }
   });
 };

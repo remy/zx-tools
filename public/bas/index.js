@@ -25,6 +25,7 @@ const cm = CodeMirror.fromTextArea(ta, {
   viewportMargin: Infinity,
   styleActiveLine: true,
   autoCloseBrackets: true,
+  lint: true,
 });
 
 cm.getWrapperElement().addEventListener('click', (e) => {

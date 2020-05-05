@@ -14,7 +14,7 @@ module.exports = (req, res) => {
 
   upload.single('file')(req, res, (err) => {
     if (err) {
-      return res.status(400).send({
+      return res.status(500).send({
         error: err.message,
       });
     }
@@ -34,7 +34,7 @@ module.exports = (req, res) => {
       res.send(body);
     } catch (err) {
       console.log(err.stack); // output to netlify function log
-      res.status(500).json({ error: err.message });
+      res.status(400).json({ error: err.message });
     }
   });
 };
