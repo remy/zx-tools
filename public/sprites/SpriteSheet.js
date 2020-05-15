@@ -1,6 +1,6 @@
 import { rgbFromIndex, transparent, toRGB332 } from './lib/colour.js';
 
-const pixelLength = 256;
+export const pixelLength = 256;
 const width = 16;
 
 export const colourTable = Array.from({ length: pixelLength }, (_, i) => {
