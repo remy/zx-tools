@@ -113,9 +113,13 @@
               <label><input type="number" min="1" value="24" name="height"> height</label>
             </div>
             <div>
-              <strong>UI transparency</strong>
-              <label><input type="radio" value="hatched" checked name="transparency"> hatched</label>
-              <label><input type="radio" value="black" name="transparency"> black</label>
+              <strong>Options</strong>
+              <label><input type="radio" value="hatched" checked name="transparency"> hatched transparency</label>
+              <label><input type="radio" value="black" name="transparency"> black for transparency</label>
+              <label><input type="checkbox" checked value="3dos" id="include-tile-header" name="include-tile-header">
+                include
+                header<br><span><small>Required if using
+                    <code>LOAD</code> in NextBASIC</small></span></label>
             </div>
             <span class="button input-button" id="upload-map"><input type="file">Upload map</span>
             <button class="download-btn" data-action="download-map">Download map</button>

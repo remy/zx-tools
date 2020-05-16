@@ -558,3 +558,11 @@ details {
   font-size: 80%;
   margin: 8px auto;
 }
+code {
+  background: #222;
+  border-color: #222;
+}
+
+small {
+  font-size: 60%;
+}

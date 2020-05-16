@@ -481,15 +481,26 @@ $('input[name="transparency"]').on('change', (e) => {
 function downloadTiles() {
   const filename = prompt('Filename:', 'untitled.map');
   if (filename) {
-    const data = new Uint8Array(tileMap.bank.length + 128);
+    const includeHeader = $('#include-tile-header').checked;
+    let length = tileMap.bank.length;
+    let offset = 0;
+
+    if (includeHeader) {
+      length += 128;
+      offset = 128;
+    }
+
+    const data = new Uint8Array(length);
     // this is naughty, but I'm putting the height and width in the +3dos header
-    data.set(
-      plus3DOSHeader(data, {
-        hType: 3,
-        autostart: tileMap.width,
-      })
-    );
-    data.set(tileMap.bank, 128);
+    if (includeHeader) {
+      data.set(
+        plus3DOSHeader(data, {
+          hType: 3,
+          autostart: tileMap.width,
+        })
+      );
+    }
+    data.set(tileMap.bank, offset);
     save(data, filename);
   }
 }
