@@ -392,9 +392,9 @@ export default class SpriteSheet {
     return this.sprites[index];
   }
 
-  toggleScale(paintSubSprites = true) {
+  setScale(scale, paintSubSprites = true) {
     const sprite = this.sprite;
-    sprite.toggleScale();
+    sprite.setScale(scale);
     this.scale = 32 / sprite.scale;
 
     if (paintSubSprites && sprite.scale === 8) {
@@ -409,6 +409,10 @@ export default class SpriteSheet {
 
     this.current = this._current;
     this.paint();
+  }
+
+  toggleScale(paintSubSprites = true) {
+    this.setScale(this.sprite.scale === 8 ? 16 : 8, paintSubSprites);
   }
 
   clear() {

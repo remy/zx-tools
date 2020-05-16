@@ -127,13 +127,11 @@ export default class Tool {
   }
 
   start(event) {
-    const coords = getCoords(event, 64);
+    const coords = getCoords(event, 64); // FIXME
     this._coords = coords;
   }
 
-  end() {
-    // this._coords = null;
-  }
+  end() {}
 
   apply(event, sprites) {
     const coords = getCoords(event, 16 * sprites.scale, 16 * sprites.scale);

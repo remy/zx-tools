@@ -8,6 +8,8 @@ const dummySpriteSheet = {
     return dummySpriteSheet;
   },
 
+  setScale() {},
+
   paint() {},
 };
 
@@ -29,7 +31,7 @@ export default class TileMap {
   _sprites = null;
   _tmp = null;
 
-  constructor({ size = 16, sprites }) {
+  constructor({ size = 8, sprites }) {
     const scale = this.scale;
     this.size = size;
     const { bank, w, h } = sizes.get(size);
@@ -67,6 +69,14 @@ export default class TileMap {
       height: $(`.tile-controls input[name="height"]`),
       scale: $(`.tile-controls input[name="size"]`),
     };
+
+    $(`.tile-controls input[name="size"]`).on('change', (e) => {
+      this.sprites.setScale(parseInt(e.target.value, 10));
+    });
+
+    // this.elements.scale.filter(
+    //   (_) => parseInt(_.value, 10) === this.size
+    // )[0].checked = true;
 
     $('.tile-controls input').on('change', () => {
       this.size = parseInt(
@@ -184,17 +194,16 @@ export default class TileMap {
   paint() {
     for (let i = 0; i < this.bank.length; i++) {
       const { x, y } = this.getXY(i);
-      let bankIndex = i;
+      let bankIndex = this.bank[i];
       if (this.size === 8) {
         bankIndex = (i / 4) | 0;
       }
-      // console.log({ bankIndex });
 
-      const sprite = this.sprites.get(this.bank[bankIndex]);
+      const sprite = this.sprites.get(bankIndex);
 
-      if (this.size === 8) {
-        sprite.setScale(8, i % 4);
-      }
+      // if (this.size === 8) {
+      //   sprite.setScale(8, i % 4);
+      // }
 
       sprite.paint(
         this.ctx,

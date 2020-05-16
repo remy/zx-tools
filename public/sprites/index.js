@@ -30,7 +30,9 @@ const subSprites = $('#preview-8x8 canvas').map((canvas) => {
 let sprites = null;
 
 function newSpriteSheet(file) {
-  return new SpriteSheet(file, { ctx, subSprites });
+  sprites = new SpriteSheet(file, { ctx, subSprites });
+  tileMap.sprites = sprites; // just in case
+  return sprites;
 }
 
 function generateNewSpriteSheet(check = true) {
