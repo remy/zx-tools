@@ -31,7 +31,7 @@ export function emptyCanvas(ctx) {
   ctx.putImageData(blank, 0, 0);
 }
 
-export function xyToIndex({ x, y, w = width }) {
+export function xyToIndex({ x, y, w = width, h = w }) {
   if (x < 0) {
     return null;
   }
@@ -40,7 +40,7 @@ export function xyToIndex({ x, y, w = width }) {
     return null;
   }
 
-  if (y >= w) {
+  if (y >= h) {
     return null;
   }
 

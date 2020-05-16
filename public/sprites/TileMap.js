@@ -11,11 +11,11 @@ const dummySpriteSheet = {
   paint() {},
 };
 
-export function getCoords(e, w, size) {
+export function getCoords(e, w, size, h = w) {
   const rect = e.target.getBoundingClientRect();
   const x = ((e.clientX - rect.left) / size) | 0; //x position within the element.
   const y = ((e.clientY - rect.top) / size) | 0; //y position within the element.
-  const index = xyToIndex({ x, y, w });
+  const index = xyToIndex({ x, y, w, h });
   return { x, y, index };
 }
 
@@ -46,7 +46,12 @@ export default class TileMap {
 
     const cancel = trackDown(el, {
       handler: (e) => {
-        const { index } = getCoords(e, this.width, this.size * this.scale);
+        const { index } = getCoords(
+          e,
+          this.width,
+          this.size * this.scale,
+          this.height
+        );
         this.set(index);
         this._tmp = null;
         this.paint();
@@ -96,6 +101,8 @@ export default class TileMap {
     this.height = h;
     const size = this.size;
     const el = this.ctx.canvas;
+
+    console.log({ w, h });
 
     // max bank size: 16k
     const bank = new Uint8Array(w * h);
