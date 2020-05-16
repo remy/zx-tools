@@ -42,7 +42,6 @@ cm.getWrapperElement().addEventListener('click', (e) => {
         if (needle.startsWith('%')) {
           needle = needle.substring(1);
         }
-        console.log('num search');
         needle += ' ';
       }
 
@@ -245,7 +244,6 @@ CodeMirror.commands.save = () => download('3dos');
 
 dnd(document.body, (file) => {
   if (file[0] === 0x13) {
-    console.log('decode from tap');
     cm.setValue(file2txt(file, 'tap'));
   } else if (file[0] === 0x50) {
     cm.setValue(file2txt(file, '3dos'));

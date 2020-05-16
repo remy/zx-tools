@@ -77,7 +77,7 @@ async function pixelsToImage(pixels) {
   const url = canvas.toDataURL('image/png');
   const img = new Image();
   img.src = url;
-  return new Promise(resolve => (img.onload = () => resolve(img)));
+  return new Promise((resolve) => (img.onload = () => resolve(img)));
 }
 
 export default async function main(
@@ -139,7 +139,7 @@ export default async function main(
     hover = !hover;
   };
 
-  rootCanvas.onmousemove = e => {
+  rootCanvas.onmousemove = (e) => {
     if (!hover) return;
     const x = (e.pageX / 8) | 0;
     const y = (e.pageY / 8) | 0;
@@ -183,8 +183,6 @@ function putInkForBlock(
   const print = x === 3 && y === 1;
   const byte = attributesForBlock(block, print);
   const attributes = readAttributes(byte);
-
-  if (print) console.log(attributes);
 
   for (let i = 0; i < 64; i++) {
     const ink = getInkFromPixel([...block.slice(i * 4, i * 4 + 3)]);
