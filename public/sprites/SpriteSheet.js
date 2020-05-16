@@ -49,6 +49,7 @@ export function xyToIndex({ x, y, w = width }) {
 
 export class Sprite {
   scale = 16;
+  subSprite = 0; // only used when 8x8
 
   /**
    *
@@ -66,16 +67,20 @@ export class Sprite {
   }
 
   pget({ index = null, x = null, y }) {
-    if (index === null) {
-      index = xyToIndex({ x, y });
+    index = xyToIndex({ x, y, w: this.scale });
+
+    if (this.scale === 8) {
+      index += this.subSprite * 64;
     }
 
     return this.pixels[index];
   }
 
   pset({ index = null, x = null, y, value }) {
-    if (index === null) {
-      index = xyToIndex({ x, y });
+    index = xyToIndex({ x, y, w: this.scale });
+
+    if (this.scale === 8) {
+      index += this.subSprite * 64;
     }
 
     this.pixels[index] = value;
@@ -83,7 +88,13 @@ export class Sprite {
   }
 
   clear() {
-    this.pixels.fill(transparent);
+    if (this.scale === 16) {
+      this.pixels.fill(transparent);
+    } else {
+      const empty = new Uint8Array(64);
+      empty.fill(transparent);
+      this.pixels.set(empty, 64 * this.subSprite);
+    }
     this.render();
   }
 
@@ -144,15 +155,27 @@ export class Sprite {
     const pixels = this.pixels;
 
     // imageData is the internal copy
+    const width = this.scale;
     const imageData = this.ctx.getImageData(0, 0, width, width);
 
-    for (let i = 0; i < pixels.length; i++) {
+    let i = 0;
+    let j = pixels.length;
+    if (this.scale === 8) {
+      i = this.subSprite * 64;
+      j = i + 64;
+    }
+
+    let ptr = 0;
+
+    for (i; i < j; i++) {
       let index = pixels[i];
+
       const { r, g, b, a } = colourTable[index];
-      imageData.data[i * 4 + 0] = r;
-      imageData.data[i * 4 + 1] = g;
-      imageData.data[i * 4 + 2] = b;
-      imageData.data[i * 4 + 3] = a * 255;
+      imageData.data[ptr * 4 + 0] = r;
+      imageData.data[ptr * 4 + 1] = g;
+      imageData.data[ptr * 4 + 2] = b;
+      imageData.data[ptr * 4 + 3] = a * 255;
+      ptr++;
     }
 
     if (dx !== 0 || dy !== 0) {
@@ -175,6 +198,7 @@ export class Sprite {
     if (w === null) {
       w = ctx.canvas.width;
     }
+
     // clear, set to jaggy and scale to canvas
     ctx.clearRect(dx, dy, w, w);
     ctx.imageSmoothingEnabled = false;
@@ -190,6 +214,20 @@ export class Sprite {
       w
     );
   }
+
+  setScale(scale, index = false) {
+    if (index !== false) {
+      this.subSprite = index;
+    }
+    this.scale = scale;
+    const canvas = this.ctx.canvas;
+    canvas.width = canvas.height = this.scale;
+    this.render();
+  }
+
+  toggleScale(index = false) {
+    this.setScale(this.scale === 16 ? 8 : 16, index);
+  }
 }
 
 export default class SpriteSheet {
@@ -203,7 +241,7 @@ export default class SpriteSheet {
   clipboard = null;
   hooks = [];
 
-  constructor(data, ctx, scale = 2) {
+  constructor(data, { ctx, scale = 2, subSprites } = {}) {
     this.data = new Uint8Array(pixelLength * 4 * 16);
     this.data.set(data.slice(0, pixelLength * 4 * 16), 0);
 
@@ -223,6 +261,8 @@ export default class SpriteSheet {
     this._current = 0;
     this.scale = scale;
     this.ctx = ctx;
+    this.ctx.canvas.dataset.scale = this.scale;
+    this.subSprites = subSprites; // used to preview 8x8 sprites
 
     window.sprites = this;
   }
@@ -260,7 +300,6 @@ export default class SpriteSheet {
     this.history.splice(this._undoPtr + 1);
     this.history.push(new Uint8Array(this.data));
     this._undoPtr = this.history.length - 1;
-    console.log(`history: ${this.history.length}`);
   }
 
   async rotate() {
@@ -286,9 +325,15 @@ export default class SpriteSheet {
     this._undoPtr--;
 
     this.data = data;
+    const subSprite = this.sprite.subSprite;
+    const toggle = this.sprite.scale === 8;
+
     for (let i = 0; i < this.length; i++) {
       this.rebuild(i);
     }
+    this.sprite.subSprite = subSprite;
+    if (toggle) this.sprite.toggleScale();
+
     this.paint();
   }
 
@@ -332,12 +377,38 @@ export default class SpriteSheet {
 
   set current(value) {
     this._current = value;
+    this.scale = 32 / this.sprites[this._current].scale;
     this.trigger();
+    this.paint();
+  }
+
+  setSubSprite(index) {
+    this.sprite.subSprite = index;
+    this.sprite.render();
     this.paint();
   }
 
   get(index) {
     return this.sprites[index];
+  }
+
+  toggleScale(paintSubSprites = true) {
+    const sprite = this.sprite;
+    sprite.toggleScale();
+    this.scale = 32 / sprite.scale;
+
+    if (paintSubSprites && sprite.scale === 8) {
+      for (let i = 0; i < 4; i++) {
+        sprite.subSprite = i;
+        sprite.render();
+        sprite.paint(this.subSprites[i]);
+      }
+      sprite.subSprite = 0;
+      sprite.render();
+    }
+
+    this.current = this._current;
+    this.paint();
   }
 
   clear() {
@@ -354,7 +425,18 @@ export default class SpriteSheet {
   paint(i = this._current) {
     const sprite = this.sprites[i];
     sprite.paint(this.ctx);
+
+    let subSprites = sprite.scale === 8;
+    if (subSprites) {
+      sprite.toggleScale(false);
+    }
+
     sprite.paint(this.previewCtx[this._current]);
+
+    if (subSprites) {
+      sprite.toggleScale(false);
+      sprite.paint(this.subSprites[sprite.subSprite]);
+    }
 
     this.getPreviewElements().map((_) => _.classList.remove('focus'));
     this.previewCtx[this._current].canvas.classList.add('focus');

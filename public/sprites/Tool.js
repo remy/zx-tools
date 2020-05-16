@@ -48,13 +48,11 @@ export default class Tool {
 
   shift(shift) {
     this.state.index = null;
-    console.log('shift called', this.state, shift);
     if (shift) {
       if (this._last !== 'erase') this._last = this.selected;
       this.selected = 'erase';
     } else {
       if (this.state.dirty) {
-        console.log('commiting');
         const sprites = this.state.dirty;
         this.state.dirty = false;
         this.state.x = 0;
@@ -90,8 +88,6 @@ export default class Tool {
     const ctx = sprites.ctx;
     this.state[axis] += neg ? -n : n;
     const { x, y } = this.state; // weird way to do it.
-
-    console.log({ x, y });
 
     sprite.render(x, y);
     sprite.paint(ctx);
@@ -131,7 +127,7 @@ export default class Tool {
   }
 
   start(event) {
-    const coords = getCoords(event, 32);
+    const coords = getCoords(event, 64);
     this._coords = coords;
   }
 
@@ -140,7 +136,7 @@ export default class Tool {
   }
 
   apply(event, sprites) {
-    const coords = getCoords(event, 32, 32);
+    const coords = getCoords(event, 16 * sprites.scale, 16 * sprites.scale);
     let target = this.colour.value;
 
     if (this.selected === 'erase') {

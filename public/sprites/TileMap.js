@@ -65,9 +65,14 @@ export default class TileMap {
     this.elements = {
       width: $(`.tile-controls input[name="width"]`),
       height: $(`.tile-controls input[name="height"]`),
+      scale: $(`.tile-controls input[name="size"]`),
     };
 
     $('.tile-controls input').on('change', () => {
+      this.size = parseInt(
+        this.elements.scale.filter((_) => _.checked)[0].value,
+        10
+      );
       this.resize(
         parseInt(this.elements.width.value, 10),
         parseInt(this.elements.height.value, 10)
@@ -99,7 +104,7 @@ export default class TileMap {
 
     // max bank size: 16k
     const bank = new Uint8Array(w * h);
-    bank.fill(1024 / size - 1);
+    bank.fill(this.size === 16 ? 63 : 255); // fill with the last sprite value
 
     if (w !== width) {
       const adjust = w > width ? width : w;
@@ -179,7 +184,18 @@ export default class TileMap {
   paint() {
     for (let i = 0; i < this.bank.length; i++) {
       const { x, y } = this.getXY(i);
-      const sprite = this.sprites.get(this.bank[i]);
+      let bankIndex = i;
+      if (this.size === 8) {
+        bankIndex = (i / 4) | 0;
+      }
+      // console.log({ bankIndex });
+
+      const sprite = this.sprites.get(this.bank[bankIndex]);
+
+      if (this.size === 8) {
+        sprite.setScale(8, i % 4);
+      }
+
       sprite.paint(
         this.ctx,
         x * this.size * this.scale,

@@ -21,6 +21,13 @@
     <main>
       <div id="sprites">
         <button title="[D]ownload" class="button--download" data-action="download">Download<br>spritesheet</button>
+        <div class="button-group" id="preview-8x8">
+          <canvas data-action="select-sub-sprite" class="button" data-index="0"></canvas>
+          <canvas data-action="select-sub-sprite" class="button" data-index="1"></canvas>
+          <canvas data-action="select-sub-sprite" class="button" data-index="2"></canvas>
+          <canvas data-action="select-sub-sprite" class="button" data-index="3"></canvas>
+        </div>
+
         <div class="container"></div>
         <div id="current-sprite">&nbsp;</div>
       </div>
@@ -88,6 +95,7 @@
                 <button data-action="rol">&lt;&lt;</button>
                 <button data-action="ror">&gt;&gt;</button>
               </div>
+              <button data-action="toggle-scale">Toggle 8x8 sprite mode</button>
               <span class="button input-button" id="upload"><input type="file">Upload .png / .spr</span>
               <button data-action="new">New sprite sheet</button>
             </div>
@@ -102,8 +110,8 @@
         <section class="container" id="tiles" data-title="Tile Map">
           <div class="tile-controls tools">
             <h2>Map settings</h2>
-            <div hidden>
-              <strong>Size</strong>
+            <div>
+              <strong>Tile scale</strong>
               <label><input type="radio" value="16" name="size"> 16px</label>
               <label><input type="radio" value="8" name="size"> 8px</label>
             </div>

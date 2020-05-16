@@ -20,27 +20,38 @@ const upload = document.querySelector('#upload input');
 const mapUpload = document.querySelector('#upload-map input');
 const currentSpriteId = document.querySelector('#current-sprite');
 const pickerColour = document.querySelector('.pickerColour div');
-const buttons = $('button[data-action]');
+const buttons = $('[data-action]');
+
+const subSprites = $('#preview-8x8 canvas').map((canvas) => {
+  canvas.width = canvas.height = 8 * 6;
+  return canvas.getContext('2d');
+});
 
 let sprites = null;
 
-function newSpriteSheet(check = true) {
+function newSpriteSheet(file) {
+  return new SpriteSheet(file, { ctx, subSprites });
+}
+
+function generateNewSpriteSheet(check = true) {
   if (check) {
     if (!confirm('Are you sure you want to create a blank new sprite sheet?')) {
       return;
     }
   }
 
-  sprites = new SpriteSheet(
+  sprites = newSpriteSheet(
     Uint8Array.from({ length: 256 * 16 * 4 }, (_, i) => {
       if (check == false && i < 256) return i;
       return transparent;
-    }),
-    ctx
+    })
   );
 
   sprites.hook(() => {
     currentSpriteId.textContent = `sprite #${sprites.current}`;
+    document.body.dataset.scale = sprites.scale;
+    document.body.dataset.subSprite = sprites.sprite.subSprite;
+    container.dataset.scale = sprites.scale;
   });
 
   sprites.current = 0; // triggers complete draw
@@ -143,12 +154,22 @@ buttons.on('click', async (e) => {
     }
   }
 
+  if (action === 'toggle-scale') {
+    sprites.toggleScale();
+    document.body.dataset.scale = sprites.scale;
+  }
+
   if (action === 'download-map') {
     downloadTiles();
   }
 
   if (action === 'new') {
-    newSpriteSheet(true);
+    generateNewSpriteSheet(true);
+  }
+
+  if (action === 'select-sub-sprite') {
+    sprites.setSubSprite(parseInt(e.target.dataset.index, 10));
+    document.body.dataset.subSprite = sprites.sprite.subSprite;
   }
 
   if (action === 'undo') {
@@ -361,7 +382,7 @@ function renderSpritePreviews() {
 
 function fileHandler(file) {
   file = decode(file);
-  sprites = new SpriteSheet(file, ctx);
+  sprites = newSpriteSheet(file);
   tileMap.sprites = sprites;
   tileMap.paint();
 
@@ -424,8 +445,6 @@ drop(document.documentElement, fileHandler);
 document.documentElement.ondrop = async (e) => {
   e.preventDefault();
   const files = e.dataTransfer.files;
-
-  console.log('file length', files.length);
 
   if (files.length === 1) {
     const droppedFile = files[0];
@@ -529,7 +548,7 @@ document.onpaste = async (event) => {
   renderCurrentSprite();
 };
 
-newSpriteSheet(false);
+generateNewSpriteSheet(false);
 
 // render the colour picker
 render(
