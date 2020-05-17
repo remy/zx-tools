@@ -21,6 +21,12 @@ CodeMirror.defineSimpleMode('basic', {
       eol: true,
     },
     {
+      regex: /(\s*)(;.*)/,
+      token: [null, 'comment'],
+      sol: true,
+      eol: true,
+    },
+    {
       regex: /(:)\s*(;.*)/,
       token: [null, 'comment'],
       // eol: true,

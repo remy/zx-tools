@@ -15,8 +15,8 @@ const parseError = (text) => {
   let start = 0;
   let end = null;
   if (matches.length) {
-    start = matches.shift();
-    end = matches.shift();
+    start = matches.shift() || 0;
+    end = matches.shift() || null;
   }
 
   return { message, start, end, line };
@@ -27,7 +27,6 @@ CodeMirror.registerHelper('lint', 'basic', function (text, _, cm) {
 
   try {
     const res = validateTxt(text);
-
     res.forEach((error) => {
       const data = parseError(error);
       if (data) {
@@ -42,6 +41,9 @@ CodeMirror.registerHelper('lint', 'basic', function (text, _, cm) {
         });
       }
     });
-  } catch (e) {}
+  } catch (e) {
+    // console.log('linting error', e);
+  }
+
   return found;
 });
