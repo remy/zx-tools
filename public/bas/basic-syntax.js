@@ -37,7 +37,7 @@ CodeMirror.defineSimpleMode('basic', {
       token: ['keyword', null, 'number goto'],
     },
     {
-      regex: /\b(PROC)(\s+)(.+)\(\)/,
+      regex: /\b(PROC)(\s+)(.+?)\(\)/,
       token: ['keyword', null, 'goto goto-fn'],
     },
     { regex: /BIN\s[01]+/, token: 'number-binary number' },
