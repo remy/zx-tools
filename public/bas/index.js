@@ -95,13 +95,21 @@ cm.on('keydown', (cm, event) => {
     const newLine = line2bas(line, autoline ? 10 : null);
 
     if (autoline) {
+      const newLineText = formatText(line, autoline);
+
+      cm.replaceRange(
+        newLineText,
+        { line: currentLine, ch: 0 },
+        { line: currentLine }
+      );
       localSave();
       return;
     }
 
     try {
       const s = statements(cm.getValue(), { keepDirectives: true });
-      const newLineText = formatText(line);
+      const newLineText = formatText(line, autoline);
+
       const scroll = cm.getScrollerElement().scrollTop;
 
       let content = '\n';
