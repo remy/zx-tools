@@ -1,8 +1,21 @@
+function resultEncoded(data) {
+  const length = data.length;
+  const result = [];
+  for (let i = 0; i < length; i++) {
+    result.push(data.charCodeAt(i));
+  }
+  return Uint8Array.from(result);
+}
+
 export async function loadGist() {
   const id = getGistId(window.location.toString());
 
   if (id.includes('github.com')) {
     return loadGitHub(id);
+  }
+
+  if (id.includes('gitlab')) {
+    return loadGitLab(id);
   }
 
   const res = await fetch(`https://api.github.com/gists/${id}`);
@@ -12,8 +25,42 @@ export async function loadGist() {
     .map((key) => json.files[key])
     .find((_) => _.filename.toLowerCase().endsWith('.bas'));
   if (file) {
-    return file.content;
+    return resultEncoded(file.content);
   }
+}
+
+async function loadGitLab(url) {
+  const match = url.match(/gitlab\.com\/(.*?)\/(.*?)\/-\/blob\/(.*?)\/(.*)/i);
+
+  if (!match) return;
+  match.shift();
+  const [owner, repo, ref, path] = match;
+
+  // gitlab we need to lookup the projectId which I could only find in graphql
+  let res = await fetch('https://gitlab.com/api/graphql', {
+    method: 'post',
+    headers: {
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      query: `query {
+      project(fullPath:"${owner}/${repo}") {
+        id
+      }
+    }`,
+    }),
+  });
+
+  let json = await res.json();
+  const id = json.data.project.id.split('/').pop();
+
+  res = await fetch(
+    `https://gitlab.com/api/v4/projects/${id}/repository/files/${encodeURIComponent(
+      path
+    )}?ref=${ref || 'master'}`
+  );
+  json = await res.json();
+  return resultEncoded(atob(json.content));
 }
 
 async function loadGitHub(url) {
@@ -29,7 +76,7 @@ async function loadGitHub(url) {
     }`
   );
   const json = await res.json();
-  return atob(json.content);
+  return resultEncoded(atob(json.content));
 }
 
 function getGistId(_url) {

@@ -211,6 +211,16 @@ dnd(document.body, (file) => {
 
 if (window.location.search) {
   loadGist().then((file) => {
-    if (file) cm.setValue(file);
+    if (file) {
+      const chr1 = file[0];
+
+      if (chr1 === 0x13) {
+        cm.setValue(file2txt(file, 'tap'));
+      } else if (chr1 === 0x50) {
+        cm.setValue(file2txt(file, '3dos'));
+      } else {
+        cm.setValue(decode(file));
+      }
+    }
   });
 }
