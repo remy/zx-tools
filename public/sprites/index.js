@@ -12,7 +12,7 @@ import { plus3DOSHeader } from 'txt2bas';
 import Tabs from '../lib/Tabs.js';
 import { Unpack } from '../lib/unpack/unpack.js';
 import { saveState, restoreState } from './state.js';
-
+import debounce from 'lodash.debounce';
 const container = document.querySelector('#container');
 const ctx = container.getContext('2d');
 const spritesContainer = document.querySelector('#sprites .container');
@@ -81,6 +81,10 @@ function generateNewSpriteSheet(check = true) {
     document.body.dataset.subSprite = sprites.sprite.subSprite;
     container.dataset.scale = sprites.scale;
   });
+
+  sprites.hook(
+    debounce(() => saveState({ spriteSheet: sprites, tileMap }), 2000)
+  );
 
   sprites.current = 0; // triggers complete draw
 
@@ -302,7 +306,6 @@ document.documentElement.addEventListener('keydown', (e) => {
 
   if (e.key === 's' && e.metaKey) {
     e.preventDefault();
-    saveState({ spriteSheet: sprites, tileMap });
   }
 
   let focusTool = null;
