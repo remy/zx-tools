@@ -59,7 +59,7 @@ function generateNewSpriteSheet(check = true) {
       tileMap.scale = tileMapData.scale;
       tileMap.size = tileMapData.size;
       tileMap.setDimensions(tileMapData.width, tileMapData.height);
-      tileMap.bank = new Uint8Array(tileMapData.bank);
+      tileMap.load(new Uint8Array(tileMapData.bank));
       tileMap.sprites = sprites; // just in case
       tileMap.paint();
     }
@@ -146,7 +146,7 @@ function fileToTile(file) {
     const height = (header.length - 128) / width; // header is 128 bytes
     tileMap.setDimensions(width, height);
   }
-  tileMap.bank = new Uint8Array(file.slice(unpack.offset));
+  tileMap.load(new Uint8Array(file.slice(unpack.offset)));
   tileMap.sprites = sprites; // just in case
   tileMap.paint();
 }
@@ -351,8 +351,13 @@ document.documentElement.addEventListener('keydown', (e) => {
   }
 
   if (e.shiftKey === false && e.key === 'z' && (e.metaKey || e.ctrlKey)) {
-    sprites.undo();
-    tool.resetState();
+    // check if tile or sprite is in focus
+    if (tabs.selected === 'sprite-editor') {
+      sprites.undo();
+      tool.resetState();
+    } else if (tabs.selected === 'tiles') {
+      tileMap.undo();
+    }
     return;
   }
 

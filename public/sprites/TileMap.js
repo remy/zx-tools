@@ -30,6 +30,9 @@ export default class TileMap {
   scale = 2;
   _sprites = null;
   _tmp = null;
+  _lastSet = null;
+  history = [];
+  _undoPtr = 0;
 
   constructor({ size = 8, sprites }) {
     const scale = this.scale;
@@ -91,6 +94,25 @@ export default class TileMap {
 
     // triggers dom changes
     this.setDimensions(w, h);
+    this.snapshot();
+  }
+
+  snapshot() {
+    this.history.splice(this._undoPtr + 1);
+    this.history.push(new Uint8Array(this.bank));
+    this._undoPtr = this.history.length - 1;
+  }
+
+  undo() {
+    const data = this.history[this._undoPtr];
+
+    if (!data) {
+      return;
+    }
+    this._undoPtr--;
+
+    this.bank = data;
+    this.paint();
   }
 
   serialize() {
@@ -103,6 +125,7 @@ export default class TileMap {
     };
   }
 
+  // important: this is not used to change dimensions, only for init
   setDimensions(width, height) {
     this.elements.width.value = width;
     this.elements.height.value = height;
@@ -140,6 +163,7 @@ export default class TileMap {
 
     el.width = w * size * this.scale;
     el.height = h * size * this.scale;
+    this.snapshot();
     this.paint();
   }
 
@@ -153,6 +177,11 @@ export default class TileMap {
     return this._sprites;
   }
 
+  load(bank) {
+    this.history = [];
+    this.bank = bank;
+  }
+
   getXY = (i) => {
     const x = i % this.width;
     const y = (i / this.width) | 0;
@@ -161,7 +190,11 @@ export default class TileMap {
   };
 
   set(index) {
-    this.bank[index] = this.sprites.current;
+    if (this._lastSet !== index) {
+      this.bank[index] = this.sprites.current;
+      this.snapshot();
+      this._lastSet = index;
+    }
   }
 
   clearHover() {
