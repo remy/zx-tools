@@ -93,6 +93,16 @@ export default class TileMap {
     this.setDimensions(w, h);
   }
 
+  serialize() {
+    return {
+      bank: Array.from(this.bank),
+      scale: this.scale,
+      width: this.width,
+      height: this.height,
+      size: this.size,
+    };
+  }
+
   setDimensions(width, height) {
     this.elements.width.value = width;
     this.elements.height.value = height;

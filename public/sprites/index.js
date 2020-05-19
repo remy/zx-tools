@@ -11,6 +11,8 @@ import TileMap from './TileMap.js';
 import { plus3DOSHeader } from 'txt2bas';
 import Tabs from '../lib/Tabs.js';
 import { Unpack } from '../lib/unpack/unpack.js';
+import { saveState, restoreState } from './state.js';
+
 const container = document.querySelector('#container');
 const ctx = container.getContext('2d');
 const spritesContainer = document.querySelector('#sprites .container');
@@ -21,6 +23,7 @@ const mapUpload = document.querySelector('#upload-map input');
 const currentSpriteId = document.querySelector('#current-sprite');
 const pickerColour = document.querySelector('.pickerColour div');
 const buttons = $('[data-action]');
+const ONE_WEEK = 1000 * 60 * 60 * 24 * 7;
 
 const subSprites = $('#preview-8x8 canvas').map((canvas) => {
   canvas.width = canvas.height = 8 * 6;
@@ -40,14 +43,37 @@ function generateNewSpriteSheet(check = true) {
     if (!confirm('Are you sure you want to create a blank new sprite sheet?')) {
       return;
     }
+    localStorage.clear();
   }
 
-  sprites = newSpriteSheet(
-    Uint8Array.from({ length: 256 * 16 * 4 }, (_, i) => {
-      if (check == false && i < 256) return i;
-      return transparent;
-    })
-  );
+  let spriteData;
+
+  const restored = restoreState();
+
+  if (!check && restored.lastSaved > Date.now() - ONE_WEEK) {
+    spriteData = Uint8Array.from(restored.spriteSheet.data);
+    sprites = newSpriteSheet(spriteData);
+
+    if (restored.tileMap) {
+      const tileMapData = restored.tileMap;
+      tileMap.scale = tileMapData.scale;
+      tileMap.size = tileMapData.size;
+      tileMap.setDimensions(tileMapData.width, tileMapData.height);
+      tileMap.bank = new Uint8Array(tileMapData.bank);
+      tileMap.sprites = sprites; // just in case
+      tileMap.paint();
+    }
+    console.log(
+      'State restored from ' + new Date(restored.lastSaved).toLocaleString()
+    );
+  } else {
+    sprites = newSpriteSheet(
+      Uint8Array.from({ length: 256 * 16 * 4 }, (_, i) => {
+        if (check == false && i < 256) return i;
+        return transparent;
+      })
+    );
+  }
 
   sprites.hook(() => {
     currentSpriteId.textContent = `sprite #${sprites.current}`;
@@ -274,6 +300,11 @@ document.documentElement.addEventListener('keydown', (e) => {
     tool.shift(true);
   }
 
+  if (e.key === 's' && e.metaKey) {
+    e.preventDefault();
+    saveState({ spriteSheet: sprites, tileMap });
+  }
+
   let focusTool = null;
   if (tabs.selected === 'sprite-editor') {
     focusTool = tool;
@@ -301,7 +332,7 @@ document.documentElement.addEventListener('keydown', (e) => {
     return;
   }
 
-  if (e.key === 'r') {
+  if (e.key === 'r' && !e.metaKey) {
     sprites.rotate();
     return;
   }

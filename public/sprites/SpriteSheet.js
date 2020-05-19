@@ -267,6 +267,12 @@ export default class SpriteSheet {
     window.sprites = this;
   }
 
+  serialize() {
+    return {
+      data: Array.from(this.data),
+    };
+  }
+
   getCoords(e) {
     return getCoords(e, this.scale * 16);
   }
