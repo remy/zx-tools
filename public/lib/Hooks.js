@@ -14,7 +14,7 @@ export default class Hooks {
     this.hooks.push(callback);
   }
 
-  trigger() {
-    this.hooks.forEach((callback) => callback());
+  trigger(...args) {
+    this.hooks.forEach((callback) => callback(...args));
   }
 }

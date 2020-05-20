@@ -13,7 +13,9 @@ import Tabs from '../lib/Tabs.js';
 import { Unpack } from '../lib/unpack/unpack.js';
 import { saveState, restoreState } from './state.js';
 import debounce from 'lodash.debounce';
+
 const container = document.querySelector('#container');
+const exampleBasicLink = document.querySelector('#basic-example-link');
 const ctx = container.getContext('2d');
 const spritesContainer = document.querySelector('#sprites .container');
 const debug = document.querySelector('#debug');
@@ -36,6 +38,10 @@ function newSpriteSheet(file) {
   sprites = new SpriteSheet(file, { ctx, subSprites });
   tileMap.sprites = sprites; // just in case
   return sprites;
+}
+
+function saveLocal() {
+  saveState({ spriteSheet: sprites, tileMap });
 }
 
 function generateNewSpriteSheet(check = true) {
@@ -76,15 +82,13 @@ function generateNewSpriteSheet(check = true) {
   }
 
   sprites.hook(() => {
-    currentSpriteId.textContent = `sprite #${sprites.current}`;
-    document.body.dataset.scale = sprites.scale;
+    currentSpriteId.textContent = `sprite #${sprites.spriteIndex()}`;
+    document.body.dataset.scale = sprites.defaultScale;
     document.body.dataset.subSprite = sprites.sprite.subSprite;
-    container.dataset.scale = sprites.scale;
+    container.dataset.scale = sprites.defaultScale;
   });
 
-  sprites.hook(
-    debounce(() => saveState({ spriteSheet: sprites, tileMap }), 2000)
-  );
+  sprites.hook(debounce(saveLocal, 2000));
 
   sprites.current = 0; // triggers complete draw
 
@@ -107,9 +111,7 @@ const tabs = new Tabs('.tabbed');
 const colour = new ColourPicker(8, pickerColour.parentNode);
 const tool = new Tool({ colour });
 const tileMap = new TileMap({ size: 16, sprites });
-tileMap.hook(
-  debounce(() => saveState({ spriteSheet: sprites, tileMap }), 2000)
-);
+tileMap.hook(debounce(saveLocal, 2000));
 
 let imageWindow = null;
 window.tileMap = tileMap;
@@ -179,8 +181,19 @@ $('#png-import-tools button').on('click', (e) => {
   }
 });
 
+exampleBasicLink.addEventListener('mousedown', () => {
+  exampleBasicLink.search = `?data=${btoa(tileMap.toBasic())}`;
+});
+
 buttons.on('click', async (e) => {
   const action = e.target.dataset.action;
+
+  if (action === 'clear-map') {
+    if (confirm('This will replace your current map, continue?')) {
+      tileMap.clear();
+      saveLocal();
+    }
+  }
 
   if (action === 'debug-sprites') {
     if (confirm('This will replace your current spritesheet, continue?')) {
@@ -192,7 +205,7 @@ buttons.on('click', async (e) => {
 
   if (action === 'toggle-scale') {
     sprites.toggleScale();
-    document.body.dataset.scale = sprites.scale;
+    document.body.dataset.scale = sprites.defaultScale;
   }
 
   if (action === 'download-map') {
@@ -205,7 +218,6 @@ buttons.on('click', async (e) => {
 
   if (action === 'select-sub-sprite') {
     sprites.setSubSprite(parseInt(e.target.dataset.index, 10));
-    document.body.dataset.subSprite = sprites.sprite.subSprite;
   }
 
   if (action === 'undo') {
@@ -310,6 +322,13 @@ document.documentElement.addEventListener('keydown', (e) => {
 
   if (e.key === 's' && e.metaKey) {
     e.preventDefault();
+    saveLocal();
+  }
+
+  // shift + 1-4
+  if (e.shiftKey && e.which >= 49 && e.which <= 52) {
+    sprites.setSubSprite(e.which - 49);
+    return;
   }
 
   let focusTool = null;
@@ -475,14 +494,15 @@ spritesContainer.addEventListener('click', (e) => {
 spritesContainer.addEventListener('mousemove', (e) => {
   const node = e.target;
   if (node.nodeName === 'CANVAS') {
-    currentSpriteId.textContent = `sprite #${Array.from(
-      node.parentNode.childNodes
-    ).indexOf(node)}`;
+    const m = sprites.defaultScale === 8 ? 4 : 1;
+    currentSpriteId.textContent = `sprite #${
+      m * Array.from(node.parentNode.childNodes).indexOf(node)
+    }`;
   }
 });
 
 spritesContainer.addEventListener('mouseout', () => {
-  currentSpriteId.textContent = `sprite #${sprites.current}`;
+  currentSpriteId.textContent = `sprite #${sprites.spriteIndex()}`;
 });
 
 drop(document.documentElement, fileHandler);

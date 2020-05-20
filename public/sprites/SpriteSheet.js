@@ -1,235 +1,6 @@
-import { rgbFromIndex, transparent, toRGB332 } from './lib/colour.js';
+import Sprite from './Sprite.js';
 import Hooks from '../lib/Hooks.js';
-
-export const pixelLength = 256;
-const width = 16;
-
-export const colourTable = Array.from({ length: pixelLength }, (_, i) => {
-  return rgbFromIndex(i);
-});
-
-export function getCoords(e, w = width, h = w) {
-  const rect = e.target.getBoundingClientRect();
-  const x = ((e.clientX - rect.left) / w) | 0; //x position within the element.
-  const y = ((e.clientY - rect.top) / h) | 0; //y position within the element.
-  const index = xyToIndex({ x, y, w: 16 });
-  return { x, y, index };
-}
-
-export function emptyCanvas(ctx) {
-  const blankData = new Uint8ClampedArray(
-    ctx.canvas.width * ctx.canvas.height * 4
-  );
-  // blankData.fill(transparent);
-  for (let i = 0; i < blankData.length; i += 4) {
-    blankData[i + 0] = 0;
-    blankData[i + 1] = 0;
-    blankData[i + 2] = 0;
-    blankData[i + 3] = 0;
-  }
-
-  const blank = new ImageData(blankData, ctx.canvas.width, ctx.canvas.height);
-  ctx.putImageData(blank, 0, 0);
-}
-
-export function xyToIndex({ x, y, w = width }) {
-  if (x < 0) {
-    return null;
-  }
-
-  if (x >= w) {
-    return null;
-  }
-
-  if (y >= w) {
-    return null;
-  }
-
-  return w * y + x;
-}
-
-export class Sprite {
-  scale = 16;
-  subSprite = 0; // only used when 8x8
-
-  /**
-   *
-   * @param {Uint8Array} pixels
-   */
-  constructor(pixels) {
-    this.pixels = pixels;
-    this.ctx = document.createElement('canvas').getContext('2d');
-    this.ctx.canvas.width = this.ctx.canvas.height = width;
-    this.render();
-  }
-
-  get canvas() {
-    return this.ctx.canvas;
-  }
-
-  pget({ index = null, x = null, y }) {
-    index = xyToIndex({ x, y, w: this.scale });
-
-    if (this.scale === 8) {
-      index += this.subSprite * 64;
-    }
-
-    return this.pixels[index];
-  }
-
-  pset({ index = null, x = null, y, value }) {
-    index = xyToIndex({ x, y, w: this.scale });
-
-    if (this.scale === 8) {
-      index += this.subSprite * 64;
-    }
-
-    this.pixels[index] = value;
-    this.render();
-  }
-
-  clear() {
-    if (this.scale === 16) {
-      this.pixels.fill(transparent);
-    } else {
-      const empty = new Uint8Array(64);
-      empty.fill(transparent);
-      this.pixels.set(empty, 64 * this.subSprite);
-    }
-    this.render();
-  }
-
-  mirror(horizontal = true) {
-    return new Promise((resolve) => {
-      const i = new Image();
-      const url = this.canvas.toDataURL(); // needed over a blob because blob is apparently a reference
-      i.src = url;
-      i.onload = () => {
-        this.ctx.clearRect(0, 0, width, width);
-        this.ctx.save();
-        if (horizontal) {
-          this.ctx.scale(-1, 1);
-          this.ctx.drawImage(i, 0, 0, -width, width); //, -width, 0);
-        } else {
-          this.ctx.scale(1, -1);
-          this.ctx.drawImage(i, 0, 0, width, -width);
-        }
-        this.ctx.restore();
-        this.canvasToPixels();
-        resolve();
-      };
-    });
-  }
-
-  rotate() {
-    return new Promise((resolve) => {
-      const i = new Image();
-      const url = this.canvas.toDataURL(); // needed over a blob because blob is apparently a reference
-      i.src = url;
-      i.onload = () => {
-        this.ctx.clearRect(0, 0, width, width);
-        this.ctx.translate(width / 2, width / 2);
-        this.ctx.rotate((90 * Math.PI) / 180); // 90deg
-        this.ctx.drawImage(i, -width / 2, -width / 2);
-        this.ctx.rotate((-90 * Math.PI) / 180);
-        this.ctx.translate(-width / 2, -width / 2);
-        this.canvasToPixels();
-        resolve();
-      };
-    });
-  }
-
-  canvasToPixels() {
-    const imageData = this.ctx.getImageData(0, 0, width, width);
-    for (let i = 0; i < imageData.data.length / 4; i++) {
-      const [r, g, b, a] = imageData.data.slice(i * 4, i * 4 + 4);
-
-      if (a === 0) {
-        this.pixels[i] = transparent;
-      } else {
-        this.pixels[i] = toRGB332(r, g, b);
-      }
-    }
-  }
-
-  render(dx = 0, dy = 0) {
-    const pixels = this.pixels;
-
-    // imageData is the internal copy
-    const width = this.scale;
-    const imageData = this.ctx.getImageData(0, 0, width, width);
-
-    let i = 0;
-    let j = pixels.length;
-    if (this.scale === 8) {
-      i = this.subSprite * 64;
-      j = i + 64;
-    }
-
-    let ptr = 0;
-
-    for (i; i < j; i++) {
-      let index = pixels[i];
-
-      const { r, g, b, a } = colourTable[index];
-      imageData.data[ptr * 4 + 0] = r;
-      imageData.data[ptr * 4 + 1] = g;
-      imageData.data[ptr * 4 + 2] = b;
-      imageData.data[ptr * 4 + 3] = a * 255;
-      ptr++;
-    }
-
-    if (dx !== 0 || dy !== 0) {
-      emptyCanvas(this.ctx);
-    }
-
-    this.ctx.putImageData(
-      imageData,
-      dx,
-      dy,
-      0,
-      0,
-      imageData.width,
-      imageData.height
-    );
-  }
-
-  // we always paint square…
-  paint(ctx, dx = 0, dy = 0, w = null) {
-    if (w === null) {
-      w = ctx.canvas.width;
-    }
-
-    // clear, set to jaggy and scale to canvas
-    ctx.clearRect(dx, dy, w, w);
-    ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(
-      this.ctx.canvas,
-      0,
-      0,
-      this.ctx.canvas.width,
-      this.ctx.canvas.height,
-      dx,
-      dy,
-      w,
-      w
-    );
-  }
-
-  setScale(scale, index = false) {
-    if (index !== false) {
-      this.subSprite = index;
-    }
-    this.scale = scale;
-    const canvas = this.ctx.canvas;
-    canvas.width = canvas.height = this.scale;
-    this.render();
-  }
-
-  toggleScale(index = false) {
-    this.setScale(this.scale === 16 ? 8 : 16, index);
-  }
-}
+import { width, pixelLength, getCoords } from './sprite-tools.js';
 
 export default class SpriteSheet extends Hooks {
   sprites = [];
@@ -240,6 +11,7 @@ export default class SpriteSheet extends Hooks {
   _current = 0;
   length = 0;
   clipboard = null;
+  defaultScale = 16; // 8 = 8x8
 
   constructor(data, { ctx, scale = 2, subSprites } = {}) {
     super();
@@ -266,6 +38,7 @@ export default class SpriteSheet extends Hooks {
     this.subSprites = subSprites; // used to preview 8x8 sprites
 
     window.sprites = this;
+    this.trigger();
   }
 
   serialize() {
@@ -275,7 +48,7 @@ export default class SpriteSheet extends Hooks {
   }
 
   getCoords(e) {
-    return getCoords(e, this.scale * 16);
+    return getCoords(e, 512 / this.defaultScale);
   }
 
   copy() {
@@ -358,13 +131,20 @@ export default class SpriteSheet extends Hooks {
   }
 
   pset(coords, value) {
-    this.sprites[this._current].pset({ ...coords, value });
+    this.sprites[this._current].pset({
+      ...coords,
+      value,
+      scale: this.defaultScale,
+    });
     this.trigger();
     return true;
   }
 
   pget(args) {
-    return this.sprites[this._current].pget(args);
+    return this.sprites[this._current].pget({
+      ...args,
+      scale: this.defaultScale,
+    });
   }
 
   get current() {
@@ -375,16 +155,35 @@ export default class SpriteSheet extends Hooks {
     return this.sprites[this._current];
   }
 
+  spriteIndex(scale = this.defaultScale) {
+    const i = this._current;
+    if (scale === 16) return i;
+
+    return i * 4 + this.sprite.subSprite;
+  }
+
   set current(value) {
+    if (value === this._current) {
+      console.log('current not being set', value, this._current);
+
+      return;
+    }
     this._current = value;
-    this.scale = 32 / this.sprites[this._current].scale;
+    if (this.defaultScale === 8) {
+      this.sprites[value].subSprite = 0;
+      this.sprites[value].scale = 8;
+    } else {
+      this.sprites[value].scale = 16;
+    }
+
     this.trigger();
-    this.paint();
+    this.paint(value, true);
   }
 
   setSubSprite(index) {
     this.sprite.subSprite = index;
     this.sprite.render();
+    this.trigger();
     this.paint();
   }
 
@@ -392,27 +191,27 @@ export default class SpriteSheet extends Hooks {
     return this.sprites[index];
   }
 
-  setScale(scale, paintSubSprites = true) {
+  renderSubSprites() {
     const sprite = this.sprite;
-    sprite.setScale(scale);
-    this.scale = 32 / sprite.scale;
+    if (this.defaultScale === 16) return;
 
-    if (paintSubSprites && sprite.scale === 8) {
-      for (let i = 0; i < 4; i++) {
-        sprite.subSprite = i;
-        sprite.render();
-        sprite.paint(this.subSprites[i]);
-      }
-      sprite.subSprite = 0;
-      sprite.render();
+    for (let i = 3; i >= 0; i--) {
+      sprite.subSprite = i;
+      // sprite.render();
+      sprite.paint(this.subSprites[i], { scale: 8, subSprite: i });
     }
+  }
 
-    this.current = this._current;
-    this.paint();
+  setScale(scale) {
+    this.defaultScale = scale;
+    this.sprite.scale = scale;
+    const current = this._current;
+    this._current = null; // forces a recalc repaint
+    this.current = current;
   }
 
   toggleScale(paintSubSprites = true) {
-    this.setScale(this.sprite.scale === 8 ? 16 : 8, paintSubSprites);
+    this.setScale(this.defaultScale === 8 ? 16 : 8, paintSubSprites);
   }
 
   clear() {
@@ -422,24 +221,25 @@ export default class SpriteSheet extends Hooks {
     this.paint();
   }
 
-  renderPreview(i) {
-    this.sprites[i].draw(this.previewCtx[i]);
-  }
-
-  paint(i = this._current) {
+  paint(i = this._current, allSubSprites = false) {
     const sprite = this.sprites[i];
-    sprite.paint(this.ctx);
+    sprite.paint(this.ctx, {
+      scale: this.defaultScale,
+      subSprite: sprite.subSprite,
+    }); // paint the preview
 
-    let subSprites = sprite.scale === 8;
-    if (subSprites) {
-      sprite.toggleScale(false);
-    }
+    // paint into the sprite sheet
+    sprite.paint(this.previewCtx[this._current], { scale: 16 });
 
-    sprite.paint(this.previewCtx[this._current]);
-
-    if (subSprites) {
-      sprite.toggleScale(false);
-      sprite.paint(this.subSprites[sprite.subSprite]);
+    if (this.defaultScale === 8) {
+      if (allSubSprites) {
+        this.renderSubSprites();
+      } else {
+        sprite.paint(this.subSprites[sprite.subSprite], {
+          scale: 8,
+          subSprite: sprite.subSprite,
+        });
+      }
     }
 
     this.getPreviewElements().map((_) => _.classList.remove('focus'));

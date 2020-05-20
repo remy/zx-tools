@@ -7,7 +7,7 @@ import save from '../lib/save.js';
 import { decode } from '../lib/unpack/lib.js';
 import { generateBlock } from '../lib/audio/index.js';
 import { createWavFromBuffer } from '../lib/audio/make-wav.js';
-import { loadGist } from '../lib/gist.js';
+import { load } from '../lib/load-basic.js';
 
 function localSave() {
   sessionStorage.setItem('code', cm.getValue());
@@ -254,7 +254,7 @@ dnd(document.body, (file) => {
 });
 
 if (window.location.search) {
-  loadGist().then((file) => {
+  load().then((file) => {
     if (file) cm.setValue(file);
   });
 }

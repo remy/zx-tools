@@ -1,8 +1,9 @@
 // import { rgbFromIndex, transparent, toRGB332 } from './lib/colour.js';
-import { xyToIndex } from './SpriteSheet.js';
+import { xyToIndex } from './sprite-tools.js';
 import { $ } from '../lib/$.js';
 import trackDown from '../lib/track-down.js';
 import Hooks from '../lib/Hooks.js';
+// import debounce from 'lodash.debounce';
 
 const dummySpriteSheet = {
   get() {
@@ -31,6 +32,7 @@ export default class TileMap extends Hooks {
   scale = 2;
   _sprites = null;
   _tmp = null;
+  _size = 16; // default to 16px
   _lastSet = null;
   history = [];
   _undoPtr = 0;
@@ -38,11 +40,10 @@ export default class TileMap extends Hooks {
   constructor({ size = 8, sprites }) {
     super();
     const scale = this.scale;
-    this.size = size;
     const { bank, w, h } = sizes.get(size);
     // max bank size: 16k
     this.bank = new Uint8Array(bank);
-    this.bank.fill(1024 / size - 1);
+    this.bank.fill(63); //1024 / size - 1);
 
     this.ctx = document.createElement('canvas').getContext('2d');
 
@@ -56,9 +57,8 @@ export default class TileMap extends Hooks {
         const { index } = getCoords(e, this.width, this.size * this.scale);
         this.set(index);
         this._tmp = null;
-        this.paint();
       },
-      end: (e) => this.hover(e),
+      move: (e) => this.hover(e),
     });
 
     el.addEventListener('mouseout', () => {
@@ -91,8 +91,31 @@ export default class TileMap extends Hooks {
     });
 
     // triggers dom changes
-    this.setDimensions({ width: w, height: h });
+    this.setDimensions({ width: w, height: h, size });
     this.snapshot();
+  }
+
+  get size() {
+    return this._size;
+  }
+
+  set size(value) {
+    if (value !== this._size) {
+      this._size = value;
+
+      this.sprites.defaultScale = value;
+      if (value === 8) {
+        this.sprites.renderSubSprites();
+      }
+      document.body.dataset.scale = this.sprites.defaultScale;
+    }
+  }
+
+  clear() {
+    const bank = new Uint8Array(this.width * this.height);
+    bank.fill(63); //1024 / this.size - 1);
+    this.load({ bank });
+    this.paint();
   }
 
   snapshot() {
@@ -131,15 +154,6 @@ export default class TileMap extends Hooks {
     this.width = width;
     this.height = height;
 
-    if (this.size !== size) {
-      if (!this.sprites) {
-        console.log('cannot toggle scale as sprites are missing');
-      } else {
-        this.sprites.setScale(size);
-        document.body.dataset.scale = this.sprites.scale;
-      }
-    }
-
     this.size = size;
     this.scale = scale;
 
@@ -159,7 +173,7 @@ export default class TileMap extends Hooks {
 
     // max bank size: 16k
     const bank = new Uint8Array(w * h);
-    bank.fill(this.size === 16 ? 63 : 255); // fill with the last sprite value
+    bank.fill(63); // fill with the last sprite value
 
     if (w !== width) {
       const adjust = w > width ? width : w;
@@ -181,7 +195,8 @@ export default class TileMap extends Hooks {
 
   set sprites(sprites) {
     this._sprites = sprites || dummySpriteSheet;
-    if (sprites) sprites.hook(() => this.paint());
+    this._sprites.defaultScale = this.size;
+    // if (sprites) sprites.hook(debounce(() => this.paint(), 1000));
     this.paint();
   }
 
@@ -190,6 +205,8 @@ export default class TileMap extends Hooks {
   }
 
   load({ bank, dimensions = {}, sprites = null }) {
+    if (Object.keys(dimensions).length) this.setDimensions(dimensions);
+
     this.history = [];
     this.bank = bank;
     this.snapshot();
@@ -197,8 +214,7 @@ export default class TileMap extends Hooks {
     if (sprites) {
       this._sprites = sprites;
     }
-
-    if (Object.keys(dimensions).length) this.setDimensions(dimensions);
+    this.trigger();
   }
 
   getXY = (i) => {
@@ -210,33 +226,27 @@ export default class TileMap extends Hooks {
 
   set(index) {
     if (this._lastSet !== index) {
-      this.bank[index] = this.sprites.current;
+      this.bank[index] = this.sprites.spriteIndex(this.size);
       this.snapshot();
       this._lastSet = index;
       this.trigger();
+      this.paintSingle(index);
     }
   }
 
   clearHover() {
     if (this._tmp !== null) {
       const index = this._tmp;
-      const { x, y } = this.getXY(index);
-      const sprite = this.sprites.get(this.bank[index]);
+      // const { x, y } = this.getXY(index);
+      // const sprite = this.sprites.get(this.bank[index]);
 
-      sprite.paint(
-        this.ctx,
-        x * this.size * this.scale,
-        y * this.size * this.scale,
-        this.size * this.scale,
-        false
-      );
-      // }
+      this.paintSingle(index);
       this._tmp = null;
     }
   }
 
   hover(e) {
-    const { index, x, y } = getCoords(e, this.width, this.size * this.scale);
+    const { index } = getCoords(e, this.width, this.size * this.scale);
 
     if (this._tmp === index) {
       return;
@@ -245,36 +255,78 @@ export default class TileMap extends Hooks {
     this.clearHover();
 
     this._tmp = index;
-    this.sprites.sprite.paint(
-      this.ctx,
-      x * this.size * this.scale,
-      y * this.size * this.scale,
-      this.size * this.scale,
-      false
-    );
+
+    this.paintSingle(index, this.sprites.spriteIndex(this.size));
+  }
+
+  toBasic() {
+    const str = `#autoline
+    RUN AT 3
+    LAYER 2,1: CLS
+    LOAD "MY_SPRITES.spr" BANK 13:; spritesheet
+    LOAD "MY_MAP.map" BANK 14:; tile map
+    TILE BANK 13:; point tilemap to spritesheet
+    TILE DIM 14,0,${this.width},${this.size}:; using tile bank 14, offset 0, tile ${this.width} wide, tile size ${this.size}
+    TILE ${this.width},${this.height}:; print tile for ${this.width}x${this.height}
+    PAUSE 0
+    `
+      .split('\n')
+      .map((_) => _.trim())
+      .join('\n');
+    return str;
+  }
+
+  paintSingle(i, bankIndex = null) {
+    const small = this.size === 8;
+    const { x, y } = this.getXY(i);
+    if (bankIndex === null) bankIndex = this.bank[i];
+    let value = bankIndex;
+
+    if (small) {
+      bankIndex = (bankIndex / 4) | 0;
+    }
+
+    const sprite = this.sprites.get(bankIndex);
+
+    if (!sprite) {
+      console.log({ value, bankIndex, i });
+      return;
+    }
+
+    sprite.paint(this.ctx, {
+      scale: small ? 8 : 16,
+      subSprite: value % 4,
+      x: x * this.size * this.scale,
+      y: y * this.size * this.scale,
+      w: this.size * this.scale,
+    });
   }
 
   paint() {
+    const small = this.size === 8;
     for (let i = 0; i < this.bank.length; i++) {
       const { x, y } = this.getXY(i);
       let bankIndex = this.bank[i];
-      if (this.size === 8) {
-        bankIndex = (i / 4) | 0;
+      let value = bankIndex;
+
+      if (small) {
+        bankIndex = (bankIndex / 4) | 0;
       }
 
       const sprite = this.sprites.get(bankIndex);
 
-      // if (this.size === 8) {
-      //   sprite.setScale(8, i % 4);
-      // }
+      if (!sprite) {
+        console.log({ value, bankIndex, i });
+        break;
+      }
 
-      sprite.paint(
-        this.ctx,
-        x * this.size * this.scale,
-        y * this.size * this.scale,
-        this.size * this.scale,
-        false
-      );
+      sprite.paint(this.ctx, {
+        scale: small ? 8 : 16,
+        subSprite: value % 4,
+        x: x * this.size * this.scale,
+        y: y * this.size * this.scale,
+        w: this.size * this.scale,
+      });
     }
   }
 }

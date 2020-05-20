@@ -1,4 +1,5 @@
 import { $ } from './$.js';
+import Hooks from '../lib/Hooks.js';
 
 export class Tab {
   constructor(parent, root) {
@@ -15,8 +16,9 @@ export class Tab {
   }
 }
 
-export default class Tabs {
+export default class Tabs extends Hooks {
   constructor(selector) {
+    super();
     this.root = document.querySelector(selector);
 
     const panels = $(selector + ' > section:not([hidden])');
@@ -56,6 +58,7 @@ export default class Tabs {
     this.panels.find((_) => _.id === id).show();
     this.tabs.find((_) => _.hash === '#' + id).className = 'selected';
     this.selected = id;
+    this.trigger(id);
   }
 
   hide() {

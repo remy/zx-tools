@@ -1,5 +1,5 @@
 import { $ } from '../lib/$.js';
-import { getCoords } from './SpriteSheet.js';
+import { getCoords } from './sprite-tools.js';
 
 export default class Tool {
   types = ['brush', 'fill', 'erase', 'pan'];
@@ -89,7 +89,7 @@ export default class Tool {
     this.state[axis] += neg ? -n : n;
     const { x, y } = this.state; // weird way to do it.
 
-    sprite.render(x, y);
+    sprite.render({ x, y });
     sprite.paint(ctx);
   }
 
@@ -99,7 +99,7 @@ export default class Tool {
     const x = coords.x - this._coords.x;
     const y = coords.y - this._coords.y;
 
-    sprite.render(x, y);
+    sprite.render({ x, y });
     sprite.paint(ctx);
   }
 
@@ -134,7 +134,11 @@ export default class Tool {
   end() {}
 
   apply(event, sprites) {
-    const coords = getCoords(event, 16 * sprites.scale, 16 * sprites.scale);
+    const coords = getCoords(
+      event,
+      512 / sprites.defaultScale,
+      512 / sprites.defaultScale
+    );
     let target = this.colour.value;
 
     if (this.selected === 'erase') {

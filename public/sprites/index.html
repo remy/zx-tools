@@ -15,6 +15,7 @@
         <li><a href="/bas/">Text 2 BASIC</a></li>
         <li class="selected"><a href="/sprites/">Sprites</a></li class="selected">
         <li><a href="/scr-tools/">.SCR tools</a></li class="selected">
+        <li class="zoom-button"><span onclick="document.querySelector('main').requestFullscreen()">Zoom</span></li>
         <li><a href="/help/">Help</a></li>
       </ul>
     </nav>
@@ -129,8 +130,10 @@
             </div>
             <span class="button input-button" id="upload-map"><input type="file">Upload map</span>
             <button class="download-btn" data-action="download-map">Download map</button>
+            <button data-action="clear-map">Clear map</button>
             <button class="debug-sprite-btn" data-action="debug-sprites">Load debug sprites</button>
-            <a href="/bas/?id=0a51ba71408dbeff08baad3acaf1d533" target="_blank">Example BASIC code</a>
+            <a id="basic-example-link" href="/bas/?id=0a51ba71408dbeff08baad3acaf1d533" target="_blank">Example BASIC
+              code</a>
           </div>
           <div id="tile-map-container"></div>
         </section>
@@ -210,6 +213,8 @@
                 <dd>switch to erase</dd>
                 <dt>left/right cursor</dt>
                 <dd>change current sprite in sprite sheet</dd>
+                <dt>shift + 1 - 4</dt>
+                <dd>select 8x8 sprite</dd>
                 <dt>shift + cursor keys</dt>
                 <dd>shift/pan sprite by 1 pixel</dd>
                 <dt>ctrl + shift + cursor keys</dt>
@@ -239,9 +244,11 @@
             <summary>Change log</summary>
             <div>
               <ul>
-                <li>2020 May 19
+                <li>2020 May 20
                   <ul>
                     <li>Add: auto save on spritesheet and tilemap</li>
+                    <li>Add: 8x8 tilemap support</li>
+                    <li>Add: Live example BASIC code for tile</li>
                   </ul>
                 </li>
                 <li>2020 May 16
