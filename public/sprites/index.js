@@ -56,11 +56,11 @@ function generateNewSpriteSheet(check = true) {
 
     if (restored.tileMap) {
       const tileMapData = restored.tileMap;
-      tileMap.scale = tileMapData.scale;
-      tileMap.size = tileMapData.size;
-      tileMap.setDimensions(tileMapData.width, tileMapData.height);
-      tileMap.load(new Uint8Array(tileMapData.bank));
-      tileMap.sprites = sprites; // just in case
+      tileMap.load({
+        sprites,
+        bank: new Uint8Array(tileMapData.bank),
+        dimensions: tileMapData,
+      });
       tileMap.paint();
     }
     console.log(
@@ -140,13 +140,13 @@ function fileToTile(file) {
     C$checksum`
   );
 
+  const dimensions = {};
   if (header.hOffset !== 0x8000) {
     // then we've got a version where I tucked the dimensions in the file
-    const width = header.autostart; // aka autostart
-    const height = (header.length - 128) / width; // header is 128 bytes
-    tileMap.setDimensions(width, height);
+    dimensions.width = header.autostart; // aka autostart
+    dimensions.height = (header.length - 128) / dimensions.width; // header is 128 bytes
   }
-  tileMap.load(new Uint8Array(file.slice(unpack.offset)));
+  tileMap.load({ bank: new Uint8Array(file.slice(unpack.offset)), dimensions });
   tileMap.sprites = sprites; // just in case
   tileMap.paint();
 }

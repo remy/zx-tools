@@ -93,7 +93,7 @@ export default class TileMap {
     });
 
     // triggers dom changes
-    this.setDimensions(w, h);
+    this.setDimensions({ width: w, height: h });
     this.snapshot();
   }
 
@@ -126,16 +126,29 @@ export default class TileMap {
   }
 
   // important: this is not used to change dimensions, only for init
-  setDimensions(width, height) {
+  setDimensions({ width, height, size = this.size, scale = this.scale } = {}) {
     this.elements.width.value = width;
     this.elements.height.value = height;
     this.width = width;
     this.height = height;
 
-    const { size, scale } = this;
+    if (this.size !== size) {
+      if (!this.sprites) {
+        console.log('cannot toggle scale as sprites are missing');
+      } else {
+        this.sprites.setScale(size);
+        document.body.dataset.scale = this.sprites.scale;
+      }
+    }
+
+    this.size = size;
+    this.scale = scale;
+
     const el = this.ctx.canvas;
     el.width = width * size * scale;
     el.height = height * size * scale;
+
+    $(`.tile-controls input[name="size"][value="${this.size}"]`).checked = true;
   }
 
   resize(w, h) {
@@ -177,9 +190,16 @@ export default class TileMap {
     return this._sprites;
   }
 
-  load(bank) {
+  load({ bank, dimensions = {}, sprites = null }) {
     this.history = [];
     this.bank = bank;
+    this.snapshot();
+
+    if (sprites) {
+      this._sprites = sprites;
+    }
+
+    if (Object.keys(dimensions).length) this.setDimensions(dimensions);
   }
 
   getXY = (i) => {
