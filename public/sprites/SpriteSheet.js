@@ -1,4 +1,5 @@
 import { rgbFromIndex, transparent, toRGB332 } from './lib/colour.js';
+import Hooks from '../lib/Hooks.js';
 
 export const pixelLength = 256;
 const width = 16;
@@ -230,7 +231,7 @@ export class Sprite {
   }
 }
 
-export default class SpriteSheet {
+export default class SpriteSheet extends Hooks {
   sprites = [];
   previewCtx = [];
   history = [];
@@ -239,9 +240,9 @@ export default class SpriteSheet {
   _current = 0;
   length = 0;
   clipboard = null;
-  hooks = [];
 
   constructor(data, { ctx, scale = 2, subSprites } = {}) {
+    super();
     this.data = new Uint8Array(pixelLength * 4 * 16);
     this.data.set(data.slice(0, pixelLength * 4 * 16), 0);
 
@@ -275,14 +276,6 @@ export default class SpriteSheet {
 
   getCoords(e) {
     return getCoords(e, this.scale * 16);
-  }
-
-  hook(callback) {
-    this.hooks.push(callback);
-  }
-
-  trigger() {
-    this.hooks.forEach((callback) => callback());
   }
 
   copy() {
@@ -340,6 +333,7 @@ export default class SpriteSheet {
     this.sprite.subSprite = subSprite;
     if (toggle) this.sprite.toggleScale();
 
+    this.trigger();
     this.paint();
   }
 

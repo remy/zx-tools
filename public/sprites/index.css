@@ -158,7 +158,7 @@ canvas {
   background: var(--transparent-image);
 }
 
-canvas[data-scale='4'] {
+[data-scale='4'] canvas#container {
   background: var(--transparent-image-8);
 }
 

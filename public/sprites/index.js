@@ -107,6 +107,10 @@ const tabs = new Tabs('.tabbed');
 const colour = new ColourPicker(8, pickerColour.parentNode);
 const tool = new Tool({ colour });
 const tileMap = new TileMap({ size: 16, sprites });
+tileMap.hook(
+  debounce(() => saveState({ spriteSheet: sprites, tileMap }), 2000)
+);
+
 let imageWindow = null;
 window.tileMap = tileMap;
 document.querySelector('#tile-map-container').appendChild(tileMap.ctx.canvas);

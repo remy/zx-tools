@@ -2,6 +2,7 @@
 import { xyToIndex } from './SpriteSheet.js';
 import { $ } from '../lib/$.js';
 import trackDown from '../lib/track-down.js';
+import Hooks from '../lib/Hooks.js';
 
 const dummySpriteSheet = {
   get() {
@@ -26,7 +27,7 @@ const sizes = new Map([
   [8, { bank: 32 * 24, w: 32, h: 24 }],
 ]);
 
-export default class TileMap {
+export default class TileMap extends Hooks {
   scale = 2;
   _sprites = null;
   _tmp = null;
@@ -35,6 +36,7 @@ export default class TileMap {
   _undoPtr = 0;
 
   constructor({ size = 8, sprites }) {
+    super();
     const scale = this.scale;
     this.size = size;
     const { bank, w, h } = sizes.get(size);
@@ -77,10 +79,6 @@ export default class TileMap {
       this.sprites.setScale(parseInt(e.target.value, 10));
     });
 
-    // this.elements.scale.filter(
-    //   (_) => parseInt(_.value, 10) === this.size
-    // )[0].checked = true;
-
     $('.tile-controls input').on('change', () => {
       this.size = parseInt(
         this.elements.scale.filter((_) => _.checked)[0].value,
@@ -112,6 +110,7 @@ export default class TileMap {
     this._undoPtr--;
 
     this.bank = data;
+    this.trigger();
     this.paint();
   }
 
@@ -214,6 +213,7 @@ export default class TileMap {
       this.bank[index] = this.sprites.current;
       this.snapshot();
       this._lastSet = index;
+      this.trigger();
     }
   }
 
