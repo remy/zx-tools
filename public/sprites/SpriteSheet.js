@@ -1,6 +1,7 @@
 import Sprite from './Sprite.js';
 import Hooks from '../lib/Hooks.js';
 import { width, pixelLength, getCoords } from './sprite-tools.js';
+import { off } from 'codemirror';
 
 export default class SpriteSheet extends Hooks {
   sprites = [];
@@ -54,16 +55,29 @@ export default class SpriteSheet extends Hooks {
   copy() {
     // FIXME support partial copy/clip //{ x = 0, y = 0, w = width, h = width }
     this.clipboard = new Sprite(new Uint8Array(this.sprite.pixels));
+    this.clipboard.subSprite = this.sprite.subSprite;
   }
 
   paste() {
-    if (this.clipboard.pixels) this.set(this.clipboard.pixels);
+    if (this.clipboard.pixels) {
+      let pixels = this.clipboard.pixels;
+      let offset = 0;
+      if (this.defaultScale === 8) {
+        const i = this.clipboard.subSprite * 64;
+        pixels = new Uint8Array(pixels.slice(i, i + 64));
+        offset = this._current * pixelLength + this.sprite.subSprite * 64;
+      }
+      this.set(pixels, offset);
+      if (this.defaultScale === 8) {
+        // this.renderSubSprites();
+      }
+    }
   }
 
-  set(data) {
+  set(data, offset = this._current * pixelLength) {
     // FIXME support partial paste
     this.snapshot();
-    this.data.set(data, this._current * pixelLength);
+    this.data.set(data, offset);
     this.rebuild(this._current);
     this.paint();
   }
@@ -114,10 +128,12 @@ export default class SpriteSheet extends Hooks {
     if (i < 0 || i > this.length) {
       return; // noop
     }
+    const subSprite = this.sprite.subSprite;
     const sprite = new Sprite(
       this.data.subarray(i * pixelLength, i * pixelLength + pixelLength)
     );
     this.sprites[i] = sprite;
+    this.sprites[i].subSprite = subSprite;
     sprite.paint(this.previewCtx[i]);
     this.trigger();
   }

@@ -206,6 +206,7 @@ buttons.on('click', async (e) => {
   if (action === 'toggle-scale') {
     sprites.toggleScale();
     document.body.dataset.scale = sprites.defaultScale;
+    saveLocal();
   }
 
   if (action === 'download-map') {
