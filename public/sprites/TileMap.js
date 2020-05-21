@@ -37,6 +37,7 @@ export default class TileMap extends Hooks {
   _lastSet = null;
   history = [];
   _undoPtr = 0;
+  showIndexOverlay = false;
 
   constructor({ size = 8, sprites }) {
     super();
@@ -79,22 +80,34 @@ export default class TileMap extends Hooks {
       width: $(`.tile-controls input[name="width"]`),
       height: $(`.tile-controls input[name="height"]`),
       scale: $(`.tile-controls input[name="size"]`),
+      showIndex: $(`.tile-controls input[name="show-index-overlay"]`),
     };
+
+    this.showIndexOverlay = this.elements.showIndex.checked;
+    if (this.showIndexOverlay) this.showIndex();
 
     $(`.tile-controls input[name="size"]`).on('change', (e) => {
       this.sprites.setScale(parseInt(e.target.value, 10));
     });
 
     $('.tile-controls input').on('change', () => {
-      this.size = parseInt(
-        this.elements.scale.filter((_) => _.checked)[0].value,
-        10
-      );
-      this.resize(
-        parseInt(this.elements.width.value, 10),
-        parseInt(this.elements.height.value, 10)
-      );
+      this.showIndexOverlay = this.elements.showIndex.checked;
+      this.showIndex(!this.showIndexOverlay);
+      this.resize({
+        w: parseInt(this.elements.width.value, 10),
+        h: parseInt(this.elements.height.value, 10),
+        size: parseInt(
+          this.elements.scale.filter((_) => _.checked)[0].value,
+          10
+        ),
+      });
     });
+
+    this.hook(() => {
+      if (this.showIndexOverlay) {
+        this.showIndex();
+      }
+    }, 'update-index');
 
     // triggers dom changes
     this.setDimensions({ width: w, height: h, size });
@@ -170,11 +183,40 @@ export default class TileMap extends Hooks {
     $(`.tile-controls input[name="size"][value="${this.size}"]`).checked = true;
   }
 
-  resize(w, h) {
+  showIndex(remove) {
+    if (this.ctx.canvas.parentElement) {
+      if (remove) {
+        if (this.indexMap)
+          this.ctx.canvas.parentElement.removeChild(this.indexMap);
+        this.indexMap = null;
+        return;
+      }
+      if (!this.indexMap) {
+        this.indexMap = document.createElement('div');
+        this.indexMap.id = 'index-map';
+        this.ctx.canvas.parentElement.appendChild(this.indexMap);
+      }
+
+      this.indexMap.style.width = this.scale * this.size * this.width + 'px';
+      this.indexMap.style.height = this.scale * this.size * this.height + 'px';
+      this.indexMap.innerHTML = Array.from(this.bank)
+        .map((i) => `<span>${i}</span>`)
+        .join('');
+    }
+  }
+
+  resize({ w, h, size }) {
     const { width, height } = this;
+
+    if (w === width && h === height && size === this.size) {
+      return;
+    }
+
+    this.size = size;
+
     this.width = w;
     this.height = h;
-    const size = this.size;
+
     const el = this.ctx.canvas;
 
     // max bank size: 16k

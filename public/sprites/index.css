@@ -8,6 +8,14 @@ html {
   background: #373737;
 }
 
+body {
+  --data-scale: 16px;
+}
+
+body[data-scale='8'] {
+  --data-scale: 8px;
+}
+
 html[data-transparency='black'] {
   --transparent-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><rect fill='black' width='32' height='32' x='0' y='0' /></svg>");
 }
@@ -390,6 +398,7 @@ strong {
 }
 
 #tile-map-container {
+  position: relative;
   min-width: 140px;
   overflow: scroll;
 }
@@ -676,4 +685,23 @@ main:fullscreen > :last-child {
   background: white;
   color: black;
   outline: 2px solid black;
+}
+
+#index-map {
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+#index-map * {
+  outline: 1px solid rgba(0, 0, 0, 0.5);
+  font-size: var(--data-scale);
+  text-align: center;
+  height: calc(2 * var(--data-scale));
+  width: calc(2 * var(--data-scale));
+  line-height: calc(2 * var(--data-scale));
+  text-shadow: 1px 1px 1px black;
 }
