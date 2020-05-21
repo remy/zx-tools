@@ -3,6 +3,7 @@
 html {
   --scale: 16px;
   --transparent-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><rect stroke='black' stroke-width='0.2' stroke-opacity='100%' fill='lightgrey' width='32' height='32' x='0' y='0' /><rect fill='white' width='16' height='16' x='1' y='1' /><rect fill='white' width='15' height='15' x='16' y='16' /></svg>");
+  --transparent-image-8: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64'><rect stroke='black' stroke-width='0.2' stroke-opacity='100%' fill='lightgrey' width='64' height='64' x='0' y='0' /><rect fill='white' width='32' height='32' x='1' y='1' /><rect fill='white' width='31' height='31' x='32' y='32' /></svg>");
   --size: calc(16 * var(--scale) * 2);
   background: #373737;
 }
@@ -26,7 +27,7 @@ main {
   flex-direction: row;
   justify-content: center;
   margin: 20px 0px;
-  flex-wrap: wrap;
+  flex-wrap: no-wrap;
   align-items: flex-start;
   justify-content: space-evenly;
 }
@@ -155,6 +156,10 @@ h2 {
 
 canvas {
   background: var(--transparent-image);
+}
+
+[data-scale='8'] canvas#container {
+  background: var(--transparent-image-8);
 }
 
 #container {
@@ -385,7 +390,7 @@ strong {
 }
 
 #tile-map-container {
-  max-width: 608px;
+  min-width: 140px;
   overflow: scroll;
 }
 
@@ -558,6 +563,7 @@ details {
   font-size: 80%;
   margin: 8px auto;
 }
+
 code {
   background: #222;
   border-color: #222;
@@ -565,4 +571,77 @@ code {
 
 small {
   font-size: 60%;
+}
+
+.tile-controls.tools {
+  padding-top: 0;
+}
+
+#preview-8x8 {
+  display: none;
+  justify-content: space-between;
+  background-color: transparent;
+}
+
+[data-scale='8'] #preview-8x8 {
+  display: flex;
+  flex-wrap: wrap;
+  max-width: 104px;
+  margin: 10px auto;
+}
+
+.current-scale:after {
+  content: '16';
+}
+
+[data-scale='8'] .current-scale:after {
+  content: '8';
+}
+
+#preview-8x8 canvas {
+  background: var(--transparent-image);
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  transition: scale 100ms ease-in;
+}
+
+#preview-8x8 canvas:hover {
+  outline: 0;
+  transform: scale(1.05);
+}
+
+[data-sub-sprite='0'] #preview-8x8 canvas[data-index='0'],
+[data-sub-sprite='1'] #preview-8x8 canvas[data-index='1'],
+[data-sub-sprite='2'] #preview-8x8 canvas[data-index='2'],
+[data-sub-sprite='3'] #preview-8x8 canvas[data-index='3'] {
+  outline: 2px dashed yellow;
+}
+
+nav ul li:last-child {
+  flex-grow: 0;
+}
+
+.zoom-button {
+  flex-grow: 1;
+  text-align: right;
+}
+
+.zoom-button span {
+  cursor: pointer;
+}
+
+.zoom-button span:hover {
+  text-decoration: underline;
+}
+
+main:fullscreen {
+  padding: 40px 20px 40px 0;
+  margin: 0 auto;
+  background: #373737;
+  overflow: scroll;
+}
+
+main:fullscreen > :last-child {
+  padding-bottom: 40px;
 }

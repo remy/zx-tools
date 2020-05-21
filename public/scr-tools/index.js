@@ -7,10 +7,7 @@ import { dither } from './lib/retrofy.js';
 const result = $('#result')[0];
 
 function basename(filename) {
-  return filename
-    .split('.')
-    .slice(0, -1)
-    .join('.');
+  return filename.split('.').slice(0, -1).join('.');
 }
 
 function container(filename, altDownload) {
@@ -27,7 +24,7 @@ function container(filename, altDownload) {
   const button = document.createElement('button');
   div.appendChild(button);
   button.onclick = async () => {
-    const file = await new Promise(resolve => canvas.toBlob(resolve));
+    const file = await new Promise((resolve) => canvas.toBlob(resolve));
 
     save(file, basename(filename) + '.png');
   };
@@ -53,7 +50,6 @@ async function fileHandler(data, filename, type) {
     const blob = new Blob([data], { type });
     const url = URL.createObjectURL(blob);
     const res = await dither({ url });
-    console.log(res);
     pixelsForSCR(res, container(filename, res));
     URL.revokeObjectURL(url);
   }
@@ -61,10 +57,10 @@ async function fileHandler(data, filename, type) {
 
 drop(document.body, fileHandler);
 
-$('input').on('change', event => {
+$('input').on('change', (event) => {
   const file = event.target.files[0];
   const reader = new FileReader();
-  reader.onload = event =>
+  reader.onload = (event) =>
     fileHandler(new Uint8Array(event.target.result), file.name, file.type);
   reader.readAsArrayBuffer(file);
 });

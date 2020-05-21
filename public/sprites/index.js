@@ -11,7 +11,11 @@ import TileMap from './TileMap.js';
 import { plus3DOSHeader } from 'txt2bas';
 import Tabs from '../lib/Tabs.js';
 import { Unpack } from '../lib/unpack/unpack.js';
+import { saveState, restoreState } from './state.js';
+import debounce from 'lodash.debounce';
+
 const container = document.querySelector('#container');
+const exampleBasicLink = document.querySelector('#basic-example-link');
 const ctx = container.getContext('2d');
 const spritesContainer = document.querySelector('#sprites .container');
 const debug = document.querySelector('#debug');
@@ -20,28 +24,71 @@ const upload = document.querySelector('#upload input');
 const mapUpload = document.querySelector('#upload-map input');
 const currentSpriteId = document.querySelector('#current-sprite');
 const pickerColour = document.querySelector('.pickerColour div');
-const buttons = $('button[data-action]');
+const buttons = $('[data-action]');
+const ONE_WEEK = 1000 * 60 * 60 * 24 * 7;
+
+const subSprites = $('#preview-8x8 canvas').map((canvas) => {
+  canvas.width = canvas.height = 8 * 6;
+  return canvas.getContext('2d');
+});
 
 let sprites = null;
 
-function newSpriteSheet(check = true) {
+function newSpriteSheet(file) {
+  sprites = new SpriteSheet(file, { ctx, subSprites });
+  tileMap.sprites = sprites; // just in case
+  return sprites;
+}
+
+function saveLocal() {
+  saveState({ spriteSheet: sprites, tileMap });
+}
+
+function generateNewSpriteSheet(check = true) {
   if (check) {
     if (!confirm('Are you sure you want to create a blank new sprite sheet?')) {
       return;
     }
+    localStorage.clear();
   }
 
-  sprites = new SpriteSheet(
-    Uint8Array.from({ length: 256 * 16 * 4 }, (_, i) => {
-      if (check == false && i < 256) return i;
-      return transparent;
-    }),
-    ctx
-  );
+  let spriteData;
+
+  const restored = restoreState();
+
+  if (!check && restored.lastSaved > Date.now() - ONE_WEEK) {
+    spriteData = Uint8Array.from(restored.spriteSheet.data);
+    sprites = newSpriteSheet(spriteData);
+
+    if (restored.tileMap) {
+      const tileMapData = restored.tileMap;
+      tileMap.load({
+        sprites,
+        bank: new Uint8Array(tileMapData.bank),
+        dimensions: tileMapData,
+      });
+      tileMap.paint();
+    }
+    console.log(
+      'State restored from ' + new Date(restored.lastSaved).toLocaleString()
+    );
+  } else {
+    sprites = newSpriteSheet(
+      Uint8Array.from({ length: 256 * 16 * 4 }, (_, i) => {
+        if (check == false && i < 256) return i;
+        return transparent;
+      })
+    );
+  }
 
   sprites.hook(() => {
-    currentSpriteId.textContent = `sprite #${sprites.current}`;
+    currentSpriteId.textContent = `sprite #${sprites.spriteIndex()}`;
+    document.body.dataset.scale = sprites.defaultScale;
+    document.body.dataset.subSprite = sprites.sprite.subSprite;
+    container.dataset.scale = sprites.defaultScale;
   });
+
+  sprites.hook(debounce(saveLocal, 2000));
 
   sprites.current = 0; // triggers complete draw
 
@@ -64,6 +111,8 @@ const tabs = new Tabs('.tabbed');
 const colour = new ColourPicker(8, pickerColour.parentNode);
 const tool = new Tool({ colour });
 const tileMap = new TileMap({ size: 16, sprites });
+tileMap.hook(debounce(saveLocal, 2000));
+
 let imageWindow = null;
 window.tileMap = tileMap;
 document.querySelector('#tile-map-container').appendChild(tileMap.ctx.canvas);
@@ -74,7 +123,10 @@ function fileToImageWindow(file) {
     .querySelector('#png-importer canvas.png')
     .getContext('2d');
   imageWindow = new ImageWindow(res.data, ctx, res.png.width, res.png.height);
-  imageWindow.oncopy = (data) => sprites.set(data);
+  imageWindow.oncopy = (data) => {
+    sprites.set(data);
+    sprites.renderSubSprites();
+  };
   window.imageWindow = imageWindow;
   imageWindow.paint();
 }
@@ -97,13 +149,13 @@ function fileToTile(file) {
     C$checksum`
   );
 
+  const dimensions = {};
   if (header.hOffset !== 0x8000) {
     // then we've got a version where I tucked the dimensions in the file
-    const width = header.autostart; // aka autostart
-    const height = (header.length - 128) / width; // header is 128 bytes
-    tileMap.setDimensions(width, height);
+    dimensions.width = header.autostart; // aka autostart
+    dimensions.height = (header.length - 128) / dimensions.width; // header is 128 bytes
   }
-  tileMap.bank = new Uint8Array(file.slice(unpack.offset));
+  tileMap.load({ bank: new Uint8Array(file.slice(unpack.offset)), dimensions });
   tileMap.sprites = sprites; // just in case
   tileMap.paint();
 }
@@ -128,12 +180,23 @@ $('#png-import-tools button').on('click', (e) => {
   }
 
   if (action === 'copy') {
-    imageWindow.copy();
+    imageWindow.copy($('#copy-as-8x8').checked);
   }
+});
+
+exampleBasicLink.addEventListener('mousedown', () => {
+  exampleBasicLink.search = `?data=${btoa(tileMap.toBasic())}`;
 });
 
 buttons.on('click', async (e) => {
   const action = e.target.dataset.action;
+
+  if (action === 'clear-map') {
+    if (confirm('This will replace your current map, continue?')) {
+      tileMap.clear();
+      saveLocal();
+    }
+  }
 
   if (action === 'debug-sprites') {
     if (confirm('This will replace your current spritesheet, continue?')) {
@@ -143,12 +206,22 @@ buttons.on('click', async (e) => {
     }
   }
 
+  if (action === 'toggle-scale') {
+    sprites.toggleScale();
+    document.body.dataset.scale = sprites.defaultScale;
+    saveLocal();
+  }
+
   if (action === 'download-map') {
     downloadTiles();
   }
 
   if (action === 'new') {
-    newSpriteSheet(true);
+    generateNewSpriteSheet(true);
+  }
+
+  if (action === 'select-sub-sprite') {
+    sprites.setSubSprite(parseInt(e.target.dataset.index, 10));
   }
 
   if (action === 'undo') {
@@ -251,6 +324,17 @@ document.documentElement.addEventListener('keydown', (e) => {
     tool.shift(true);
   }
 
+  if (e.key === 's' && e.metaKey) {
+    e.preventDefault();
+    saveLocal();
+  }
+
+  // shift + 1-4
+  if (e.shiftKey && e.which >= 49 && e.which <= 52) {
+    sprites.setSubSprite(e.which - 49);
+    return;
+  }
+
   let focusTool = null;
   if (tabs.selected === 'sprite-editor') {
     focusTool = tool;
@@ -278,7 +362,7 @@ document.documentElement.addEventListener('keydown', (e) => {
     return;
   }
 
-  if (e.key === 'r') {
+  if (e.key === 'r' && !e.metaKey) {
     sprites.rotate();
     return;
   }
@@ -294,8 +378,13 @@ document.documentElement.addEventListener('keydown', (e) => {
   }
 
   if (e.shiftKey === false && e.key === 'z' && (e.metaKey || e.ctrlKey)) {
-    sprites.undo();
-    tool.resetState();
+    // check if tile or sprite is in focus
+    if (tabs.selected === 'sprite-editor') {
+      sprites.undo();
+      tool.resetState();
+    } else if (tabs.selected === 'tiles') {
+      tileMap.undo();
+    }
     return;
   }
 
@@ -361,7 +450,7 @@ function renderSpritePreviews() {
 
 function fileHandler(file) {
   file = decode(file);
-  sprites = new SpriteSheet(file, ctx);
+  sprites = newSpriteSheet(file);
   tileMap.sprites = sprites;
   tileMap.paint();
 
@@ -409,14 +498,15 @@ spritesContainer.addEventListener('click', (e) => {
 spritesContainer.addEventListener('mousemove', (e) => {
   const node = e.target;
   if (node.nodeName === 'CANVAS') {
-    currentSpriteId.textContent = `sprite #${Array.from(
-      node.parentNode.childNodes
-    ).indexOf(node)}`;
+    const m = sprites.defaultScale === 8 ? 4 : 1;
+    currentSpriteId.textContent = `sprite #${
+      m * Array.from(node.parentNode.childNodes).indexOf(node)
+    }`;
   }
 });
 
 spritesContainer.addEventListener('mouseout', () => {
-  currentSpriteId.textContent = `sprite #${sprites.current}`;
+  currentSpriteId.textContent = `sprite #${sprites.spriteIndex()}`;
 });
 
 drop(document.documentElement, fileHandler);
@@ -424,8 +514,6 @@ drop(document.documentElement, fileHandler);
 document.documentElement.ondrop = async (e) => {
   e.preventDefault();
   const files = e.dataTransfer.files;
-
-  console.log('file length', files.length);
 
   if (files.length === 1) {
     const droppedFile = files[0];
@@ -540,7 +628,7 @@ document.onpaste = async (event) => {
   renderCurrentSprite();
 };
 
-newSpriteSheet(false);
+generateNewSpriteSheet(false);
 
 // render the colour picker
 render(

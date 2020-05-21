@@ -15,12 +15,20 @@
         <li><a href="/bas/">Text 2 BASIC</a></li>
         <li class="selected"><a href="/sprites/">Sprites</a></li class="selected">
         <li><a href="/scr-tools/">.SCR tools</a></li class="selected">
+        <li class="zoom-button"><span onclick="document.querySelector('main').requestFullscreen()">Zoom</span></li>
         <li><a href="/help/">Help</a></li>
       </ul>
     </nav>
     <main>
       <div id="sprites">
         <button title="[D]ownload" class="button--download" data-action="download">Download<br>spritesheet</button>
+        <div class="button-group" id="preview-8x8">
+          <canvas data-action="select-sub-sprite" class="button" data-index="0"></canvas>
+          <canvas data-action="select-sub-sprite" class="button" data-index="1"></canvas>
+          <canvas data-action="select-sub-sprite" class="button" data-index="2"></canvas>
+          <canvas data-action="select-sub-sprite" class="button" data-index="3"></canvas>
+        </div>
+
         <div class="container"></div>
         <div id="current-sprite">&nbsp;</div>
       </div>
@@ -40,8 +48,8 @@
           <div id="tools" class="tools">
             <div>
               <div class="button-group" id="tool-types">
-                <button title="[b]rush" data-action="brush"><svg xmlns="http://www.w3.org/2000/svg" height="24"
-                    width="24">
+                <button title="[b]rush (alt+click to use as picker)" data-action="brush"><svg
+                    xmlns="http://www.w3.org/2000/svg" height="24" width="24">
                     <path d="M0 0h24v24H0V0z" fill="none" />
                     <path fill="#fff"
                       d="M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3zm13.71-9.37l-1.34-1.34a.996.996 0 00-1.41 0L9 12.25 11.75 15l8.96-8.96a.996.996 0 000-1.41z" />
@@ -88,6 +96,7 @@
                 <button data-action="rol">&lt;&lt;</button>
                 <button data-action="ror">&gt;&gt;</button>
               </div>
+              <button data-action="toggle-scale">Toggle 8x8 sprite mode</button>
               <span class="button input-button" id="upload"><input type="file">Upload .png / .spr</span>
               <button data-action="new">New sprite sheet</button>
             </div>
@@ -102,15 +111,17 @@
         <section class="container" id="tiles" data-title="Tile Map">
           <div class="tile-controls tools">
             <h2>Map settings</h2>
-            <div hidden>
-              <strong>Size</strong>
+            <div>
+              <strong>Tile scale</strong>
               <label><input type="radio" value="16" name="size"> 16px</label>
               <label><input type="radio" value="8" name="size"> 8px</label>
             </div>
             <div>
               <strong>Dimensions</strong>
-              <label><input type="number" min="1" value="32" name="width"> width</label>
-              <label><input type="number" min="1" value="24" name="height"> height</label>
+              <label><input type="number" min="1" value="32" name="width"> x<span class="current-scale"></span> tiles
+                wide</label>
+              <label><input type="number" min="1" value="24" name="height"> x<span class="current-scale"></span> tiles
+                tall</label>
             </div>
             <div>
               <strong>Options</strong>
@@ -123,8 +134,10 @@
             </div>
             <span class="button input-button" id="upload-map"><input type="file">Upload map</span>
             <button class="download-btn" data-action="download-map">Download map</button>
+            <button data-action="clear-map">Clear map</button>
             <button class="debug-sprite-btn" data-action="debug-sprites">Load debug sprites</button>
-            <a href="/bas/?id=0a51ba71408dbeff08baad3acaf1d533" target="_blank">Example BASIC code</a>
+            <a id="basic-example-link" href="/bas/?id=0a51ba71408dbeff08baad3acaf1d533" target="_blank">Example BASIC
+              code</a>
           </div>
           <div id="tile-map-container"></div>
         </section>
@@ -136,6 +149,9 @@
           </div>
           <div id="png-import-tools" class="tools">
             <div>
+              <div class="button-group">
+                <label><input id="copy-as-8x8" type="checkbox"> Copy as 8x8 sprite set</label>
+              </div>
               <button data-action="copy">Copy to sprite</button>
               <div class="button-group">
                 <button data-action="zoom-in"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#fff"
@@ -204,6 +220,8 @@
                 <dd>switch to erase</dd>
                 <dt>left/right cursor</dt>
                 <dd>change current sprite in sprite sheet</dd>
+                <dt>shift + 1 - 4</dt>
+                <dd>select 8x8 sprite</dd>
                 <dt>shift + cursor keys</dt>
                 <dd>shift/pan sprite by 1 pixel</dd>
                 <dt>ctrl + shift + cursor keys</dt>
@@ -233,6 +251,17 @@
             <summary>Change log</summary>
             <div>
               <ul>
+                <li>2020 May 20
+                  <ul>
+                    <li>Add: auto save on spritesheet and tilemap</li>
+                    <li>Add: 8x8 tilemap support</li>
+                    <li>Add: Live example BASIC code for tile</li>
+                  </ul>
+                </li>
+                <li>2020 May 16
+                  <ul>
+                    <li>Add: headerless map download option</li>
+                  </ul>
                 <li>2020 April 23
                   <ul>
                     <li>Add: map dimension control</li>

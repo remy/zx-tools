@@ -1,5 +1,5 @@
 import { $ } from '../lib/$.js';
-import { getCoords } from './SpriteSheet.js';
+import { getCoords } from './sprite-tools.js';
 
 export default class Tool {
   types = ['brush', 'fill', 'erase', 'pan'];
@@ -48,13 +48,11 @@ export default class Tool {
 
   shift(shift) {
     this.state.index = null;
-    console.log('shift called', this.state, shift);
     if (shift) {
       if (this._last !== 'erase') this._last = this.selected;
       this.selected = 'erase';
     } else {
       if (this.state.dirty) {
-        console.log('commiting');
         const sprites = this.state.dirty;
         this.state.dirty = false;
         this.state.x = 0;
@@ -91,9 +89,7 @@ export default class Tool {
     this.state[axis] += neg ? -n : n;
     const { x, y } = this.state; // weird way to do it.
 
-    console.log({ x, y });
-
-    sprite.render(x, y);
+    sprite.render({ x, y });
     sprite.paint(ctx);
   }
 
@@ -103,7 +99,7 @@ export default class Tool {
     const x = coords.x - this._coords.x;
     const y = coords.y - this._coords.y;
 
-    sprite.render(x, y);
+    sprite.render({ x, y });
     sprite.paint(ctx);
   }
 
@@ -131,16 +127,18 @@ export default class Tool {
   }
 
   start(event) {
-    const coords = getCoords(event, 32);
+    const coords = getCoords(event, 64); // FIXME
     this._coords = coords;
   }
 
-  end() {
-    // this._coords = null;
-  }
+  end() {}
 
   apply(event, sprites) {
-    const coords = getCoords(event, 32, 32);
+    const coords = getCoords(
+      event,
+      512 / sprites.defaultScale,
+      512 / sprites.defaultScale
+    );
     let target = this.colour.value;
 
     if (this.selected === 'erase') {

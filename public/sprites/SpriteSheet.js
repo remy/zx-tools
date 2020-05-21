@@ -1,198 +1,8 @@
-import { rgbFromIndex, transparent, toRGB332 } from './lib/colour.js';
+import Sprite from './Sprite.js';
+import Hooks from '../lib/Hooks.js';
+import { width, pixelLength, getCoords } from './sprite-tools.js';
 
-export const pixelLength = 256;
-const width = 16;
-
-export const colourTable = Array.from({ length: pixelLength }, (_, i) => {
-  return rgbFromIndex(i);
-});
-
-export function getCoords(e, w = width, h = w) {
-  const rect = e.target.getBoundingClientRect();
-  const x = ((e.clientX - rect.left) / w) | 0; //x position within the element.
-  const y = ((e.clientY - rect.top) / h) | 0; //y position within the element.
-  const index = xyToIndex({ x, y, w: 16 });
-  return { x, y, index };
-}
-
-export function emptyCanvas(ctx) {
-  const blankData = new Uint8ClampedArray(
-    ctx.canvas.width * ctx.canvas.height * 4
-  );
-  // blankData.fill(transparent);
-  for (let i = 0; i < blankData.length; i += 4) {
-    blankData[i + 0] = 0;
-    blankData[i + 1] = 0;
-    blankData[i + 2] = 0;
-    blankData[i + 3] = 0;
-  }
-
-  const blank = new ImageData(blankData, ctx.canvas.width, ctx.canvas.height);
-  ctx.putImageData(blank, 0, 0);
-}
-
-export function xyToIndex({ x, y, w = width, h = w }) {
-  if (x < 0) {
-    return null;
-  }
-
-  if (x >= w) {
-    return null;
-  }
-
-  if (y >= h) {
-    return null;
-  }
-
-  return w * y + x;
-}
-
-export class Sprite {
-  scale = 16;
-
-  /**
-   *
-   * @param {Uint8Array} pixels
-   */
-  constructor(pixels) {
-    this.pixels = pixels;
-    this.ctx = document.createElement('canvas').getContext('2d');
-    this.ctx.canvas.width = this.ctx.canvas.height = width;
-    this.render();
-  }
-
-  get canvas() {
-    return this.ctx.canvas;
-  }
-
-  pget({ index = null, x = null, y }) {
-    if (index === null) {
-      index = xyToIndex({ x, y });
-    }
-
-    return this.pixels[index];
-  }
-
-  pset({ index = null, x = null, y, value }) {
-    if (index === null) {
-      index = xyToIndex({ x, y });
-    }
-
-    this.pixels[index] = value;
-    this.render();
-  }
-
-  clear() {
-    this.pixels.fill(transparent);
-    this.render();
-  }
-
-  mirror(horizontal = true) {
-    return new Promise((resolve) => {
-      const i = new Image();
-      const url = this.canvas.toDataURL(); // needed over a blob because blob is apparently a reference
-      i.src = url;
-      i.onload = () => {
-        this.ctx.clearRect(0, 0, width, width);
-        this.ctx.save();
-        if (horizontal) {
-          this.ctx.scale(-1, 1);
-          this.ctx.drawImage(i, 0, 0, -width, width); //, -width, 0);
-        } else {
-          this.ctx.scale(1, -1);
-          this.ctx.drawImage(i, 0, 0, width, -width);
-        }
-        this.ctx.restore();
-        this.canvasToPixels();
-        resolve();
-      };
-    });
-  }
-
-  rotate() {
-    return new Promise((resolve) => {
-      const i = new Image();
-      const url = this.canvas.toDataURL(); // needed over a blob because blob is apparently a reference
-      i.src = url;
-      i.onload = () => {
-        this.ctx.clearRect(0, 0, width, width);
-        this.ctx.translate(width / 2, width / 2);
-        this.ctx.rotate((90 * Math.PI) / 180); // 90deg
-        this.ctx.drawImage(i, -width / 2, -width / 2);
-        this.ctx.rotate((-90 * Math.PI) / 180);
-        this.ctx.translate(-width / 2, -width / 2);
-        this.canvasToPixels();
-        resolve();
-      };
-    });
-  }
-
-  canvasToPixels() {
-    const imageData = this.ctx.getImageData(0, 0, width, width);
-    for (let i = 0; i < imageData.data.length / 4; i++) {
-      const [r, g, b, a] = imageData.data.slice(i * 4, i * 4 + 4);
-
-      if (a === 0) {
-        this.pixels[i] = transparent;
-      } else {
-        this.pixels[i] = toRGB332(r, g, b);
-      }
-    }
-  }
-
-  render(dx = 0, dy = 0) {
-    const pixels = this.pixels;
-
-    // imageData is the internal copy
-    const imageData = this.ctx.getImageData(0, 0, width, width);
-
-    for (let i = 0; i < pixels.length; i++) {
-      let index = pixels[i];
-      const { r, g, b, a } = colourTable[index];
-      imageData.data[i * 4 + 0] = r;
-      imageData.data[i * 4 + 1] = g;
-      imageData.data[i * 4 + 2] = b;
-      imageData.data[i * 4 + 3] = a * 255;
-    }
-
-    if (dx !== 0 || dy !== 0) {
-      emptyCanvas(this.ctx);
-    }
-
-    this.ctx.putImageData(
-      imageData,
-      dx,
-      dy,
-      0,
-      0,
-      imageData.width,
-      imageData.height
-    );
-  }
-
-  // we always paint square…
-  paint(ctx, dx = 0, dy = 0, w = null) {
-    if (w === null) {
-      w = ctx.canvas.width;
-    }
-    // clear, set to jaggy and scale to canvas
-    ctx.clearRect(dx, dy, w, w);
-    ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(
-      this.ctx.canvas,
-      0,
-      0,
-      this.ctx.canvas.width,
-      this.ctx.canvas.height,
-      dx,
-      dy,
-      w,
-      w
-    );
-  }
-}
-
-export default class SpriteSheet {
+export default class SpriteSheet extends Hooks {
   sprites = [];
   previewCtx = [];
   history = [];
@@ -201,9 +11,10 @@ export default class SpriteSheet {
   _current = 0;
   length = 0;
   clipboard = null;
-  hooks = [];
+  defaultScale = 16; // 8 = 8x8
 
-  constructor(data, ctx, scale = 2) {
+  constructor(data, { ctx, scale = 2, subSprites } = {}) {
+    super();
     this.data = new Uint8Array(pixelLength * 4 * 16);
     this.data.set(data.slice(0, pixelLength * 4 * 16), 0);
 
@@ -223,35 +34,49 @@ export default class SpriteSheet {
     this._current = 0;
     this.scale = scale;
     this.ctx = ctx;
+    this.ctx.canvas.dataset.scale = this.scale;
+    this.subSprites = subSprites; // used to preview 8x8 sprites
 
     window.sprites = this;
+    this.trigger();
+  }
+
+  serialize() {
+    return {
+      data: Array.from(this.data),
+    };
   }
 
   getCoords(e) {
-    return getCoords(e, this.scale * 16);
-  }
-
-  hook(callback) {
-    this.hooks.push(callback);
-  }
-
-  trigger() {
-    this.hooks.forEach((callback) => callback());
+    return getCoords(e, 512 / this.defaultScale);
   }
 
   copy() {
     // FIXME support partial copy/clip //{ x = 0, y = 0, w = width, h = width }
     this.clipboard = new Sprite(new Uint8Array(this.sprite.pixels));
+    this.clipboard.subSprite = this.sprite.subSprite;
   }
 
   paste() {
-    if (this.clipboard.pixels) this.set(this.clipboard.pixels);
+    if (this.clipboard.pixels) {
+      let pixels = this.clipboard.pixels;
+      let offset = 0;
+      if (this.defaultScale === 8) {
+        const i = this.clipboard.subSprite * 64;
+        pixels = new Uint8Array(pixels.slice(i, i + 64));
+        offset = this._current * pixelLength + this.sprite.subSprite * 64;
+      }
+      this.set(pixels, offset);
+      if (this.defaultScale === 8) {
+        // this.renderSubSprites();
+      }
+    }
   }
 
-  set(data) {
+  set(data, offset = this._current * pixelLength) {
     // FIXME support partial paste
     this.snapshot();
-    this.data.set(data, this._current * pixelLength);
+    this.data.set(data, offset);
     this.rebuild(this._current);
     this.paint();
   }
@@ -260,7 +85,6 @@ export default class SpriteSheet {
     this.history.splice(this._undoPtr + 1);
     this.history.push(new Uint8Array(this.data));
     this._undoPtr = this.history.length - 1;
-    console.log(`history: ${this.history.length}`);
   }
 
   async rotate() {
@@ -286,9 +110,16 @@ export default class SpriteSheet {
     this._undoPtr--;
 
     this.data = data;
+    const subSprite = this.sprite.subSprite;
+    const toggle = this.sprite.scale === 8;
+
     for (let i = 0; i < this.length; i++) {
       this.rebuild(i);
     }
+    this.sprite.subSprite = subSprite;
+    if (toggle) this.sprite.toggleScale();
+
+    this.trigger();
     this.paint();
   }
 
@@ -296,10 +127,12 @@ export default class SpriteSheet {
     if (i < 0 || i > this.length) {
       return; // noop
     }
+    const subSprite = this.sprite.subSprite;
     const sprite = new Sprite(
       this.data.subarray(i * pixelLength, i * pixelLength + pixelLength)
     );
     this.sprites[i] = sprite;
+    this.sprites[i].subSprite = subSprite;
     sprite.paint(this.previewCtx[i]);
     this.trigger();
   }
@@ -313,13 +146,20 @@ export default class SpriteSheet {
   }
 
   pset(coords, value) {
-    this.sprites[this._current].pset({ ...coords, value });
+    this.sprites[this._current].pset({
+      ...coords,
+      value,
+      scale: this.defaultScale,
+    });
     this.trigger();
     return true;
   }
 
   pget(args) {
-    return this.sprites[this._current].pget(args);
+    return this.sprites[this._current].pget({
+      ...args,
+      scale: this.defaultScale,
+    });
   }
 
   get current() {
@@ -330,14 +170,63 @@ export default class SpriteSheet {
     return this.sprites[this._current];
   }
 
+  spriteIndex(scale = this.defaultScale) {
+    const i = this._current;
+    if (scale === 16) return i;
+
+    return i * 4 + this.sprite.subSprite;
+  }
+
   set current(value) {
+    if (value === this._current) {
+      console.log('current not being set', value, this._current);
+
+      return;
+    }
     this._current = value;
+    if (this.defaultScale === 8) {
+      this.sprites[value].subSprite = 0;
+      this.sprites[value].scale = 8;
+    } else {
+      this.sprites[value].scale = 16;
+    }
+
+    this.trigger();
+    this.paint(value, true);
+  }
+
+  setSubSprite(index) {
+    this.sprite.subSprite = index;
+    this.sprite.render();
     this.trigger();
     this.paint();
   }
 
   get(index) {
     return this.sprites[index];
+  }
+
+  renderSubSprites() {
+    const sprite = this.sprite;
+    if (this.defaultScale === 16) return;
+
+    for (let i = 3; i >= 0; i--) {
+      sprite.subSprite = i;
+      // sprite.render();
+      sprite.paint(this.subSprites[i], { scale: 8, subSprite: i });
+    }
+  }
+
+  setScale(scale) {
+    this.defaultScale = scale;
+    this.sprite.scale = scale;
+    const current = this._current;
+    this._current = null; // forces a recalc repaint
+    this.current = current;
+  }
+
+  toggleScale(paintSubSprites = true) {
+    this.setScale(this.defaultScale === 8 ? 16 : 8, paintSubSprites);
   }
 
   clear() {
@@ -347,14 +236,26 @@ export default class SpriteSheet {
     this.paint();
   }
 
-  renderPreview(i) {
-    this.sprites[i].draw(this.previewCtx[i]);
-  }
-
-  paint(i = this._current) {
+  paint(i = this._current, allSubSprites = false) {
     const sprite = this.sprites[i];
-    sprite.paint(this.ctx);
-    sprite.paint(this.previewCtx[this._current]);
+    sprite.paint(this.ctx, {
+      scale: this.defaultScale,
+      subSprite: sprite.subSprite,
+    }); // paint the preview
+
+    // paint into the sprite sheet
+    sprite.paint(this.previewCtx[this._current], { scale: 16 });
+
+    if (this.defaultScale === 8) {
+      if (allSubSprites) {
+        this.renderSubSprites();
+      } else {
+        sprite.paint(this.subSprites[sprite.subSprite], {
+          scale: 8,
+          subSprite: sprite.subSprite,
+        });
+      }
+    }
 
     this.getPreviewElements().map((_) => _.classList.remove('focus'));
     this.previewCtx[this._current].canvas.classList.add('focus');

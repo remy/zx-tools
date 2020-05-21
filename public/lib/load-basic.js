@@ -7,8 +7,13 @@ function resultEncoded(data) {
   return Uint8Array.from(result);
 }
 
-export async function loadGist() {
-  const id = getGistId(window.location.toString());
+export async function load() {
+  const { id, data } = parseUrl(window.location.toString());
+
+  if (data) {
+    // decode and return
+    return atob(data);
+  }
 
   if (id.includes('github.com')) {
     return loadGitHub(id);
@@ -18,6 +23,7 @@ export async function loadGist() {
     return loadGitLab(id);
   }
 
+  // default to gist
   const res = await fetch(`https://api.github.com/gists/${id}`);
   const json = await res.json();
 
@@ -79,17 +85,18 @@ async function loadGitHub(url) {
   return resultEncoded(atob(json.content));
 }
 
-function getGistId(_url) {
+function parseUrl(_url) {
   const u = new URL(_url);
   const gist = u.searchParams.get('gist');
   const url = u.searchParams.get('url');
   const id = u.searchParams.get('id');
+  const data = u.searchParams.get('data');
 
   let value = gist || url || id;
 
-  if (value.includes('gist.github')) {
+  if (value && value.includes('github')) {
     value = value.split('/').pop();
   }
 
-  return value;
+  return { id: value, data };
 }
