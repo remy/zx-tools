@@ -109,8 +109,10 @@
 
 
         <section class="container" id="tiles" data-title="Tile Map">
-          <div class="tile-controls tools">
-            <h2>Map settings</h2>
+          <details id="map-settings" open class="tile-controls tools">
+            <summary>
+              <h2><span>Map s</span>ettings</h2>
+            </summary>
             <div>
               <strong>Tile scale</strong>
               <label><input type="radio" value="16" name="size"> 16px</label>
@@ -139,7 +141,7 @@
             <button class="debug-sprite-btn" data-action="debug-sprites">Load debug sprites</button>
             <a id="basic-example-link" href="/bas/?id=0a51ba71408dbeff08baad3acaf1d533" target="_blank">Example BASIC
               code</a>
-          </div>
+          </details>
           <div id="tile-map-container">
             <p id="current-tile"></p>
           </div>

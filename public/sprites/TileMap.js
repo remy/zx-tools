@@ -285,7 +285,7 @@ export default class TileMap extends Hooks {
   clearHover() {
     if (this._tmp !== null) {
       const index = this._tmp;
-      currentTile.innerHTML = ``;
+      currentTile.innerHTML = `&nbsp;`;
 
       this.paintSingle(index);
       this._tmp = null;

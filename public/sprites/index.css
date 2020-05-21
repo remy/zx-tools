@@ -335,6 +335,7 @@ button svg {
   display: flex;
   flex-direction: row-reverse;
   overflow: scroll;
+  justify-content: center;
   width: 100%;
 }
 
@@ -704,4 +705,35 @@ main:fullscreen > :last-child {
   width: calc(2 * var(--data-scale));
   line-height: calc(2 * var(--data-scale));
   text-shadow: 1px 1px 1px black;
+}
+
+#map-settings h2 {
+  display: inline;
+}
+
+#map-settings > summary::marker {
+  font-size: 14px;
+}
+
+#map-settings:not([open]) {
+  min-width: auto;
+  margin-right: 0;
+  padding: 0px;
+}
+
+#map-settings:not([open]) > summary {
+  font-size: 0px;
+  white-space: nowrap;
+}
+
+#map-settings:not([open]) > summary span {
+  display: none;
+}
+
+#map-settings:not([open]) > summary h2 {
+  font-size: 16px;
+}
+
+#map-settings:not([open]) > summary h2:before {
+  content: 'S';
 }
