@@ -244,24 +244,47 @@ buttons.on('click', async (e) => {
   if (action.startsWith('ro')) {
     const left = action === 'rol';
     const right = action === 'ror';
-    if (
-      (right && currentSprite == totalSprites - 1) ||
-      (left && currentSprite === 0)
-    ) {
-      return;
-    }
 
-    sprites.snapshot();
-    const offset = 256 * currentSprite;
-    const copy = sprites.data.slice(offset, offset + 256);
-    const next = (currentSprite + (left ? -1 : 1)) * 256;
-    sprites.data.set(sprites.data.slice(next, next + 256), offset);
-    sprites.data.set(copy, next);
-    sprites.current += left ? -1 : 1;
-    sprites.rebuild(sprites.current - 1);
-    sprites.rebuild(sprites.current + 1);
-    sprites.rebuild(sprites.current);
-    sprites.paint();
+    if (sprites.defaultScale === 16) {
+      if (
+        (right && currentSprite == totalSprites - 1) ||
+        (left && currentSprite === 0)
+      ) {
+        return;
+      }
+
+      sprites.snapshot();
+      const offset = 256 * currentSprite;
+      const copy = sprites.data.slice(offset, offset + 256);
+      const next = (currentSprite + (left ? -1 : 1)) * 256;
+      sprites.data.set(sprites.data.slice(next, next + 256), offset);
+      sprites.data.set(copy, next);
+      sprites.current += left ? -1 : 1;
+      sprites.rebuild(sprites.current - 1);
+      sprites.rebuild(sprites.current + 1);
+      sprites.rebuild(sprites.current);
+      sprites.paint();
+    } else {
+      sprites.snapshot();
+      const base = 256 * currentSprite;
+      const index = sprites.sprite.subSprite;
+      const offset = base + 64 * index;
+      const copy = sprites.data.slice(offset, offset + 64);
+      let targetIndex = (sprites.sprite.subSprite + (left ? -1 : 1)) % 4;
+      if (targetIndex < 0) {
+        targetIndex = 3;
+      }
+
+      const next = targetIndex * 64;
+
+      sprites.data.set(sprites.data.slice(next, next + 64), offset);
+      sprites.data.set(copy, next);
+      sprites.rebuild(currentSprite);
+      sprites.renderSubSprites();
+      sprites.sprite.subSprite = targetIndex;
+      sprites.paint();
+      sprites.trigger();
+    }
   }
 
   if (action === 'copy') {
