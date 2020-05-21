@@ -3,7 +3,8 @@ import { xyToIndex } from './sprite-tools.js';
 import { $ } from '../lib/$.js';
 import trackDown from '../lib/track-down.js';
 import Hooks from '../lib/Hooks.js';
-// import debounce from 'lodash.debounce';
+
+const currentTile = document.querySelector('#current-tile');
 
 const dummySpriteSheet = {
   get() {
@@ -176,8 +177,6 @@ export default class TileMap extends Hooks {
     const size = this.size;
     const el = this.ctx.canvas;
 
-    console.log({ w, h });
-
     // max bank size: 16k
     const bank = new Uint8Array(w * h);
     bank.fill(63); // fill with the last sprite value
@@ -244,8 +243,7 @@ export default class TileMap extends Hooks {
   clearHover() {
     if (this._tmp !== null) {
       const index = this._tmp;
-      // const { x, y } = this.getXY(index);
-      // const sprite = this.sprites.get(this.bank[index]);
+      currentTile.innerHTML = ``;
 
       this.paintSingle(index);
       this._tmp = null;
@@ -253,7 +251,7 @@ export default class TileMap extends Hooks {
   }
 
   hover(e) {
-    const { index } = getCoords(e, this.width, this.size * this.scale);
+    const { index, x, y } = getCoords(e, this.width, this.size * this.scale);
 
     if (this._tmp === index) {
       return;
@@ -262,6 +260,8 @@ export default class TileMap extends Hooks {
     this.clearHover();
 
     this._tmp = index;
+
+    currentTile.innerHTML = `X:${x} Y:${y} -- ${this.bank[index]}`;
 
     this.paintSingle(index, this.sprites.spriteIndex(this.size));
   }

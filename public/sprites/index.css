@@ -666,3 +666,8 @@ main:fullscreen > :last-child {
   left: 0;
   bottom: -24px;
 }
+
+#current-tile {
+  text-align: center;
+  margin: 0;
+}

@@ -108,6 +108,10 @@ function download() {
 }
 
 const tabs = new Tabs('.tabbed');
+tabs.hook(() => {
+  sprites.paint();
+  tileMap.paint();
+});
 const colour = new ColourPicker(8, pickerColour.parentNode);
 const tool = new Tool({ colour });
 const tileMap = new TileMap({ size: 16, sprites });
@@ -115,7 +119,11 @@ tileMap.hook(debounce(saveLocal, 2000));
 
 let imageWindow = null;
 window.tileMap = tileMap;
-document.querySelector('#tile-map-container').appendChild(tileMap.ctx.canvas);
+if (!document.body.prepend) {
+  document.querySelector('#tile-map-container').appendChild(tileMap.ctx.canvas);
+} else {
+  document.querySelector('#tile-map-container').prepend(tileMap.ctx.canvas);
+}
 
 function fileToImageWindow(file) {
   const res = pngNoTransformFile(file);
