@@ -7,7 +7,7 @@ export const colourTable = Array.from({ length: pixelLength }, (_, i) => {
   return rgbFromIndex(i);
 });
 
-export function xyToIndex({ x, y, w = width }) {
+export function xyToIndex({ x, y, w = width, h = w }) {
   if (x < 0) {
     return null;
   }
@@ -16,7 +16,7 @@ export function xyToIndex({ x, y, w = width }) {
     return null;
   }
 
-  if (y >= w) {
+  if (y >= h) {
     return null;
   }
 
@@ -27,7 +27,7 @@ export function getCoords(e, w = width, h = w) {
   const rect = e.target.getBoundingClientRect();
   const x = ((e.clientX - rect.left) / w) | 0; //x position within the element.
   const y = ((e.clientY - rect.top) / h) | 0; //y position within the element.
-  const index = xyToIndex({ x, y, w: 16 });
+  const index = xyToIndex({ x, y, w: 16, h });
   return { x, y, index };
 }
 
