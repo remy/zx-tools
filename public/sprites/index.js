@@ -363,16 +363,26 @@ document.documentElement.addEventListener('keydown', (e) => {
   }
 
   if (e.key === 'r' && !e.metaKey) {
+    if (sprites.defaultScale === 8) {
+      return alert(`Rotate isn't supported yet for 8x8 sprites`);
+    }
     sprites.rotate();
     return;
   }
 
-  if (e.key === 'h') {
+  if (e.key === 'h' && !e.metaKey) {
+    if (sprites.defaultScale === 8) {
+      return alert(`Mirror isn't supported yet for 8x8 sprites`);
+    }
     sprites.mirror(true);
     return;
   }
 
-  if (e.key === 'v') {
+  if (e.key === 'v' && !e.metaKey) {
+    if (sprites.defaultScale === 8) {
+      return alert(`Flip isn't supported yet for 8x8 sprites`);
+    }
+
     sprites.mirror(false);
     return;
   }

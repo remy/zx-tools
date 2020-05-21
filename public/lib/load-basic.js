@@ -12,7 +12,7 @@ export async function load() {
 
   if (data) {
     // decode and return
-    return atob(data);
+    return resultEncoded(atob(data));
   }
 
   if (id.includes('github.com')) {

@@ -34,8 +34,9 @@ export default class Sprite {
   pset({ index = null, x = null, y, value, scale = this.scale }) {
     index = xyToIndex({ x, y, w: scale });
 
-    if (index === this._lastIndex) return;
-    this._lastIndex = index;
+    const key = index + ':' + value;
+    if (key === this._lastIndex) return;
+    this._lastIndex = key;
 
     if (scale === 8) {
       index += this.subSprite * 64;

@@ -52,13 +52,13 @@
             <li>.wav with correct headers and pilot for tape loading</li>
           </ul>
         </li>
-        <li>Import from gists via query string, such
+        <li>Import from gists, github and gitlab via query string, such
           as:<br>
           <a
-            href="https://zx.remysharp.com/bas/?url=https://gist.github.com/remy/3cbe71821d3eae96273d0cef0426fda0">?url=https://gist.github.com/remy/3cbe71821d3eae96273d0cef0426fda0</a>
+            href="https://zx.remysharp.com/bas/?id=3cbe71821d3eae96273d0cef0426fda0">?id=3cbe71821d3eae96273d0cef0426fda0</a>
           or<br>
           <a
-            href="https://zx.remysharp.com/bas/?url=3cbe71821d3eae96273d0cef0426fda0">?url=3cbe71821d3eae96273d0cef0426fda0</a><br>
+            href="https://zx.remysharp.com/bas/?url=https://gitlab.com/thesmog358/tbblue/-/blob/master/games/Next/NextBASIC%20Invaders/basicInvaders.bas">?url=https://gitlab.com/thesmog358/tbblue/-/blob/master/games/Next/NextBASIC%20Invaders/basicInvaders.bas</a><br>
         </li>
         <li>Parses <code>10print"ok"</code> and correctly expands</li>
         <li>Unique line numbers, so repeating a line number will replace previous line</li>
@@ -69,13 +69,12 @@
       <p>Editor based on the <code>.spredit</code> tool on the ZX Spectrum Next.</p>
       <p>Features:</p>
       <ul>
-        <li>Drag and drop support</li>
         <li>Exports to <code>.spr</code> ZX Spectrum Next compatible format</li>
-        <li>Imports PNG file format</li>
-        <li>Import support dimensions at multiples of 16x16 blocks - i.e. 32x48 or 16x256 etc</li>
-        <li>Click to paint current colour, shift+click to delete/paint transparency</li>
-        <li>Alt+click on pixel to add the colour to current colours</li>
-        <li>Keys 1-6 to change colour from colour history</li>
+        <li>Supports both 16x16 and 8x8 tilemaps</li>
+        <li>Drag and drop import</li>
+        <li>Imports PNG file format for easy sprite creation</li>
+        <li>Import PNG to sprite sheet support dimensions at multiples of 16x16 blocks - i.e. 32x48 or 16x256 etc</li>
+        <li>See <a href="/sprites#usage">usage panel</a> for full list of keyboard and mouse shortcuts</li>
       </ul>
 
       <h1 id="scr-tools">SCR tools</h1>

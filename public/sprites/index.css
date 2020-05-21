@@ -2,8 +2,8 @@
 
 html {
   --scale: 16px;
-  --transparent-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><rect stroke='black' stroke-width='0.2' stroke-opacity='100%' fill='lightgrey' width='32' height='32' x='0' y='0' /><rect fill='white' width='16' height='16' x='1' y='1' /><rect fill='white' width='15' height='15' x='16' y='16' /></svg>");
-  --transparent-image-8: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64'><rect stroke='black' stroke-width='0.2' stroke-opacity='100%' fill='lightgrey' width='64' height='64' x='0' y='0' /><rect fill='white' width='32' height='32' x='1' y='1' /><rect fill='white' width='31' height='31' x='32' y='32' /></svg>");
+  --transparent-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><rect stroke='black' stroke-width='0.2' stroke-opacity='100%' fill='%23eee' width='32' height='32' x='0' y='0' /><rect fill='white' width='16' height='16' x='1' y='1' /><rect fill='white' width='15' height='15' x='16' y='16' /></svg>");
+  --transparent-image-8: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64'><rect stroke='black' stroke-width='0.2' stroke-opacity='100%' fill='%23eee' width='64' height='64' x='0' y='0' /><rect fill='white' width='32' height='32' x='1' y='1' /><rect fill='white' width='31' height='31' x='32' y='32' /></svg>");
   --size: calc(16 * var(--scale) * 2);
   background: #373737;
 }
@@ -644,4 +644,25 @@ main:fullscreen {
 
 main:fullscreen > :last-child {
   padding-bottom: 40px;
+}
+
+.pickerColour > div:after {
+  content: attr(data-value);
+  font-size: 9px;
+  text-align: center;
+  display: block;
+  position: absolute;
+  bottom: -13px;
+  letter-spacing: -1px;
+  width: 24px;
+}
+
+.picker.sprite > div:hover:after {
+  content: attr(title);
+  position: absolute;
+  width: 192px;
+  text-align: center;
+  pointer-events: none;
+  left: 0;
+  bottom: -24px;
 }

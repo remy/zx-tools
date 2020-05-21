@@ -11,6 +11,8 @@ ul {
 main li a {
   overflow: hidden;
   text-overflow: ellipsis;
-  display: list-item;
+  display: inline-block;
+  max-width: 700px;
   white-space: pre;
+  vertical-align: bottom;
 }

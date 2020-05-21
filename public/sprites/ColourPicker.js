@@ -45,6 +45,7 @@ export default class ColourPicker {
         .toString(16)
         .padStart(2, '0')}`;
       el.className = 'c-' + value;
+      el.dataset.value = value;
     });
   }
 
