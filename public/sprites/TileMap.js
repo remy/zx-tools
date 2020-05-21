@@ -30,7 +30,7 @@ const sizes = new Map([
 ]);
 
 export default class TileMap extends Hooks {
-  scale = 2;
+  scale = 3;
   _sprites = null;
   _tmp = null;
   _size = 16; // default to 16px
@@ -91,8 +91,6 @@ export default class TileMap extends Hooks {
     });
 
     $('.tile-controls input').on('change', () => {
-      this.showIndexOverlay = this.elements.showIndex.checked;
-      this.showIndex(!this.showIndexOverlay);
       this.resize({
         w: parseInt(this.elements.width.value, 10),
         h: parseInt(this.elements.height.value, 10),
@@ -101,6 +99,8 @@ export default class TileMap extends Hooks {
           10
         ),
       });
+      this.showIndexOverlay = this.elements.showIndex.checked;
+      this.showIndex(!this.showIndexOverlay);
     });
 
     this.hook(() => {

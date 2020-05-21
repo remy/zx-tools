@@ -1,6 +1,7 @@
 /* sprites/index.css */
 
 html {
+  --tile-zoom-scale: 3;
   --scale: 16px;
   --transparent-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><rect stroke='black' stroke-width='0.2' stroke-opacity='100%' fill='%23eee' width='32' height='32' x='0' y='0' /><rect fill='white' width='16' height='16' x='1' y='1' /><rect fill='white' width='15' height='15' x='16' y='16' /></svg>");
   --transparent-image-8: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64'><rect stroke='black' stroke-width='0.2' stroke-opacity='100%' fill='%23eee' width='64' height='64' x='0' y='0' /><rect fill='white' width='32' height='32' x='1' y='1' /><rect fill='white' width='31' height='31' x='32' y='32' /></svg>");
@@ -404,6 +405,14 @@ strong {
   overflow: scroll;
 }
 
+[data-scale='8'] #tile-map-container canvas {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24'><rect stroke='black' stroke-width='0.2' stroke-opacity='100%' fill='%23eee' width='24' height='24' x='0' y='0' /><rect fill='white' width='12' height='12' x='1' y='1' /><rect fill='white' width='11' height='11' x='12' y='12' /></svg>");
+}
+
+#tile-map-container canvas {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48'><rect stroke='black' stroke-width='0.2' stroke-opacity='100%' fill='%23eee' width='48' height='48' x='0' y='0' /><rect fill='white' width='24' height='24' x='1' y='1' /><rect fill='white' width='23' height='23' x='24' y='24' /></svg>");
+}
+
 #tile-map-container canvas {
   /* width: 100%; */
   margin-right: auto;
@@ -701,9 +710,9 @@ main:fullscreen > :last-child {
   outline: 1px solid rgba(0, 0, 0, 0.5);
   font-size: var(--data-scale);
   text-align: center;
-  height: calc(2 * var(--data-scale));
-  width: calc(2 * var(--data-scale));
-  line-height: calc(2 * var(--data-scale));
+  height: calc(var(--tile-zoom-scale) * var(--data-scale));
+  width: calc(var(--tile-zoom-scale) * var(--data-scale));
+  line-height: calc(var(--tile-zoom-scale) * var(--data-scale));
   text-shadow: 1px 1px 1px black;
 }
 
