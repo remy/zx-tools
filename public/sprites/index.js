@@ -204,6 +204,7 @@ buttons.on('click', async (e) => {
   if (action === 'clear-map') {
     if (confirm('This will replace your current map, continue?')) {
       tileMap.clear();
+      tileMap.scale = 3; // FIX hack for local storage out of sync
       saveLocal();
     }
   }
