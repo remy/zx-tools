@@ -59,8 +59,9 @@ export default class SpriteSheet extends Hooks {
 
   paste() {
     if (this.clipboard.pixels) {
+      // debugger;
       let pixels = this.clipboard.pixels;
-      let offset = 0;
+      let offset = this._current * pixelLength;
       if (this.defaultScale === 8) {
         const i = this.clipboard.subSprite * 64;
         pixels = new Uint8Array(pixels.slice(i, i + 64));
@@ -85,6 +86,7 @@ export default class SpriteSheet extends Hooks {
     this.history.splice(this._undoPtr + 1);
     this.history.push(new Uint8Array(this.data));
     this._undoPtr = this.history.length - 1;
+    this.trigger();
   }
 
   async rotate() {

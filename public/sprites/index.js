@@ -41,6 +41,8 @@ function newSpriteSheet(file) {
 }
 
 function saveLocal() {
+  console.log('saving state locally');
+
   saveState({ spriteSheet: sprites, tileMap });
 }
 

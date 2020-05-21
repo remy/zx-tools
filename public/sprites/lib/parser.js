@@ -48,24 +48,13 @@ export function pngNoTransformFile(file) {
   const { isPNG } = detect(file);
 
   if (!isPNG) {
-    throw new Error('not supported (yet)');
+    alert('spr import is not fully supported (yet)');
     // assume this is a sprite and chunk it to be ordered like a png
-    console.log(file.length);
 
     // const length = 4 * 16;
-    const width = 16 * 16;
     const data = new Uint8Array(file.length);
     for (let i = 0; i < file.length; i += 1) {
       // file is the sprite data, arrayed in 16x16 px all in a row
-
-      const x = (i / 16) | 0;
-
-      // 0-15 = sp1, 16-31 = sp2, 32-63 = sp3
-      const spriteIndex = (i / 256) | 0;
-      const pxOffset = 256 * spriteIndex + (i % 16);
-
-      const spritePx = (i % 16) + 256;
-
       const ptr =
         (((i % 16) + 256 * ((i / 16) | 0)) % 4096) + 16 * ((i / 256) | 0);
 
