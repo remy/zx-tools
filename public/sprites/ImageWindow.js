@@ -1,5 +1,5 @@
 import { $ } from '../lib/$.js';
-import { colourTable, emptyCanvas, getCoords } from './SpriteSheet.js';
+import { colourTable, emptyCanvas, getCoords } from './sprite-tools.js';
 import trackDown from '../lib/track-down.js';
 import { toRGB332 } from './lib/colour.js';
 
@@ -111,7 +111,7 @@ export default class ImageWindow {
     this.paint(x | 0, y | 0);
   }
 
-  copy() {
+  copy(as8x8 = false) {
     const data = new Uint8Array(16 * 16);
     const ctx = this.__ctx;
 
@@ -120,8 +120,17 @@ export default class ImageWindow {
     const imageData = ctx.getImageData(x, y, 16, 16);
 
     for (let i = 0; i < data.length; i++) {
-      const [r, g, b, a] = imageData.data.slice(i * 4, i * 4 + 4);
+      let j = i;
+      if (as8x8) {
+        j =
+          112 * Math.floor(i / 128) +
+          16 * Math.floor((i % 64) / 8) +
+          8 * Math.floor(i / 64) +
+          (i % 8);
+      }
+      const [r, g, b, a] = imageData.data.slice(j * 4, j * 4 + 4);
       const index = toRGB332(r, g, b);
+
       if (index === 0xe3 || a === 0) {
         data[i] = 0xe3;
       } else {

@@ -30,3 +30,19 @@ export function getCoords(e, w = width, h = w) {
   const index = xyToIndex({ x, y, w: 16 });
   return { x, y, index };
 }
+
+export function emptyCanvas(ctx) {
+  const blankData = new Uint8ClampedArray(
+    ctx.canvas.width * ctx.canvas.height * 4
+  );
+  // blankData.fill(transparent);
+  for (let i = 0; i < blankData.length; i += 4) {
+    blankData[i + 0] = 0;
+    blankData[i + 1] = 0;
+    blankData[i + 2] = 0;
+    blankData[i + 3] = 0;
+  }
+
+  const blank = new ImageData(blankData, ctx.canvas.width, ctx.canvas.height);
+  ctx.putImageData(blank, 0, 0);
+}

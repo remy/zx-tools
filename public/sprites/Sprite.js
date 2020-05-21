@@ -1,4 +1,4 @@
-import { width, xyToIndex, colourTable } from './sprite-tools.js';
+import { width, xyToIndex, colourTable, emptyCanvas } from './sprite-tools.js';
 import { transparent, toRGB332 } from './lib/colour.js';
 
 export default class Sprite {
@@ -171,20 +171,4 @@ export default class Sprite {
 
     ctx.drawImage(source, 0, 0, source.width, source.height, x, y, w, w);
   }
-}
-
-export function emptyCanvas(ctx) {
-  const blankData = new Uint8ClampedArray(
-    ctx.canvas.width * ctx.canvas.height * 4
-  );
-  // blankData.fill(transparent);
-  for (let i = 0; i < blankData.length; i += 4) {
-    blankData[i + 0] = 0;
-    blankData[i + 1] = 0;
-    blankData[i + 2] = 0;
-    blankData[i + 3] = 0;
-  }
-
-  const blank = new ImageData(blankData, ctx.canvas.width, ctx.canvas.height);
-  ctx.putImageData(blank, 0, 0);
 }

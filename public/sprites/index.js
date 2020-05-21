@@ -123,7 +123,10 @@ function fileToImageWindow(file) {
     .querySelector('#png-importer canvas.png')
     .getContext('2d');
   imageWindow = new ImageWindow(res.data, ctx, res.png.width, res.png.height);
-  imageWindow.oncopy = (data) => sprites.set(data);
+  imageWindow.oncopy = (data) => {
+    sprites.set(data);
+    sprites.renderSubSprites();
+  };
   window.imageWindow = imageWindow;
   imageWindow.paint();
 }
@@ -177,7 +180,7 @@ $('#png-import-tools button').on('click', (e) => {
   }
 
   if (action === 'copy') {
-    imageWindow.copy();
+    imageWindow.copy($('#copy-as-8x8').checked);
   }
 });
 
