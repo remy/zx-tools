@@ -38,6 +38,7 @@ export default class SpriteSheet extends Hooks {
     this.subSprites = subSprites; // used to preview 8x8 sprites
 
     window.sprites = this;
+    this.renderSubSprites();
     this.trigger();
   }
 
@@ -221,10 +222,18 @@ export default class SpriteSheet extends Hooks {
 
   setScale(scale) {
     this.defaultScale = scale;
+    console.trace('setting scale to ' + scale);
+
     this.sprite.scale = scale;
     const current = this._current;
     this._current = null; // forces a recalc repaint
     this.current = current;
+
+    if (scale === 8) {
+      this.renderSubSprites();
+    }
+
+    document.body.dataset.scale = this.defaultScale;
   }
 
   toggleScale(paintSubSprites = true) {

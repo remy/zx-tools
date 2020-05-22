@@ -121,12 +121,7 @@ export default class TileMap extends Hooks {
   set size(value) {
     if (value !== this._size) {
       this._size = value;
-
-      this.sprites.defaultScale = value;
-      if (value === 8) {
-        this.sprites.renderSubSprites();
-      }
-      document.body.dataset.scale = this.sprites.defaultScale;
+      this.sprites.setScale(value);
     }
   }
 
@@ -243,7 +238,7 @@ export default class TileMap extends Hooks {
 
   set sprites(sprites) {
     this._sprites = sprites || dummySpriteSheet;
-    this._sprites.defaultScale = this.size;
+    this._sprites.setScale(this.size);
     // if (sprites) sprites.hook(debounce(() => this.paint(), 1000));
     this.paint();
   }

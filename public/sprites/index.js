@@ -35,7 +35,10 @@ const subSprites = $('#preview-8x8 canvas').map((canvas) => {
 let sprites = null;
 
 function newSpriteSheet(file) {
+  let tmp;
+  if (sprites) tmp = sprites.defaultScale;
   sprites = new SpriteSheet(file, { ctx, subSprites });
+  if (tmp) sprites.setScale(tmp);
   tileMap.sprites = sprites; // just in case
   return sprites;
 }
@@ -220,7 +223,6 @@ buttons.on('click', async (e) => {
 
   if (action === 'toggle-scale') {
     sprites.toggleScale();
-    document.body.dataset.scale = sprites.defaultScale;
     saveLocal();
   }
 
@@ -247,6 +249,7 @@ buttons.on('click', async (e) => {
     const left = action === 'rol';
     const right = action === 'ror';
 
+    debugger;
     if (sprites.defaultScale === 16) {
       if (
         (right && currentSprite == totalSprites - 1) ||
@@ -561,18 +564,12 @@ spritesContainer.addEventListener('mouseout', () => {
 
 drop(document.documentElement, fileHandler);
 
+// handler for multiple files
 document.documentElement.ondrop = async (e) => {
   e.preventDefault();
   const files = e.dataTransfer.files;
 
-  if (files.length === 1) {
-    const droppedFile = files[0];
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      fileHandler(new Uint8Array(event.target.result));
-    };
-    reader.readAsArrayBuffer(droppedFile);
-  } else {
+  if (files.length > 1) {
     let id = sprites.current + 1;
     await Promise.all(
       Array.from(files).map((file) => {
