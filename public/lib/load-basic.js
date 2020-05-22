@@ -8,19 +8,21 @@ function resultEncoded(data) {
 }
 
 export async function load() {
-  const { id, data } = parseUrl(window.location.toString());
+  const { id, url, data } = parseUrl(window.location.toString());
+
+  console.log({ id, data });
 
   if (data) {
     // decode and return
     return resultEncoded(atob(data));
   }
 
-  if (id.includes('github.com')) {
-    return loadGitHub(id);
+  if (url.includes('github.com')) {
+    return loadGitHub(url);
   }
 
-  if (id.includes('gitlab')) {
-    return loadGitLab(id);
+  if (url.includes('gitlab')) {
+    return loadGitLab(url);
   }
 
   // default to gist
@@ -98,5 +100,5 @@ function parseUrl(_url) {
     value = value.split('/').pop();
   }
 
-  return { id: value, data };
+  return { id: value, data, url };
 }
