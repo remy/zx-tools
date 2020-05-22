@@ -23,7 +23,10 @@ export default class ImageWindow {
     });
 
     this.render(this.__ctx, data);
-    this.zoom = 0;
+    // this.zoom = 0;
+    this.zoom = 2;
+    this.y = this.x = 0;
+    this.paint();
   }
 
   get zoom() {

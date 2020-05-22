@@ -192,47 +192,21 @@ canvas {
   cursor: crosshair;
 }
 
+#sprites {
+  display: flex;
+  flex-direction: column;
+  margin-right: 20px;
+}
+
 #sprites .container {
   --block-size: 32px;
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  margin: 0 40px;
-  /* width: 100%; */
+  margin: 0 20px;
   width: calc(4 * var(--block-size));
   cursor: pointer;
-}
-
-@media screen and (max-width: 1104px) {
-  main {
-    flex-direction: column;
-  }
-
-  #sprites {
-    margin-bottom: 16px;
-    display: flex;
-    flex-direction: row-reverse;
-    width: 100%;
-    align-items: center;
-    justify-content: center;
-  }
-
-  #sprites .container {
-    width: calc(32 * 16px);
-  }
-
-  #sprites button {
-    margin: 16px;
-    padding: 16px 32px;
-  }
-
-  #sprites button br {
-    white-space: nowrap;
-  }
-
-  .tabbed {
-    width: 100%;
-  }
+  order: 4;
 }
 
 #sprites .container > div {
@@ -577,10 +551,12 @@ details {
 }
 
 #current-sprite {
+  white-space: nowrap;
   text-align: center;
   width: 80px;
   font-size: 80%;
   margin: 8px auto;
+  order: 2;
 }
 
 code {
@@ -600,6 +576,7 @@ small {
   display: none;
   justify-content: space-between;
   background-color: transparent;
+  order: 4;
 }
 
 [data-scale='8'] #preview-8x8 {
@@ -745,4 +722,53 @@ main:fullscreen > :last-child {
 
 #map-settings:not([open]) > summary h2:before {
   content: 'S';
+}
+
+@media screen and (max-width: 1104px) {
+  main {
+    flex-direction: column;
+  }
+
+  #sprites {
+    margin-bottom: 16px;
+    flex-direction: row;
+    margin-right: 0;
+    width: 100%;
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  #sprites button[data-action='download'] {
+    order: 4;
+    margin-top: 0;
+  }
+
+  [data-scale='8'] #preview-8x8 {
+    order: 2;
+    margin: 0;
+  }
+
+  #current-sprite {
+    order: 1;
+    margin: 20px;
+  }
+
+  #sprites .container {
+    width: calc(32 * 16px);
+    order: 3;
+    flex-grow: 1;
+  }
+
+  #sprites button {
+    margin: 16px;
+    padding: 16px 32px;
+  }
+
+  #sprites button br {
+    white-space: nowrap;
+  }
+
+  .tabbed {
+    width: 100%;
+  }
 }

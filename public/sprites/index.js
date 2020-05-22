@@ -99,6 +99,8 @@ function generateNewSpriteSheet(check = true) {
 
   renderSpritePreviews();
   renderCurrentSprite();
+
+  currentSpriteId.textContent = `sprite #${sprites.spriteIndex()}`;
 }
 
 function download() {
@@ -354,6 +356,10 @@ document.documentElement.addEventListener('keyup', (e) => {
 });
 
 document.documentElement.addEventListener('keydown', (e) => {
+  if (e.key === '?') {
+    return tabs.show('usage');
+  }
+
   if (e.key === 'Shift') {
     tool.shift(true);
   }
