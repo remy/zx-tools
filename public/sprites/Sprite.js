@@ -3,7 +3,6 @@ import { transparent, toRGB332 } from './lib/colour.js';
 
 export default class Sprite {
   scale = width;
-  subSprite = 0; // only used when 8x8
   _lastIndex = null;
 
   /**
@@ -15,6 +14,16 @@ export default class Sprite {
     this.ctx = document.createElement('canvas').getContext('2d');
     this.ctx.canvas.width = this.ctx.canvas.height = width;
     this.render();
+    this.subSprite = 0;
+  }
+
+  set subSprite(value) {
+    this._subSprite = value;
+    document.body.dataset.subSprite = value;
+  }
+
+  get subSprite() {
+    return this._subSprite;
   }
 
   get canvas() {

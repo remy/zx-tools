@@ -86,7 +86,6 @@ function generateNewSpriteSheet(check = true) {
   sprites.hook(() => {
     currentSpriteId.textContent = `sprite #${sprites.spriteIndex()}`;
     document.body.dataset.scale = sprites.defaultScale;
-    document.body.dataset.subSprite = sprites.sprite.subSprite;
     container.dataset.scale = sprites.defaultScale;
   });
 
@@ -272,11 +271,12 @@ buttons.on('click', async (e) => {
       const offset = base + 64 * index;
       const copy = sprites.data.slice(offset, offset + 64);
       let targetIndex = (sprites.sprite.subSprite + (left ? -1 : 1)) % 4;
+
       if (targetIndex < 0) {
         targetIndex = 3;
       }
 
-      const next = targetIndex * 64;
+      const next = base + 64 * targetIndex;
 
       sprites.data.set(sprites.data.slice(next, next + 64), offset);
       sprites.data.set(copy, next);
