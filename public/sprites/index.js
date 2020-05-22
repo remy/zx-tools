@@ -49,12 +49,12 @@ function saveLocal() {
   saveState({ spriteSheet: sprites, tileMap });
 }
 
-function generateNewSpriteSheet(check = true) {
-  if (check) {
+function generateNewSpriteSheet({ check = true, file = null } = {}) {
+  if (!file && check) {
     if (!confirm('Are you sure you want to create a blank new sprite sheet?')) {
       return;
     }
-    localStorage.clear();
+    localStorage.removeItem('spriteSheet');
   }
 
   let spriteData;
@@ -79,15 +79,18 @@ function generateNewSpriteSheet(check = true) {
     );
   } else {
     sprites = newSpriteSheet(
-      Uint8Array.from({ length: 256 * 16 * 4 }, (_, i) => {
-        if (check == false && i < 256) return i;
-        return transparent;
-      })
+      file ||
+        Uint8Array.from({ length: 256 * 16 * 4 }, (_, i) => {
+          if (check == false && i < 256) return i;
+          return transparent;
+        })
     );
   }
 
   sprites.hook(() => {
     currentSpriteId.textContent = `sprite #${sprites.spriteIndex()}`;
+    console.log('hook called  ' + sprites.spriteIndex());
+
     document.body.dataset.scale = sprites.defaultScale;
     container.dataset.scale = sprites.defaultScale;
   });
@@ -104,6 +107,8 @@ function generateNewSpriteSheet(check = true) {
   renderCurrentSprite();
 
   currentSpriteId.textContent = `sprite #${sprites.spriteIndex()}`;
+
+  return sprites;
 }
 
 function download() {
@@ -207,6 +212,7 @@ buttons.on('click', async (e) => {
 
   if (action === 'clear-map') {
     if (confirm('This will replace your current map, continue?')) {
+      localStorage.removeItem('tileMap');
       tileMap.clear();
       tileMap.scale = 3; // FIX hack for local storage out of sync
       saveLocal();
@@ -231,7 +237,7 @@ buttons.on('click', async (e) => {
   }
 
   if (action === 'new') {
-    generateNewSpriteSheet(true);
+    generateNewSpriteSheet({ check: true });
   }
 
   if (action === 'select-sub-sprite') {
@@ -249,7 +255,6 @@ buttons.on('click', async (e) => {
     const left = action === 'rol';
     const right = action === 'ror';
 
-    debugger;
     if (sprites.defaultScale === 16) {
       if (
         (right && currentSprite == totalSprites - 1) ||
@@ -503,12 +508,12 @@ function renderSpritePreviews() {
 
 function fileHandler(file) {
   file = decode(file);
-  sprites = newSpriteSheet(file);
-  tileMap.sprites = sprites;
-  tileMap.paint();
+  sprites = generateNewSpriteSheet({ file });
+  // tileMap.sprites = sprites;
+  // tileMap.paint();
 
-  renderSpritePreviews();
-  renderCurrentSprite();
+  // renderSpritePreviews();
+  // renderCurrentSprite();
 }
 
 function render(data, into) {
@@ -675,7 +680,7 @@ document.onpaste = async (event) => {
   renderCurrentSprite();
 };
 
-generateNewSpriteSheet(false);
+generateNewSpriteSheet({ check: false });
 
 // render the colour picker
 render(
