@@ -10,8 +10,6 @@ function resultEncoded(data) {
 export async function load() {
   const { id, url = '', data = null } = parseUrl(window.location.toString());
 
-  console.log({ id, data, url });
-
   if (data) {
     // decode and return
     return resultEncoded(atob(data));
@@ -23,6 +21,10 @@ export async function load() {
 
   if (url.includes('gitlab')) {
     return loadGitLab(url);
+  }
+
+  if (!id && url) {
+    return loadCustom(url);
   }
 
   // default to gist
@@ -39,6 +41,12 @@ export async function load() {
   if (file) {
     return resultEncoded(file.content);
   }
+}
+
+async function loadCustom(url) {
+  const res = await fetch('/request?url=' + encodeURIComponent(url));
+  const text = await res.text();
+  return resultEncoded(text);
 }
 
 async function loadGitLab(url) {
@@ -93,16 +101,13 @@ async function loadGitHub(url) {
 
 function parseUrl(_url) {
   const u = new URL(_url);
-  const gist = u.searchParams.get('gist');
   const url = u.searchParams.get('url');
-  const id = u.searchParams.get('id');
   const data = u.searchParams.get('data');
+  let id = u.searchParams.get('id') || u.searchParams.get('gist');
 
-  let value = gist || url || id;
-
-  if (value && value.includes('github')) {
-    value = value.split('/').pop();
+  if (id && id.includes('github')) {
+    id = id.split('/').pop();
   }
 
-  return { id: value, data, url };
+  return { id, data, url };
 }
