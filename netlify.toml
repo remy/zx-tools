@@ -9,3 +9,8 @@
   from = "/bas2txt"
   to = "https://txt2bas.now.sh/api/bas2txt"
   status = 200
+
+[[redirects]]
+  from = "/request"
+  to = "https://txt2bas.now.sh/api/request"
+  status = 200

@@ -23,6 +23,7 @@
   "license": "MIT",
   "dependencies": {
     "@remy/unpack": "^2.1.0",
+    "axios": "^0.19.2",
     "codemirror": "^5.52.0",
     "esm": "^3.2.25",
     "lodash.debounce": "^4.0.8",
