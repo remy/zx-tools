@@ -10,14 +10,14 @@ function resultEncoded(data) {
 export async function load() {
   const { id, url = '', data = null } = parseUrl(window.location.toString());
 
-  console.log({ id, data });
+  console.log({ id, data, url });
 
   if (data) {
     // decode and return
     return resultEncoded(atob(data));
   }
 
-  if (url.includes('github.com')) {
+  if (url.includes('/github.com')) {
     return loadGitHub(url);
   }
 
@@ -29,9 +29,13 @@ export async function load() {
   const res = await fetch(`https://api.github.com/gists/${id}`);
   const json = await res.json();
 
-  const file = Object.keys(json.files)
-    .map((key) => json.files[key])
-    .find((_) => _.filename.toLowerCase().endsWith('.bas'));
+  const files = Object.keys(json.files).map((key) => json.files[key]);
+  let file = files.find((_) => _.filename.toLowerCase().endsWith('.bas'));
+
+  if (!file) {
+    // find the first text file
+    file = files.find((_) => _.type.toLowerCase() === 'text/plain');
+  }
   if (file) {
     return resultEncoded(file.content);
   }
