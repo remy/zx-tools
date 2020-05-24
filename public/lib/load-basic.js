@@ -8,7 +8,7 @@ function resultEncoded(data) {
 }
 
 export async function load() {
-  const { id, url, data } = parseUrl(window.location.toString());
+  const { id, url = '', data = null } = parseUrl(window.location.toString());
 
   console.log({ id, data });
 
