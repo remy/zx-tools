@@ -8,4 +8,6 @@ The code is a little hacky (written over a few days), but has some semblance of 
 
 This project is vanilla HTML + JS project (so yes, I'm currently repeating the navigation over and oer, and it's okay!) - however if you're looking for code, it should be organised well enough to extract the function you want, I just kindly ask that you credit me, ta.
 
-![screenshot](https://user-images.githubusercontent.com/13700/76740752-49297400-6766-11ea-89e6-c9c95dfbbfab.png)
+![screenshot](https://user-images.githubusercontent.com/13700/83136544-8e134480-a0df-11ea-8efa-f87fc40d0204.png)
+
+
