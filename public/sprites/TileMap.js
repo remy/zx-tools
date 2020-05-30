@@ -333,7 +333,6 @@ export default class TileMap extends Hooks {
     const sprite = this.sprites.get(bankIndex);
 
     if (!sprite) {
-      console.log({ value, bankIndex, i });
       return;
     }
 
@@ -360,7 +359,7 @@ export default class TileMap extends Hooks {
       const sprite = this.sprites.get(bankIndex);
 
       if (!sprite) {
-        console.log({ value, bankIndex, i });
+        // console.log({ value, bankIndex, i });
         break;
       }
 

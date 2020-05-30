@@ -12,9 +12,17 @@ export default class SpriteSheet extends Hooks {
   length = 0;
   clipboard = null;
   defaultScale = 16; // 8 = 8x8
+  miniCoords = [
+    // note that 16 = 8x8 just scaled @ 2
+    [0, 0],
+    [16, 0],
+    [0, 16],
+    [16, 16],
+  ];
 
   constructor(data, { ctx, scale = 2, subSprites } = {}) {
     super();
+
     this.data = new Uint8Array(pixelLength * 4 * 16);
     this.data.set(data.slice(0, pixelLength * 4 * 16), 0);
 
@@ -30,15 +38,15 @@ export default class SpriteSheet extends Hooks {
     }
 
     this.snapshot();
+    this.scale = scale;
     this.length = data.length / pixelLength;
     this._current = 0;
-    this.scale = scale;
     this.ctx = ctx;
     this.ctx.canvas.dataset.scale = this.scale;
     this.subSprites = subSprites; // used to preview 8x8 sprites
 
     window.sprites = this;
-    this.renderSubSprites();
+    this.renderSubSprites(0);
     this.trigger();
   }
 
@@ -136,7 +144,11 @@ export default class SpriteSheet extends Hooks {
     );
     this.sprites[i] = sprite;
     this.sprites[i].subSprite = subSprite;
-    sprite.paint(this.previewCtx[i]);
+    if (this.defaultScale === 8) {
+      this.renderSubSprites(i);
+    } else {
+      sprite.paint(this.previewCtx[i]);
+    }
     this.trigger();
   }
 
@@ -182,8 +194,6 @@ export default class SpriteSheet extends Hooks {
 
   set current(value) {
     if (value === this._current) {
-      console.log('current not being set', value, this._current);
-
       return;
     }
     this._current = value;
@@ -209,29 +219,53 @@ export default class SpriteSheet extends Hooks {
     return this.sprites[index];
   }
 
-  renderSubSprites() {
-    const sprite = this.sprite;
+  renderSubSprite(subSprite, i = this._current) {
+    const sprite = this.sprites[i];
+    sprite.paint(this.subSprites[sprite.subSprite], {
+      scale: 8,
+      subSprite,
+    });
+    const w = 16;
+    const [x, y] = this.miniCoords[subSprite];
+
+    sprite.paint(this.previewCtx[i], {
+      scale: 8,
+      subSprite,
+      w,
+      x,
+      y,
+    });
+  }
+
+  renderSubSprites(spriteIndex = this._current) {
+    const sprite = this.sprites[spriteIndex];
     if (this.defaultScale === 16) return;
 
     for (let i = 3; i >= 0; i--) {
       sprite.subSprite = i;
-      // sprite.render();
-      sprite.paint(this.subSprites[i], { scale: 8, subSprite: i });
+      this.renderSubSprite(i, spriteIndex);
     }
   }
 
   setScale(scale) {
+    if (scale === this.defaultScale) return;
+
     this.defaultScale = scale;
     this.sprite.scale = scale;
+
+    // re-renders the entire preview sheet
+    for (let i = 0; i < this.sprites.length; i++) {
+      if (scale === 8) {
+        this.renderSubSprites(i);
+      } else {
+        this.sprites[i].paint(this.previewCtx[i], { scale: 16 });
+      }
+    }
 
     // forces a recalc repaint
     const current = this._current;
     this._current = null;
     this.current = current;
-
-    if (scale === 8) {
-      this.renderSubSprites();
-    }
 
     document.body.dataset.scale = this.defaultScale;
   }
@@ -247,6 +281,8 @@ export default class SpriteSheet extends Hooks {
     this.paint();
   }
 
+  // paintPreview(i = this._current, allSubSprites = false) {}
+
   paint(i = this._current, allSubSprites = false) {
     const sprite = this.sprites[i];
     sprite.paint(this.ctx, {
@@ -254,18 +290,15 @@ export default class SpriteSheet extends Hooks {
       subSprite: sprite.subSprite,
     }); // paint the preview
 
-    // paint into the sprite sheet
-    sprite.paint(this.previewCtx[this._current], { scale: 16 });
-
     if (this.defaultScale === 8) {
       if (allSubSprites) {
-        this.renderSubSprites();
+        this.renderSubSprites(i);
       } else {
-        sprite.paint(this.subSprites[sprite.subSprite], {
-          scale: 8,
-          subSprite: sprite.subSprite,
-        });
+        this.renderSubSprite(sprite.subSprite, i);
       }
+    } else {
+      // paint into the sprite sheet
+      sprite.paint(this.previewCtx[this._current], { scale: 16 });
     }
 
     this.getPreviewElements().map((_) => _.classList.remove('focus'));

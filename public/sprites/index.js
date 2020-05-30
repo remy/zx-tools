@@ -34,6 +34,10 @@ const subSprites = $('#preview-8x8 canvas').map((canvas) => {
 
 let sprites = null;
 
+function pad3(n) {
+  return n.toString().padStart(3, '0');
+}
+
 function newSpriteSheet(file) {
   let tmp;
   if (sprites) tmp = sprites.defaultScale;
@@ -88,8 +92,7 @@ function generateNewSpriteSheet({ check = true, file = null } = {}) {
   }
 
   sprites.hook(() => {
-    currentSpriteId.textContent = `sprite #${sprites.spriteIndex()}`;
-    console.log('hook called  ' + sprites.spriteIndex());
+    currentSpriteId.textContent = `sprite #${pad3(sprites.spriteIndex())}`;
 
     document.body.dataset.scale = sprites.defaultScale;
     container.dataset.scale = sprites.defaultScale;
@@ -106,7 +109,7 @@ function generateNewSpriteSheet({ check = true, file = null } = {}) {
   renderSpritePreviews();
   renderCurrentSprite();
 
-  currentSpriteId.textContent = `sprite #${sprites.spriteIndex()}`;
+  currentSpriteId.textContent = `sprite #${pad3(sprites.spriteIndex())}`;
 
   return sprites;
 }
@@ -557,14 +560,14 @@ spritesContainer.addEventListener('mousemove', (e) => {
   const node = e.target;
   if (node.nodeName === 'CANVAS') {
     const m = sprites.defaultScale === 8 ? 4 : 1;
-    currentSpriteId.textContent = `sprite #${
+    currentSpriteId.textContent = `sprite #${pad3(
       m * Array.from(node.parentNode.childNodes).indexOf(node)
-    }`;
+    )}`;
   }
 });
 
 spritesContainer.addEventListener('mouseout', () => {
-  currentSpriteId.textContent = `sprite #${sprites.spriteIndex()}`;
+  currentSpriteId.textContent = `sprite #${pad3(sprites.spriteIndex())}`;
 });
 
 drop(document.documentElement, fileHandler);

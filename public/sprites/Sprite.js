@@ -4,6 +4,7 @@ import { transparent, toRGB332 } from './lib/colour.js';
 export default class Sprite {
   scale = width;
   _lastIndex = null;
+  cachedSource = [];
 
   /**
    *
@@ -107,6 +108,7 @@ export default class Sprite {
   }
 
   canvasToPixels() {
+    this.cachedSource = [];
     const imageData = this.ctx.getImageData(0, 0, width, width);
     for (let i = 0; i < imageData.data.length / 4; i++) {
       const [r, g, b, a] = imageData.data.slice(i * 4, i * 4 + 4);
@@ -157,6 +159,7 @@ export default class Sprite {
     }
 
     ctx.putImageData(imageData, x, y, 0, 0, imageData.width, imageData.height);
+    this.cachedSource = [];
   }
 
   // we always paint square…
@@ -171,12 +174,15 @@ export default class Sprite {
 
     let source = this.ctx.canvas;
 
-    if (scale) {
+    if (this.cachedSource[subSprite]) {
+      source = this.cachedSource[subSprite];
+    } else if (scale) {
       const ctx = document.createElement('canvas').getContext('2d');
       ctx.canvas.width = scale;
       ctx.canvas.height = scale;
       this.render({ ctx, scale, subSprite });
       source = ctx.canvas;
+      this.cachedSource[subSprite] = source;
     }
 
     ctx.drawImage(source, 0, 0, source.width, source.height, x, y, w, w);
