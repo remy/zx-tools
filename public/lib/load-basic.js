@@ -109,5 +109,9 @@ function parseUrl(_url) {
     id = id.split('/').pop();
   }
 
+  if (url.includes('gist.')) {
+    id = url.split('/').pop();
+  }
+
   return { id, data, url };
 }

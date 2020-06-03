@@ -10,7 +10,7 @@ import Tool from './Tool.js';
 import TileMap from './TileMap.js';
 import { plus3DOSHeader } from 'txt2bas';
 import Tabs from '../lib/Tabs.js';
-import { Unpack } from '../lib/unpack/unpack.js';
+import { Unpack } from '@remy/unpack';
 import { saveState, restoreState } from './state.js';
 import debounce from 'lodash.debounce';
 

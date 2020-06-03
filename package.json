@@ -22,13 +22,13 @@
   "author": "Remy Sharp (https://remysharp.com)",
   "license": "MIT",
   "dependencies": {
-    "@remy/unpack": "^2.1.0",
+    "@remy/unpack": "^2.1.6",
     "axios": "^0.19.2",
     "codemirror": "^5.52.0",
     "esm": "^3.2.25",
     "lodash.debounce": "^4.0.8",
     "multer": "^1.4.2",
-    "txt2bas": "^1.10.4"
+    "txt2bas": "^1.10.6"
   },
   "devDependencies": {
     "@babel/core": "^7.0.0-0",

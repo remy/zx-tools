@@ -42,6 +42,7 @@ cm.getWrapperElement().addEventListener('click', (e) => {
     if (onToken) {
       const fnSearch = e.target.classList.contains('cm-goto-fn');
       let needle = e.target.innerText.trim();
+
       const seed = needle;
       if (fnSearch) {
         needle = 'DEFPROC ' + needle + '(';

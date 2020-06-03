@@ -29,7 +29,8 @@ CodeMirror.defineSimpleMode('basic', {
     {
       regex: /(:)\s*(;.*)/,
       token: [null, 'comment'],
-      // eol: true,
+      next: 'comment',
+      eol: true,
     },
     {
       regex: /#\w+/,
@@ -37,14 +38,14 @@ CodeMirror.defineSimpleMode('basic', {
       token: ['pragma'],
       // eol: true,
     },
+    {
+      regex: /\b(PROC)(\s+)([a-z][a-z0-9]+)/i,
+      token: ['keyword keyword-with-fn', null, 'goto fn goto-fn'],
+    },
     { regex: /\s*\d+\b/, token: 'variable-3 basic-line-number', sol: true },
     {
       regex: /(GO SUB|GO TO|LINE|THEN)(\s+)(%?\d+)\b/,
       token: ['keyword', null, 'number goto'],
-    },
-    {
-      regex: /\b(PROC)(\s+)(.+?)\(\)/,
-      token: ['keyword', null, 'goto goto-fn'],
     },
     { regex: /BIN\s[01]+/, token: 'number-binary number' },
     {
@@ -64,6 +65,10 @@ CodeMirror.defineSimpleMode('basic', {
       regex: new RegExp('&|\\*|\\-|\\+|=|<>|<|>|\\|\\^|<<|>>|~'),
       token: 'operator',
     },
+  ],
+  comment: [
+    { regex: /.$/, token: 'comment', next: 'start' },
+    { regex: /.*$/, token: 'comment' },
   ],
   meta: {
     dontIndentStates: ['comment'],
