@@ -101,8 +101,8 @@ async function loadGitHub(url) {
 
 function parseUrl(_url) {
   const u = new URL(_url);
-  const url = u.searchParams.get('url');
-  const data = u.searchParams.get('data');
+  const url = u.searchParams.get('url') || '';
+  const data = u.searchParams.get('data') || '';
   let id = u.searchParams.get('id') || u.searchParams.get('gist');
 
   if (id && id.includes('github')) {
