@@ -9,9 +9,9 @@ export function rgbFromIndex(index) {
 
   //make a pure RGB332 colour
   return {
-    r: (r * 255.0) / 7.0,
-    g: (g * 255.0) / 7.0,
-    b: (b * 255.0) / 3.0,
+    r: Math.round((r * 255.0) / 7.0),
+    g: Math.round((g * 255.0) / 7.0),
+    b: Math.round((b * 255.0) / 3.0),
     a: 255,
   };
 }

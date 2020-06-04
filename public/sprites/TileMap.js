@@ -288,7 +288,12 @@ export default class TileMap extends Hooks {
   }
 
   hover(e) {
-    const { index, x, y } = getCoords(e, this.width, this.size * this.scale);
+    const { index, x, y } = getCoords(
+      e,
+      this.width,
+      this.size * this.scale,
+      this.height
+    );
 
     if (this._tmp === index) {
       return;
