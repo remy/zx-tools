@@ -1,7 +1,7 @@
 import drop from '../lib/dnd.js';
 import { rgbFromIndex, transparent } from './lib/colour.js';
 import save from '../lib/save.js';
-import { decode, pngNoTransformFile } from './lib/parser.js';
+import { decode, parseNoTransformFile } from './lib/parser.js';
 import ImageWindow from './ImageWindow.js';
 import { $ } from '../lib/$.js';
 import SpriteSheet from './SpriteSheet.js';
@@ -139,12 +139,10 @@ if (!document.body.prepend) {
   document.querySelector('#tile-map-container').prepend(tileMap.ctx.canvas);
 }
 
-function fileToImageWindow(file) {
-  const res = pngNoTransformFile(file);
-  const ctx = document
-    .querySelector('#png-importer canvas.png')
-    .getContext('2d');
-  imageWindow = new ImageWindow(res.data, ctx, res.png.width, res.png.height);
+async function fileToImageWindow(data, file) {
+  const res = await parseNoTransformFile(data, file);
+  const ctx = document.querySelector('#importer canvas.png').getContext('2d');
+  imageWindow = new ImageWindow(res.data, ctx, res.width, res.height);
   imageWindow.oncopy = (data) => {
     sprites.set(data);
     sprites.renderSubSprites();
@@ -182,7 +180,7 @@ function fileToTile(file) {
   tileMap.paint();
 }
 
-drop(document.querySelector('#png-importer'), fileToImageWindow);
+drop(document.querySelector('#importer'), fileToImageWindow);
 drop(document.querySelector('#tiles'), fileToTile);
 
 const importMask = document.querySelector('#png-container .focus');
@@ -389,7 +387,7 @@ document.documentElement.addEventListener('keydown', (e) => {
   let focusTool = null;
   if (tabs.selected === 'sprite-editor') {
     focusTool = tool;
-  } else if (tabs.selected === 'png-importer') {
+  } else if (tabs.selected === 'importer') {
     focusTool = imageWindow;
   }
 

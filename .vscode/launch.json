@@ -1,16 +1,22 @@
 {
-  // Use IntelliSense to learn about possible attributes.
-  // Hover to view descriptions of existing attributes.
-  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
   "configurations": [
     {
-      "type": "node",
+      "name": "Launch localhost",
+      "type": "firefox",
       "request": "launch",
-      "name": "Launch Program",
-      "cwd": "${workspaceFolder}",
-      "program": "${file}",
-      "runtimeArgs": ["-r", "esm"]
+      "reAttach": true,
+      "url": "http://localhost:8080/sprites/",
+      "pathMappings": [
+        {
+          "url": "http://localhost:8080/public",
+          "path": "${workspaceFolder}/public"
+        },
+        {
+          "url": "http://localhost:8080",
+          "path": "${workspaceFolder}/public"
+        }
+      ]
     }
   ]
 }

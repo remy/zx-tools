@@ -435,7 +435,7 @@ details {
   background: linear-gradient(#111, black);
 }
 
-#png-importer {
+#importer {
   display: flex;
 }
 
