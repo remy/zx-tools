@@ -1,0 +1,100 @@
+main > div {
+  margin: 20px 0;
+}
+
+label {
+  font-weight: bold;
+}
+
+input {
+  font-size: inherit;
+}
+
+#result {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  text-align: left;
+  padding-right: 20px;
+}
+
+td {
+  vertical-align: top;
+}
+
+td:first-child input {
+  pointer-events: none;
+}
+
+td.type {
+  white-space: nowrap;
+  padding-right: 80px;
+}
+
+td.contents {
+  width: 100%;
+}
+
+table label {
+  font-weight: normal;
+}
+
+tbody tr:hover {
+  background: #eee;
+  cursor: pointer;
+}
+
+td .peek {
+  color: rgb(0, 0, 215);
+  text-decoration: underline;
+  cursor: pointer;
+  padding-right: 8px;
+  user-select: none;
+}
+
+#download-data {
+  display: none;
+}
+
+.download-data #download-data {
+  display: block;
+}
+
+.peek-contents {
+  min-height: 0;
+  pointer-events: none;
+}
+
+.peek-contents td > div,
+.peek-contents input {
+  display: none;
+}
+
+.peek-contents .container canvas {
+  width: 256px;
+}
+
+.peek-contents input:checked + div {
+  display: block;
+  margin: 4px 0 28px 0;
+  white-space: pre-wrap;
+  pointer-events: initial;
+}
+
+.peek-contents canvas {
+  image-rendering: crisp-edges;
+  width: 16px;
+}

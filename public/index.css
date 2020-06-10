@@ -12,10 +12,31 @@ a {
   color: rgb(0, 0, 215);
 }
 
+.error {
+  border: 4px solid rgb(255, 112, 112);
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.error p:first-child {
+  margin-top: 0;
+}
+
 code {
   background: #eee;
   border: 2px solid #eee;
   border-radius: 2px;
+}
+
+pre {
+  background: #eee;
+  border: 2px solid #eee;
+  border-radius: 2px;
+  padding: 16px;
+}
+
+pre code {
+  border: 0;
 }
 
 label {
@@ -67,6 +88,7 @@ html {
 
 body {
   margin: 20px;
+  min-height: calc(100vh - 40px);
 }
 
 nav ul {

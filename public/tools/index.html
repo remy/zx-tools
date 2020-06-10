@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width">
-    <title>specnext .scr tools</title>
+    <title>specnext misc tools</title>
     <link rel="stylesheet" href="./index.css">
     <link rel="stylesheet" href="../index.css">
   </head>
@@ -14,7 +14,7 @@
       <ul>
         <li><a href="/bas/">Text 2 BASIC</a></li>
         <li><a href="/sprites/">Sprites</a></li>
-        <li class="selected"><a href="/scr-tools/">.SCR tools</a></li class="selected">
+        <li class="selected"><a href="/tools/">Tools</a></li>
         <li><a href="/help/">Help</a></li>
       </ul>
     </nav>
@@ -27,7 +27,16 @@
         <label for="upload-convert">Convert jpg/png into 15 colour .SCR file: </label><input type="file"
           id="upload-convert">
       </div>
+      <div>
+        <label for="upload-tap">Explore .TAP and .TZX files: </label><input type="file" id="upload-tap">
+      </div>
       <div id="result"></div>
+      <div id="download-data">
+        <span>Download options:</span>
+        <button data-action="download-raw">Raw binary</button>
+        <button data-action="download-basic">BASIC with +3dos header</button>
+        <!-- <button data-action="download-selected">Selected as TAP</button> -->
+      </div>
     </main>
     <script src="./index.js"></script>
   </body>
