@@ -89,6 +89,8 @@ param2: 0x${data.header.p2.toString(16).padStart(4, '0').toUpperCase()}`;
       const id = `scr${Math.random().toString().split('.').pop()}`;
       new Promise((resolve) => {
         const ctx = document.createElement('canvas').getContext('2d');
+        ctx.canvas.width = 256;
+        ctx.canvas.height = 192;
         pixelsForSCR(data.data, ctx);
         setTimeout(() => ctx.canvas.toBlob(resolve), 100);
       })
