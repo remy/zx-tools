@@ -8,6 +8,7 @@ import {
   file2bas,
   formatText,
   statements,
+  plus3DOSHeader,
 } from 'txt2bas';
 import './basic-syntax.js';
 import save from '../lib/save.js';
@@ -188,6 +189,15 @@ function download(action) {
 
     save(bufferLists, filename + '.wav');
     cm.setValue(line2txt(basic));
+  } else if (action === 'bank') {
+    const basic = file2bas(cm.getValue(), { includeHeader: false });
+    const file = new Uint8Array(0x4000 + 128);
+    file.fill(0x80);
+    file.set(plus3DOSHeader(basic), 0);
+    file[128] = 'B'.charCodeAt(0);
+    file[129] = 'C'.charCodeAt(0);
+    file.set(basic, 130);
+    save(file, filename + '.bank');
   } else {
     let file = file2bas(cm.getValue(), action, filename);
     save(file, filename + (action === '3dos' ? '.bas' : '.tap'));
