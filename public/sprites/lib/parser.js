@@ -28,8 +28,8 @@ export function pixelsFromFile(file) {
     const img = new Image();
     img.onload = () => {
       const ctx = document.createElement('canvas').getContext('2d');
-      ctx.width = img.width;
-      ctx.height = img.height;
+      ctx.canvas.width = img.width;
+      ctx.canvas.height = img.height;
 
       ctx.drawImage(img, 0, 0);
       URL.revokeObjectURL(url);
