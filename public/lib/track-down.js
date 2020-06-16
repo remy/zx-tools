@@ -8,33 +8,31 @@ export default function trackDown(
 
   el.addEventListener('mouseout', () => (down = false));
   el.addEventListener('click', handler);
-  el.addEventListener(
-    'mousedown',
-    e => {
-      start(e);
-      down = true;
-    },
-    true
-  );
-  el.addEventListener(
-    'mouseup',
-    e => {
-      down = false;
-      end(e);
-    },
-    true
-  );
-  el.addEventListener(
-    'mousemove',
-    e => {
-      if (down) {
-        handler(e);
-      } else {
-        move(e);
-      }
-    },
-    true
-  );
+
+  const downHandler = (e) => {
+    down = true;
+    start(e);
+  };
+
+  const upHandler = (e) => {
+    down = false;
+    end(e);
+  };
+
+  const moveHandler = (e) => {
+    if (down) {
+      handler(e);
+    } else {
+      move(e);
+    }
+  };
+
+  el.addEventListener('touchstart', downHandler, true);
+  el.addEventListener('mousedown', downHandler, true);
+  el.addEventListener('mouseup', upHandler, true);
+  el.addEventListener('touchend', upHandler, true);
+  el.addEventListener('mousemove', moveHandler, true);
+  el.addEventListener('touchmove', moveHandler, true);
 
   return () => {
     down = false;

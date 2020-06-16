@@ -13,6 +13,7 @@ import Tabs from '../lib/Tabs.js';
 import { Unpack } from '@remy/unpack';
 import { saveState, restoreState } from './state.js';
 import debounce from 'lodash.debounce';
+import trackDown from '../lib/track-down.js';
 
 const container = document.querySelector('#container');
 const exampleBasicLink = document.querySelector('#basic-example-link');
@@ -320,42 +321,26 @@ picker.addEventListener('mousedown', (e) => {
   colour.value = e.target.dataset.value;
 });
 
-let down = false;
-container.addEventListener(
-  'mousedown',
-  (event) => {
-    down = true;
-    tool.start(event);
-  },
-  true
-);
-
-container.addEventListener(
-  'mouseup',
-  () => {
-    down = false;
-    tool.end();
-  },
-  true
-);
-
-container.addEventListener(
-  'mousemove',
-  (e) => {
-    if (down) {
-      container.onclick(e);
-    }
-  },
-  true
-);
-
-container.onclick = (e) => {
+const drawHandler = (e) => {
+  if (e.type.startsWith('touch')) {
+    e.preventDefault();
+  }
   if (e.altKey || e.ctrlKey) {
     colour.value = sprites.pget(sprites.getCoords(e));
   } else {
     tool.apply(e, sprites);
   }
 };
+
+trackDown(container, {
+  handler: drawHandler,
+  start() {
+    tool.start(event);
+  },
+  end() {
+    tool.end();
+  },
+});
 
 // main key handlers
 document.documentElement.addEventListener('keyup', (e) => {

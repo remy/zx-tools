@@ -24,9 +24,16 @@ export function xyToIndex({ x, y, w = width, h = w }) {
 }
 
 export function getCoords(e, w = width, h = w) {
+  let { clientX, clientY } = e;
+
+  if (e.type.startsWith('touch')) {
+    clientX = e.touches[0].clientX;
+    clientY = e.touches[0].clientY;
+  }
+
   const rect = e.target.getBoundingClientRect();
-  const x = ((e.clientX - rect.left) / w) | 0; //x position within the element.
-  const y = ((e.clientY - rect.top) / h) | 0; //y position within the element.
+  const x = ((clientX - rect.left) / w) | 0; //x position within the element.
+  const y = ((clientY - rect.top) / h) | 0; //y position within the element.
   const index = xyToIndex({ x, y, w: 16, h });
   return { x, y, index };
 }
