@@ -196,6 +196,10 @@ async function fileHandler(data, file) {
   } else if (ext === 'TZX') {
     exploreTzx(data);
   } else if (ext === 'SCR') {
+    if (data.length === 128 + 6912) {
+      // includes a header - just drop it
+      data = data.slice(128);
+    }
     pixelsForSCR(data, container(name));
   } else {
     const blob = new Blob([data], { type });
