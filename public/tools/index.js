@@ -63,6 +63,7 @@ function renderTapperBlock({ tr, block }) {
     block.p2,
     16
   )}"></label></td>
+  <td><button>del</button></td>
 </tr>
 `;
   tr.innerHTML = html;
@@ -70,8 +71,9 @@ function renderTapperBlock({ tr, block }) {
 
 function createTapAddFile(data, file) {
   const block = tapper.add({ file, data });
+  const index = tapper.length - 1;
 
-  if (tapper.length === 1 && file.name.toLowerCase().endsWith('.bas')) {
+  if (index === 0 && file.name.toLowerCase().endsWith('.bas')) {
     // try to get auto start too
     const dataView = new DataView(data.buffer);
     const autostart = dataView.getUint16(18, true);
@@ -125,7 +127,7 @@ function createTapAddFile(data, file) {
 
   const tr = document.createElement('tr');
   block.render = () => {
-    renderTapperBlock({ tr, block, i: tapper.length - 1 });
+    renderTapperBlock({ tr, block });
   };
 
   block.render();
@@ -139,6 +141,11 @@ function createTapAddFile(data, file) {
     p1.value = `0x${toHex(block.p1, 16)}`;
     p2.value = `0x${toHex(block.p2, 16)}`;
   };
+
+  tr.querySelector('button').addEventListener('click', () => {
+    tapper.splice(index, 1);
+    tapCreatorOutput.removeChild(tr);
+  });
 
   p1.addEventListener('blur', () => {
     let v = p1.value;

@@ -139,7 +139,38 @@ summary {
   user-select: none;
 }
 
+footer {
+  color: #666;
+}
+
+footer .meta {
+  color: black;
+}
+
 div.meta ol {
   padding-bottom: 12px;
   border-bottom: 1px solid #ccc;
+}
+
+#tap-creator td button {
+  font-size: 90%;
+  padding: 2px 4px;
+  vertical-align: middle;
+  visibility: hidden;
+}
+
+#tap-creator tr:hover td button {
+  visibility: visible;
+}
+
+#tap-creator tr:hover td button:hover {
+  outline: 0;
+}
+
+tr input {
+  vertical-align: text-top;
+}
+tr select {
+  vertical-align: sub;
+  vertical-align: -moz-middle-with-baseline;
 }
