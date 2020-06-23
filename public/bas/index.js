@@ -190,13 +190,7 @@ function download(action) {
     save(bufferLists, filename + '.wav');
     cm.setValue(line2txt(basic));
   } else if (action === 'bank') {
-    const basic = file2bas(cm.getValue(), { includeHeader: false });
-    const file = new Uint8Array(0x4000 + 128);
-    file.fill(0x80);
-    file.set(plus3DOSHeader(basic), 0);
-    file[128] = 'B'.charCodeAt(0);
-    file[129] = 'C'.charCodeAt(0);
-    file.set(basic, 130);
+    const file = file2bas(cm.getValue(), { bank: true });
     save(file, filename + '.bank');
   } else {
     let file = file2bas(cm.getValue(), action, filename);
