@@ -1,12 +1,17 @@
-main > div {
+body {
+  background: #f9f9f9;
+}
+
+details > div {
   margin: 20px 0;
 }
 
-label {
-  font-weight: bold;
+div:empty {
+  margin: 0;
 }
 
-input {
+input,
+select {
   font-size: inherit;
 }
 
@@ -22,6 +27,7 @@ input {
 }
 
 table {
+  margin: 20px 0;
   width: 100%;
   border-collapse: collapse;
 }
@@ -97,4 +103,43 @@ td .peek {
 .peek-contents canvas {
   image-rendering: crisp-edges;
   width: 16px;
+}
+
+summary {
+  margin-bottom: 20px;
+  font-weight: bold;
+}
+
+#tap-creator tbody:empty:after {
+  content: 'Select files from below to create a new TAP file';
+  position: absolute;
+}
+
+#tap-creator tbody:empty {
+  height: 40px;
+  padding-bottom: 40px;
+}
+
+details {
+  padding: 8px 16px;
+  border: 1px solid transparent;
+}
+
+details[open] + details {
+  margin-top: 40px;
+}
+
+details[open] {
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 2px;
+}
+
+summary {
+  user-select: none;
+}
+
+div.meta ol {
+  padding-bottom: 12px;
+  border-bottom: 1px solid #ccc;
 }

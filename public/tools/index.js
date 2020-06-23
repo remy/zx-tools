@@ -4,18 +4,223 @@ import { $ } from '../lib/$.js';
 import save from '../lib/save.js';
 import { dither } from './lib/retrofy.js';
 import { Tzx, TapFile } from './lib/tzx.js';
-import { plus3DOSHeader } from 'txt2bas';
+import { plus3DOSHeader, statements, file2txt } from 'txt2bas';
 import { charset } from './lib/font.js';
+import BmpDecoder from '../sprites/lib/bmp.js';
+import { Tapper } from './lib/tapper';
+import { toHex } from '../lib/to.js';
 
 let explore = null;
 const buttons = $('[data-action]');
 
 const result = $('#result')[0];
+const tapExplore = $('#tap-explore-result')[0];
+const tapCreatorOutput = $('#tap-creator tbody')[0];
+
+let tapper = new Tapper();
+window.tapper = tapper;
+
+function selected(value, cmp) {
+  if (value === cmp) return 'selected';
+  return '';
+}
+
+function renderTapperBlock({ tr, block }) {
+  const html = `
+  <td><label><input size="3" min="1" type="number" name="order" value="${
+    block.order
+  }"></label></td>
+  <td class="filename"><input type="text" name="filename" size="11" maxlength="10" value="${
+    block.filename
+  }"></td>
+  <td class="dataType"><select value="${
+    block.dataType
+  }" name="dataType"><option ${selected(
+    block.dataType,
+    0
+  )} value="0">BASIC</option><option ${selected(
+    block.dataType,
+    1
+  )} value="1">CODE</option><option ${selected(
+    block.dataType,
+    2
+  )} value="2">BANK</option><option ${selected(
+    block.dataType,
+    3
+  )} value="3">SCREEN$</option></select></td>
+  <td class="blockType"><select name="blockType"><option ${selected(
+    block.type,
+    0
+  )} value="0">Program</option><option ${selected(
+    block.type,
+    3
+  )} value="3">Data</option></select></td>
+  <td class="p1"><label><input size="6" name="p1" type="text" value="0x${toHex(
+    block.p1,
+    16
+  )}"></label></td>
+  <td class="p2"><label><input size="6" name="p2" type="text" value="0x${toHex(
+    block.p2,
+    16
+  )}"></label></td>
+</tr>
+`;
+  tr.innerHTML = html;
+}
+
+function createTapAddFile(data, file) {
+  const block = tapper.add({ file, data });
+
+  if (tapper.length === 1 && file.name.toLowerCase().endsWith('.bas')) {
+    // try to get auto start too
+    const dataView = new DataView(data.buffer);
+    const autostart = dataView.getUint16(18, true);
+
+    block.p1 = autostart || 10;
+
+    const st = statements(file2txt(data));
+
+    const loads = st.filter(({ tokens }) => {
+      return tokens.filter((token) => token.text === 'LOAD').length;
+    });
+
+    const meta = loads.map(({ tokens }) => {
+      let ready = false;
+      let next = null;
+      let addr = 0xc000;
+      let filename = null;
+      let i = 0;
+      for (; i < tokens.length; i++) {
+        if (ready && tokens[i].name === 'STRING') {
+          filename =
+            tokens[i].value === '""' ? '"&lt;unnamed&gt;"' : tokens[i].value;
+        }
+        if (ready && tokens[i].name === 'KEYWORD') {
+          next = tokens[i].text;
+          break;
+        }
+        if (tokens[i].text === 'LOAD') {
+          ready = true;
+        }
+      }
+
+      if (next === 'CODE') {
+        addr = tokens.slice(i).find((token) => token.numeric).value;
+      }
+
+      return { filename, next, addr };
+    });
+
+    $('#tap-creator .meta').innerHTML = `<p>Expecting ${
+      meta.length
+    } more file(s) (not particularly in this order):</p><ol>${meta
+      .map(
+        (res) =>
+          `<li>${res.filename} ${res.next}${
+            res.next === 'CODE' ? ` @ ${res.addr}` : ''
+          }</li>`
+      )
+      .join('')}</ol>`;
+  }
+
+  const tr = document.createElement('tr');
+  block.render = () => {
+    renderTapperBlock({ tr, block, i: tapper.length - 1 });
+  };
+
+  block.render();
+
+  const p1 = tr.querySelector('[name="p1"]');
+  const p2 = tr.querySelector('[name="p2"]');
+  const dt = tr.querySelector('[name="dataType"]');
+  const bt = tr.querySelector('[name="blockType"]');
+
+  const updateParams = () => {
+    p1.value = `0x${toHex(block.p1, 16)}`;
+    p2.value = `0x${toHex(block.p2, 16)}`;
+  };
+
+  p1.addEventListener('blur', () => {
+    let v = p1.value;
+    const radix = v.toLowerCase().includes('x') ? 16 : 10;
+    v = parseInt(v, radix);
+    block.p1 = v;
+    updateParams();
+  });
+
+  p2.addEventListener('blur', () => {
+    let v = p2.value;
+    const radix = v.toLowerCase().includes('x') ? 16 : 10;
+    v = parseInt(v, radix);
+    block.p2 = v;
+    updateParams();
+  });
+
+  tr.addEventListener('input', (e) => {
+    const { name, value } = e.target;
+
+    if (name === 'order') {
+      const order = parseInt(value, 10);
+
+      tapper.forEach((_) => {
+        if (_.order === order) {
+          _.order = block.order;
+          _.render();
+        }
+      });
+      block.order = order;
+
+      // re-order nodes
+      const trs = Array.from(tapCreatorOutput.childNodes);
+      trs.sort((a, b) => {
+        return (
+          parseInt(a.querySelector('[name="order"]').value, 10) -
+          parseInt(b.querySelector('[name="order"]').value, 10)
+        );
+      });
+      trs.forEach((_) => {
+        tapCreatorOutput.appendChild(_);
+      });
+      e.target.focus();
+    }
+
+    if (name === 'blockType') {
+      block.type = value;
+      updateParams();
+      dt.value = block.dataType;
+    }
+
+    if (name === 'dataType') {
+      block.dataType = value;
+      updateParams();
+      bt.value = block.type;
+    }
+
+    if (name === 'filename') {
+      block.filename = value;
+    }
+  });
+
+  tapCreatorOutput.appendChild(tr);
+}
 
 buttons.on('click', async (e) => {
   const action = e.target.dataset.action;
+
+  if (action === 'generate-tap') {
+    const filename = prompt('Filename:', 'untitled.tap');
+    if (!filename) {
+      return;
+    }
+
+    const data = tapper.generate();
+    save(data, filename);
+
+    return;
+  }
+
   const ids = Array.from(
-    result.querySelectorAll('input[name="block"]:checked')
+    tapExplore.querySelectorAll('input[name="block"]:checked')
   ).map((el) => parseInt(el.value));
 
   const id = ids[0];
@@ -51,7 +256,7 @@ function exploreTap(data) {
     explore = new TapFile(data);
     renderBlockTable(explore.blocks);
   } catch (e) {
-    result.innerHTML = `<div class="error"><p>The file couldn't be parsed. Please try a different file, or report the issue via the help menu (top right). Thanks.</p><pre><code>${e.message}\n\n${e.stack}</code></pre></div>`;
+    tapExplore.innerHTML = `<div class="error"><p>The file couldn't be parsed. Please try a different file, or report the issue via the help menu (top right). Thanks.</p><pre><code>${e.message}\n\n${e.stack}</code></pre></div>`;
   }
 }
 
@@ -60,7 +265,7 @@ function exploreTzx(data) {
     explore = new Tzx(data);
     renderBlockTable(explore.blocks);
   } catch (e) {
-    result.innerHTML = `<div class="error"><p>The file couldn't be parsed. Please try a different file, or report the issue via the help menu (top right). Thanks.</p><pre><code>${e.message}\n\n${e.stack}</code></pre></div>`;
+    tapExplore.innerHTML = `<div class="error"><p>The file couldn't be parsed. Please try a different file, or report the issue via the help menu (top right). Thanks.</p><pre><code>${e.message}\n\n${e.stack}</code></pre></div>`;
   }
 }
 
@@ -115,7 +320,7 @@ param2: 0x${data.header.p2.toString(16).padStart(4, '0').toUpperCase()}`;
 }
 
 function renderBlockTable(blocks) {
-  result.onclick = (event) => {
+  tapExplore.onclick = (event) => {
     if (event.target.nodeName === 'LABEL' || event.target.nodeName === 'INPUT')
       return;
     event.preventDefault();
@@ -148,11 +353,51 @@ function renderBlockTable(blocks) {
     })
     .join('\n');
 
-  result.innerHTML = `<table><thead><tr><th></td><th>Id</th><th>Type</th><th colspan=2>Contents</th></tr></thead><tbody>${html}</tbody></table>`;
+  tapExplore.innerHTML = `<table><thead><tr><th></td><th>Id</th><th>Type</th><th colspan=2>Contents</th></tr></thead><tbody>${html}</tbody></table>`;
 }
 
 function basename(filename) {
   return filename.split('.').slice(0, -1).join('.');
+}
+
+function loadImage(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve(img);
+    };
+
+    img.onerror = reject;
+    img.src = url;
+  });
+}
+
+async function renderImageForBmp(file, data) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 256;
+  canvas.height = 192;
+  const ctx = canvas.getContext('2d');
+  const div = document.createElement('div');
+  div.className = 'container';
+  div.appendChild(canvas);
+
+  const img = await loadImage(file);
+  ctx.drawImage(img, 0, 0);
+
+  const bmp = new BmpDecoder(data);
+  console.log(bmp);
+
+  const button = document.createElement('button');
+  div.appendChild(button);
+  button.onclick = async () => {
+    const file = await new Promise((resolve) => canvas.toBlob(resolve));
+
+    save(file, basename(file.name) + '.bmp');
+  };
+  button.innerText = 'Download BMP';
+  result.prepend(div);
 }
 
 function container(filename, altDownload, r = result) {
@@ -188,9 +433,14 @@ function container(filename, altDownload, r = result) {
   return ctx;
 }
 
-async function fileHandler(data, file) {
+async function fileHandler(data, file, id) {
   const { name, type } = file;
   const ext = name.split('.').pop().toUpperCase();
+
+  if (id === 'create-tap') {
+    return createTapAddFile(data, file);
+  }
+
   if (ext === 'TAP') {
     exploreTap(data);
   } else if (ext === 'TZX') {
@@ -201,6 +451,8 @@ async function fileHandler(data, file) {
       data = data.slice(128);
     }
     pixelsForSCR(data, container(name));
+  } else if (id === 'bmp-to-next') {
+    renderImageForBmp(file, data);
   } else {
     const blob = new Blob([data], { type });
     const url = URL.createObjectURL(blob);
@@ -214,8 +466,9 @@ drop(document.body, fileHandler);
 
 $('input').on('change', (event) => {
   const file = event.target.files[0];
+  const id = event.target.id;
   const reader = new FileReader();
   reader.onload = (event) =>
-    fileHandler(new Uint8Array(event.target.result), file);
+    fileHandler(new Uint8Array(event.target.result), file, id);
   reader.readAsArrayBuffer(file);
 });

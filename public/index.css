@@ -143,3 +143,15 @@ details summary {
 button svg {
   vertical-align: middle;
 }
+
+select {
+  vertical-align: middle;
+}
+
+p {
+  max-width: 720px;
+}
+
+details footer {
+  font-size: 90%;
+}
