@@ -470,6 +470,7 @@ async function fileHandler(data, file, id) {
 }
 
 drop(document.body, fileHandler);
+drop(document.querySelector('#tap-creator'), createTapAddFile);
 
 $('input').on('change', (event) => {
   const file = event.target.files[0];
