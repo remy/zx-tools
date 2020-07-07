@@ -303,7 +303,11 @@ export default class TileMap extends Hooks {
 
     this._tmp = index;
 
-    currentTile.innerHTML = `X:${x} Y:${y} -- ${this.bank[index]}`;
+    if (index !== null) {
+      currentTile.innerHTML = `X:${x} Y:${y} #${this.bank[index]} @ ${index}`;
+    } else {
+      currentTile.innerHTML = '';
+    }
 
     this.paintSingle(index, this.sprites.spriteIndex(this.size));
   }
