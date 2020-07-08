@@ -1,5 +1,5 @@
 import drop from '../lib/dnd.js';
-import { rgbFromIndex, transparent } from './lib/colour.js';
+import { rgbFromIndex, transparent, rgbFromNext } from './lib/colour.js';
 import save from '../lib/save.js';
 import { decode, parseNoTransformFile } from './lib/parser.js';
 import ImageWindow from './ImageWindow.js';
@@ -14,6 +14,7 @@ import { Unpack } from '@remy/unpack';
 import { saveState, restoreState } from './state.js';
 import debounce from 'lodash.debounce';
 import trackDown from '../lib/track-down.js';
+import Palette, { makePixel } from './Palette.js';
 
 const container = document.querySelector('#container');
 const exampleBasicLink = document.querySelector('#basic-example-link');
@@ -24,7 +25,9 @@ const picker = document.querySelector('.picker');
 const upload = document.querySelector('#upload input');
 const mapUpload = document.querySelector('#upload-map input');
 const currentSpriteId = document.querySelector('#current-sprite');
-const pickerColour = document.querySelector('.pickerColour div');
+const pickerColour = document.querySelector('.pickerColour');
+const palettePickerColour = document.querySelector('#palette .picker');
+const userToolPalette = document.querySelector('#palette .colour-picker');
 const buttons = $('[data-action]');
 const ONE_WEEK = 1000 * 60 * 60 * 24 * 7;
 
@@ -123,17 +126,35 @@ function download() {
 }
 
 const tabs = new Tabs('.tabbed');
-tabs.hook(() => {
+tabs.hook((tab) => {
   sprites.paint();
   tileMap.paint();
+
+  if (tab === 'sprite-editor') {
+    palette.moveTo('sprite-editor');
+  }
+
+  if (tab === 'palette') {
+    palette.moveTo('palette');
+    userToolPalette.innerHTML = '';
+    userToolPalette.appendChild(
+      document.querySelector('.pickerColour').cloneNode(true)
+    );
+  }
 });
-const colour = new ColourPicker(8, pickerColour.parentNode);
+const palette = new Palette({ node: palettePickerColour });
+const colour = new ColourPicker({ size: 8, node: pickerColour, palette });
 const tool = new Tool({ colour });
 const tileMap = new TileMap({ size: 16, sprites });
+
+// const palettePicker = new ColourPicker(8, palettePickerColour.parentNode);
+palette.moveTo(tabs.selected);
+palette.render();
 tileMap.hook(debounce(saveLocal, 2000));
 
 let imageWindow = null;
 window.tileMap = tileMap;
+window.palette = palette;
 if (!document.body.prepend) {
   document.querySelector('#tile-map-container').appendChild(tileMap.ctx.canvas);
 } else {
@@ -183,7 +204,6 @@ function fileToTile(file) {
     dimensions.width = header.autostart; // aka autostart
     dimensions.height = (header.length - 128) / dimensions.width; // header is 128 bytes
     bank = new Uint8Array(file.slice(unpack.offset));
-    
   } else {
     bank = new Uint8Array(file.slice(unpack.offset));
   }
@@ -361,6 +381,10 @@ document.documentElement.addEventListener('keyup', (e) => {
 });
 
 document.documentElement.addEventListener('keydown', (e) => {
+  if (e.target.nodeName === 'INPUT') {
+    return;
+  }
+
   if (e.key === '?') {
     return tabs.show('usage');
   }
@@ -385,6 +409,21 @@ document.documentElement.addEventListener('keydown', (e) => {
     focusTool = tool;
   } else if (tabs.selected === 'importer') {
     focusTool = imageWindow;
+  }
+
+  if (tabs.selected === 'palette') {
+    if (e.key === '.') {
+      palette.setInc();
+      return;
+    }
+    if (e.key === 'ArrowLeft') {
+      palette.prev();
+      return;
+    }
+    if (e.key === 'ArrowRight') {
+      palette.next();
+      return;
+    }
   }
 
   if (focusTool) {
@@ -478,6 +517,15 @@ function buildStyleSheet() {
   const s = document.createElement('style');
   s.innerText = css;
   document.head.append(s);
+
+  css = '';
+  for (let i = 0; i < 512; i++) {
+    const { r, g, b, a } = rgbFromNext(i);
+    css += `.c2-${i} { background: rgba(${[r, g, b, a].join(', ')}); }`;
+  }
+  const s2 = document.createElement('style');
+  s2.innerText = css;
+  document.head.append(s2);
 }
 
 function renderCurrentSprite() {
@@ -516,18 +564,9 @@ function fileHandler(file) {
 function render(data, into) {
   into.innerHTML = '';
   for (let i = 0; i < data.length; i++) {
-    let index = data[i];
-    into.appendChild(makePixel(index, i));
+    let value = data[i];
+    into.appendChild(makePixel(value, i));
   }
-}
-
-function makePixel(index, dataIndex) {
-  const d = document.createElement('div');
-  d.className = 'c-' + index;
-  d.dataset.value = index;
-  d.dataset.index = dataIndex;
-  d.title = `${index} -- 0x${index.toString(16).padStart(2, '0')}`;
-  return d;
 }
 
 container.onmousemove = (e) => {
@@ -680,8 +719,9 @@ document.onpaste = async (event) => {
 generateNewSpriteSheet({ check: false });
 
 // render the colour picker
-render(
-  Uint8Array.from({ length: 256 }, (_, i) => i),
-  picker
-);
+// render(
+//   Uint8Array.from({ length: 256 }, (_, i) => i),
+// picker
+// );
+
 buildStyleSheet();

@@ -101,13 +101,33 @@
               <span class="button input-button" id="upload"><input type="file">Upload .png / .spr</span>
               <button data-action="new">New sprite sheet</button>
             </div>
-            <div class="picker sprite"></div>
+            <div class="palette"></div>
             <div class="pickerColour">
               <div></div>
             </div>
           </div>
         </section>
 
+        <section id="palette" data-title="Palette Editor">
+          <div class="current-palette">
+            <div class="active-palette palette">
+              <div class="picker sprite"></div>
+            </div>
+          </div>
+          <div class="flex-column tools">
+            <div class="zoom"></div>
+            <label>Find a colour:</label>
+            <input placeholder="#ccc / red / 216" id="find-colour">
+            <label hidden>Zoom on <select>
+                <option selected>both</option>
+                <option>left</option>
+                <option>right</option>
+              </select>
+            </label>
+            <div class="colour-picker"></div>
+          </div>
+          <div id="complete" class="sprite picker"></div>
+        </section>
 
         <section class="container" id="tiles" data-title="Tile Map">
           <details id="map-settings" open class="tile-controls tools">

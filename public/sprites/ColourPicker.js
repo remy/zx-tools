@@ -5,21 +5,28 @@ export default class ColourPicker {
   _index = 0;
   _history = [];
 
-  constructor(size, target) {
+  constructor({ size, palette, node }) {
     this.size = size;
 
     const html = Array.from({ length: size }, (_, i) => {
       return `<div title="Key ${i + 1}" data-id=${i} id="picker-${i}"></div>`;
     }).join('');
-    target.innerHTML = html;
+    node.innerHTML = html;
 
-    target.addEventListener('mousedown', (e) => {
-      if (e.target.dataset.id) {
-        this.index = e.target.dataset.id;
+    palette.hook((dataset) => {
+      if (dataset.id) {
+        this.index = dataset.id;
       }
     });
 
-    this.container = target;
+    node.addEventListener('mousedown', (e) => {
+      const dataset = e.target.dataset;
+      if (dataset.id) {
+        this.index = dataset.id;
+      }
+    });
+
+    this.container = node;
     this.history = [0, 255, this.transparent];
     this.index = 0;
   }
@@ -44,7 +51,7 @@ export default class ColourPicker {
       el.title = `Key ${i} - ${value} -- 0x${value
         .toString(16)
         .padStart(2, '0')}`;
-      el.className = 'c-' + value;
+      el.className = 'c2-' + value;
       el.dataset.value = value;
     });
   }

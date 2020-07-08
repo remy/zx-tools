@@ -56,7 +56,7 @@ input {
   justify-content: flex-start;
 }
 
-main * {
+main :not(input) {
   user-select: none !important;
 }
 
@@ -100,7 +100,7 @@ h2 {
   margin: 0;
 }
 
-.picker {
+#sprite-editor .palette {
   --scale: 12px;
   width: calc(16 * var(--scale));
   height: calc(16 * var(--scale));
@@ -129,6 +129,7 @@ h2 {
 
 .pickerColour div {
   --scale: 24px;
+  cursor: pointer;
   /*! width: calc(16 * var(--scale) / 12); */
   width: calc(16 * var(--scale) / 16);
   height: 40px;
@@ -160,6 +161,11 @@ h2 {
 .picker div:hover {
   cursor: crosshair;
   outline: 1px dashed yellow;
+  z-index: 11;
+}
+
+#palette .picker.sprite > div.lock {
+  outline: 2px dashed yellow;
   z-index: 10;
 }
 
@@ -722,6 +728,60 @@ main:fullscreen > :last-child {
 
 #map-settings:not([open]) > summary h2:before {
   content: 'S';
+}
+
+#palette {
+  padding-bottom: 32px;
+  display: flex;
+  flex-direction: row;
+}
+
+#palette .tools {
+  padding: 0 20px;
+  margin-left: 0;
+}
+
+#palette .pickerColour div {
+  outline: none;
+}
+
+#palette .zoom {
+  /* width: 144px; */
+  height: 192px;
+}
+
+#palette #complete {
+  height: calc(32 * var(--scale));
+}
+
+#palette .current-palette {
+  display: flex;
+}
+
+#palette select,
+#palette #find-colour {
+  background: white;
+  color: black;
+  border: 1px solid #ccc;
+  margin: 8px 0;
+  font-size: 16px;
+}
+
+#palette #find-colour {
+  width: 100%;
+}
+
+#palette .picker {
+  order: initial;
+}
+
+#palette .active-palette .picker {
+  --scale: 24px;
+  width: 384px;
+}
+
+#palette .active-palette .sprite > div:hover::after {
+  width: 384px;
 }
 
 @media screen and (max-width: 1104px) {

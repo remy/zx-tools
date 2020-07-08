@@ -155,3 +155,8 @@ p {
 details footer {
   font-size: 90%;
 }
+
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
