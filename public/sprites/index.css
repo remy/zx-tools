@@ -164,6 +164,10 @@ h2 {
   z-index: 11;
 }
 
+.picker div.transparent {
+  background: none;
+}
+
 #palette .picker.sprite > div.lock {
   outline: 2px dashed yellow;
   z-index: 10;
@@ -752,6 +756,7 @@ main:fullscreen > :last-child {
 
 #palette #complete {
   height: calc(32 * var(--scale));
+  width: calc(16 * var(--scale));
 }
 
 #palette .current-palette {
@@ -759,7 +764,7 @@ main:fullscreen > :last-child {
 }
 
 #palette select,
-#palette #find-colour {
+#palette input {
   background: white;
   color: black;
   border: 1px solid #ccc;
@@ -772,6 +777,7 @@ main:fullscreen > :last-child {
 }
 
 #palette .picker {
+  position: relative;
   order: initial;
 }
 

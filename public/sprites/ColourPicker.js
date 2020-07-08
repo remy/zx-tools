@@ -13,9 +13,13 @@ export default class ColourPicker {
     }).join('');
     node.innerHTML = html;
 
+    this.palette = palette;
+
     palette.hook((dataset) => {
-      if (dataset.id) {
-        this.index = dataset.id;
+      console.log(dataset);
+
+      if (dataset.index) {
+        this.value = dataset.index;
       }
     });
 
@@ -51,13 +55,13 @@ export default class ColourPicker {
       el.title = `Key ${i} - ${value} -- 0x${value
         .toString(16)
         .padStart(2, '0')}`;
-      el.className = 'c2-' + value;
+      el.className = 'c2-' + this.palette.get(value);
       el.dataset.value = value;
     });
   }
 
   get value() {
-    return this._history[this._index];
+    return this.palette.get(this._history[this._index]);
   }
 
   set index(value) {

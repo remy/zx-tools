@@ -155,6 +155,7 @@ tileMap.hook(debounce(saveLocal, 2000));
 let imageWindow = null;
 window.tileMap = tileMap;
 window.palette = palette;
+window.picker = colour;
 if (!document.body.prepend) {
   document.querySelector('#tile-map-container').appendChild(tileMap.ctx.canvas);
 } else {
@@ -346,10 +347,6 @@ buttons.on('click', async (e) => {
   if (action === 'download') {
     download();
   }
-});
-
-picker.addEventListener('mousedown', (e) => {
-  colour.value = e.target.dataset.value;
 });
 
 const drawHandler = (e) => {

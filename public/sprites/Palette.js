@@ -18,7 +18,7 @@ document.body.appendChild(colourTest);
  * @param {string} [prefix=c] className prefix
  * @returns Element
  */
-export function makePixel(value, index, prefix = 'c') {
+export function makePixel(value, index, prefix = 'c', transparency = []) {
   const d = document.createElement('div');
   d.className = prefix + '-' + value;
   d.dataset.value = value;
@@ -31,8 +31,9 @@ export function makePixel(value, index, prefix = 'c') {
       .join('')
       .toUpperCase();
 
-  if (value === transparent) {
+  if (transparency.includes(value)) {
     hex = 'transparent';
+    d.classList.add('transparent');
   }
 
   d.title = `${value} -- ${hex}`;
@@ -44,6 +45,7 @@ function defaultPalette(length = 256) {
 }
 
 export default class Palette extends Hooks {
+  _transparency = transparent;
   /**
    *
    * @param {Object} options
@@ -53,10 +55,12 @@ export default class Palette extends Hooks {
   constructor({ node, data = defaultPalette() }) {
     super();
     this.data = data;
+    this.updateTable();
 
     dnd(node, (file) => {
       data = new Uint16Array(file.buffer);
       this.data = data;
+      this.updateTable();
       this.render();
     });
 
@@ -129,6 +133,11 @@ export default class Palette extends Hooks {
     );
   }
 
+  get transparency() {
+    const t = this._transparency << 1;
+    return [t, t + 1];
+  }
+
   /**
    *
    * @param {string} value
@@ -171,12 +180,22 @@ export default class Palette extends Hooks {
   render(sort = false) {
     const into = this.node;
     into.innerHTML = '';
-    const sorted = Array.from(this.data).map((_) => nextLEShortToP(_));
+    let sorted = null;
+    if (!this.table) {
+      sorted = Array.from(this.data).map((_) => nextLEShortToP(_));
+    } else {
+      sorted = Array.from(this.table);
+    }
     if (sort) sorted.sort((a, b) => (a < b ? -1 : 1));
     for (let i = 0; i < sorted.length; i++) {
       let value = sorted[i];
-      into.appendChild(makePixel(value, i, 'c2'));
+      into.appendChild(makePixel(value, i, 'c2', this.transparency));
     }
+  }
+
+  updateTable() {
+    this.table = Array.from(this.data).map((_) => nextLEShortToP(_));
+    this.rgb = this.table.map((_) => rgbFromNext(_));
   }
 
   reset() {
@@ -203,7 +222,11 @@ export default class Palette extends Hooks {
   }
 
   get(index) {
-    return nextLEShortToP(this.data[index]);
+    return this.table[index];
+  }
+
+  getRGB(index) {
+    return this.rgb[index];
   }
 
   getActiveIndex() {
