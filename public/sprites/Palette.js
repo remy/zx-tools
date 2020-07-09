@@ -43,9 +43,20 @@ export class Palette extends Hooks {
     this.data = data;
     this.updateTable();
 
-    // const cpal = new Palette(complete);
-
     this.node = node;
+  }
+
+  updateCounts() {
+    if (!window.sprites.data) return;
+    const indexMap = document.createElement('div');
+    indexMap.className = 'palette-count';
+    indexMap.innerHTML = Array.from(this.data)
+      .map(
+        (_, i) =>
+          `<span>${window.sprites.data.filter((_) => _ === i).length}</span>`
+      )
+      .join('');
+    this.node.appendChild(indexMap);
   }
 
   attach() {
@@ -67,11 +78,13 @@ export class Palette extends Hooks {
     const complete = document.querySelector('#complete');
     this.complete = complete;
 
-    const cpal = new Palette(complete, byteArray(512));
-    cpal.render();
+    const completePalette = new Palette(complete, byteArray(512));
+    completePalette.render();
 
     this.lock = null;
     const p = this;
+
+    this.updateCounts();
 
     track(complete, {
       move(e) {

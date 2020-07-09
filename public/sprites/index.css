@@ -780,6 +780,30 @@ main:fullscreen > :last-child {
   margin-left: 0;
 }
 
+#palette .palette-count {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.palette-count * {
+  z-index: 100;
+  /* outline: 1px solid rgba(0, 0, 0, 0.5); */
+  font-size: 9px;
+  overflow: hidden;
+  text-align: center;
+  height: var(--scale);
+  width: var(--scale);
+  line-height: var(--scale);
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
+}
+
 #palette .pickerColour div {
   outline: none;
 }
@@ -824,6 +848,7 @@ main:fullscreen > :last-child {
 #palette .active-palette .picker {
   --scale: 24px;
   width: 384px;
+  position: relative;
 }
 
 #palette .active-palette .sprite > div:hover::after {

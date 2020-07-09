@@ -1,6 +1,7 @@
 import Sprite from './Sprite.js';
 import Hooks from '../lib/Hooks.js';
 import { width, pixelLength, getCoords } from './sprite-tools.js';
+import palette from './Palette.js';
 
 export default class SpriteSheet extends Hooks {
   sprites = [];
@@ -46,6 +47,7 @@ export default class SpriteSheet extends Hooks {
     this.subSprites = subSprites; // used to preview 8x8 sprites
 
     window.sprites = this;
+    palette.updateCounts();
     this.renderSubSprites(0);
     this.trigger();
   }
