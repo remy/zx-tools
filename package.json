@@ -29,6 +29,7 @@
     "esm": "^3.2.25",
     "lodash.debounce": "^4.0.8",
     "multer": "^1.4.2",
+    "parcel-plugin-simple-sw": "^1.0.0",
     "txt2bas": "^1.12.2"
   },
   "devDependencies": {
@@ -45,6 +46,13 @@
     "sass": "^1.26.3",
     "tap": "^14.10.7",
     "typescript": "^3.9.6"
+  },
+  "parcel-plugin-simple-sw": "*",
+  "sw": {
+    "fileName": "sw.js",
+    "swSrc": "./public/sw.js",
+    "minify": true,
+    "cacheId": "zx"
   },
   "description": ""
 }

@@ -63,6 +63,9 @@
 $ curl https://zx.remysharp.com/txt2bas -d 'text=10 PRINT "Hello world"' > my-prog.bas
 $ curl https://zx.remysharp.com/bas2txt -F 'file=@./my-prog.bas'</code></pre>
     </details>
+    <script>
+      navigator.serviceWorker.register('/sw.js');
+    </script>
     <script src="../lib/cm.js"></script>
     <script src="./index.js"></script>
   </body>
