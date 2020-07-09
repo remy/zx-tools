@@ -5,6 +5,7 @@ import {
   nextLEShortToP,
   rgbFromNext,
   next512FromRGB,
+  convertTo9Bit,
 } from './lib/colour';
 import Hooks from '../lib/Hooks';
 
@@ -12,50 +13,43 @@ const colourTest = document.createElement('div');
 document.body.appendChild(colourTest);
 
 /**
- * Creates a palette pixel with dataset assigned
- * @param {number} value The Spectrum Next palette value
- * @param {number} index Index in the source palette
- * @param {string} [prefix=c] className prefix
- * @returns Element
+ * @typedef RGBA
+ * @property {number} r 0-255
+ * @property {number} g 0-255
+ * @property {number} b 0-255
+ * @property {number} a 255 - typically defaulted as our values don't have semi-opaque
  */
-export function makePixel(value, index, prefix = 'c', transparency = []) {
-  const d = document.createElement('div');
-  d.className = prefix + '-' + value;
-  d.dataset.value = value;
-  d.dataset.index = index;
-  const { r, g, b } = rgbFromNext(value);
-  let hex =
-    '#' +
-    [r, g, b]
-      .map((_) => _.toString(16).padStart(2, '0'))
-      .join('')
-      .toUpperCase();
 
-  if (transparency.includes(value)) {
-    hex = 'transparent';
-    d.classList.add('transparent');
-  }
-
-  d.title = `${value} -- ${hex}`;
-  return d;
-}
-
-function defaultPalette(length = 256) {
+function byteArray(length = 256) {
   return Uint16Array.from({ length }, (_, i) => i);
 }
 
-export default class Palette extends Hooks {
+function defaultPalette(length = 256) {
+  return byteArray(length).map((_) => convertTo9Bit(_));
+}
+
+/**
+ * Represents a Spectrum Next palette
+ * @extends Hooks
+ */
+export class Palette extends Hooks {
   _transparency = transparent;
   /**
-   *
-   * @param {Object} options
-   * @param {Element} options.node DOM node to insert picker
-   * @param {Uint16Array} options.data Source Next palette data
+   * @param {Element} node DOM node to insert picker
    */
-  constructor({ node, data = defaultPalette() }) {
+  constructor(node, data = defaultPalette()) {
     super();
     this.data = data;
     this.updateTable();
+
+    // const cpal = new Palette(complete);
+
+    this.node = node;
+  }
+
+  attach() {
+    const node = this.node;
+    let data = this.data;
 
     dnd(node, (file) => {
       data = new Uint16Array(file.buffer);
@@ -71,7 +65,8 @@ export default class Palette extends Hooks {
     const complete = document.querySelector('#complete');
     this.complete = complete;
 
-    this.render.call({ node: complete, data: defaultPalette(512) }, true);
+    const cpal = new Palette(complete, byteArray(512));
+    cpal.render();
 
     this.lock = null;
     const p = this;
@@ -83,8 +78,6 @@ export default class Palette extends Hooks {
       handler(e) {
         const locked = complete.querySelector('.lock');
         p.clearZoom();
-        console.log(locked);
-
         if (locked === e.target) {
           return;
         }
@@ -92,6 +85,7 @@ export default class Palette extends Hooks {
         if (p.lock) {
           const index = parseInt(p.lock.dataset.index, 10);
           p.set(index, parseInt(e.target.dataset.value, 10));
+          p.trigger('change');
         }
       },
     });
@@ -104,7 +98,7 @@ export default class Palette extends Hooks {
         if (p.lock) {
           p.lock.classList.remove('lock');
         }
-        p.trigger(e.target.dataset);
+        p.trigger('select', e.target.dataset);
         if (p.lock === e.target) {
           p.lock = null;
           return;
@@ -117,29 +111,77 @@ export default class Palette extends Hooks {
     document.querySelector('#find-colour').oninput = (e) => {
       this.find(e.target.value.trim());
     };
-
-    this.node = node;
   }
 
+  info(index) {
+    let hex = this.getHex(index, '#');
+    if (this.transparency.includes(this.get(index))) {
+      hex = 'transparent';
+    }
+    return `i:${index} c:${this.get(index).toString(16).toUpperCase()} ${hex}`;
+  }
+
+  /**
+   * Creates a palette pixel with dataset assigned
+   * @param {number} value The Spectrum Next palette value
+   * @param {number} index Index in the source palette
+   * @param {string} [prefix=c] className prefix
+   * @returns Element
+   */
+  makePixel(value, index, prefix = 'c', transparency = []) {
+    const d = document.createElement('div');
+    d.className = prefix + '-' + value;
+    d.dataset.value = value;
+    d.dataset.index = index;
+
+    if (transparency.includes(value)) {
+      d.classList.add('transparent');
+    }
+
+    // d.title = `i:${index} c:${value.toString(16).toUpperCase()} ${hex}`;
+    d.title = this.info(index);
+    return d;
+  }
+
+  /**
+   * Moves the palette DOM tree to the new .palette selector under the given id
+   * @param {string} id CSS id of node
+   */
   moveTo(id) {
     const root = document.querySelector(`#${id} .palette`);
     root.appendChild(this.node);
-    console.log('move to', id);
   }
 
+  /**
+   * Resets the "lock" outline on the complete colour palette
+   */
   clearZoom() {
     Array.from(this.complete.childNodes).forEach((_) =>
       _.classList.remove('lock')
     );
   }
 
+  /**
+   * The transparency as 8bit and 9bit values
+   * @type {Array<number>}
+   */
   get transparency() {
     const t = this._transparency << 1;
     return [t, t + 1];
   }
 
   /**
-   *
+   * Transparency as an 8bit value
+   * @type {number}
+   */
+  get transparent() {
+    return this._transparency;
+  }
+
+  /**
+   * Search for the closet matching colour from the complete table based on
+   * a given CSS colour.
+   * @see https://developer.mozilla.org/en-US/docs/Web/CSS/color_value#colors_table
    * @param {string} value
    */
   find(value) {
@@ -162,7 +204,7 @@ export default class Palette extends Hooks {
       if (!match || match.length < 4) return;
 
       const [, r, g, b] = match.map((_) => parseInt(_, 10));
-      index = next512FromRGB(r, g, b);
+      index = next512FromRGB({ r, g, b });
     }
 
     this.zoom.className = `c2-${index} zoom`;
@@ -180,36 +222,46 @@ export default class Palette extends Hooks {
   render(sort = false) {
     const into = this.node;
     into.innerHTML = '';
-    let sorted = null;
-    if (!this.table) {
-      sorted = Array.from(this.data).map((_) => nextLEShortToP(_));
-    } else {
-      sorted = Array.from(this.table);
-    }
+    let sorted = Array.from(this.table);
     if (sort) sorted.sort((a, b) => (a < b ? -1 : 1));
     for (let i = 0; i < sorted.length; i++) {
       let value = sorted[i];
-      into.appendChild(makePixel(value, i, 'c2', this.transparency));
+      into.appendChild(this.makePixel(value, i, 'c2', this.transparency));
     }
   }
 
   updateTable() {
-    this.table = Array.from(this.data).map((_) => nextLEShortToP(_));
-    this.rgb = this.table.map((_) => rgbFromNext(_));
+    this.table = Array.from(this.data); //.map((_) => nextLEShortToP(_));
+    this.rgb = Array.from(this.table).map((_) => rgbFromNext(_));
   }
 
   reset() {
     this.data = defaultPalette();
   }
 
+  /**
+   * Sets the palette index to given colour 8bit value, updating the currently
+   * selected palette index if it was selected previously
+   * @param {number} index palette index
+   * @param {number} value colour value
+   */
   set(index, value) {
     this.data[index] = value;
-    const px = makePixel(value, index, 'c2');
+    const px = this.makePixel(value, index, 'c2');
+    if (this.lock === this.node.childNodes[index]) {
+      px.classList.add('lock');
+      this.lock = px;
+    }
     this.node.childNodes[index].replaceWith(px);
-    px.classList.add('lock');
-    this.lock = px;
+
+    this.table[index] = nextLEShortToP(value);
+    this.rgb[index] = rgbFromNext(this.table[index]);
   }
 
+  /**
+   * Copies the current selected value from the complete palette across to the
+   * current palette and increments the current selected index on both
+   */
   setInc() {
     const index = this.getActiveIndex();
     if (index === null) return;
@@ -221,12 +273,42 @@ export default class Palette extends Hooks {
     }
   }
 
+  /**
+   * Returns the spectrum next colour value for the given index
+   * @param {number} index palette index
+   * @returns {number} 9bit spectrum colour value
+   */
   get(index) {
     return this.table[index];
   }
 
+  /**
+   * Returns an RGB object for the given palette index
+   * @param {number} index
+   * @returns {RGBA} RGB object
+   */
   getRGB(index) {
+    if (this.transparency.includes(this.table[index])) {
+      return { r: 0, g: 0, b: 0, a: 0 };
+    }
     return this.rgb[index];
+  }
+
+  /**
+   * Returns an RGB hex string for the given palette index
+   * @param {number} index palette index
+   * @param {string} [prefix=#] String prefix
+   * @returns {string} RGB hex for value at given index
+   */
+  getHex(index, prefix = '#') {
+    const { r, g, b } = this.getRGB(index);
+    return (
+      prefix +
+      [r, g, b]
+        .map((_) => _.toString(16).padStart(2, '0'))
+        .join('')
+        .toUpperCase()
+    );
   }
 
   getActiveIndex() {
@@ -235,6 +317,10 @@ export default class Palette extends Hooks {
     return index;
   }
 
+  /**
+   * Increments the current select palette index
+   * @returns {boolean} `true` if inc was successful
+   */
   next() {
     const index = this.getActiveIndex();
     if (index === null) return false;
@@ -245,6 +331,10 @@ export default class Palette extends Hooks {
     return true;
   }
 
+  /**
+   * Decrements the current select palette index
+   * @returns {boolean} `true` if dec was successful
+   */
   prev() {
     const index = this.getActiveIndex();
     if (!index) return false;
@@ -254,3 +344,7 @@ export default class Palette extends Hooks {
     return true;
   }
 }
+
+const palette = new Palette(document.querySelector('#palette .picker'));
+export default palette;
+palette.attach();

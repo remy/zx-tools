@@ -132,7 +132,7 @@ export default class ImageWindow {
           (i % 8);
       }
       const [r, g, b, a] = imageData.data.slice(j * 4, j * 4 + 4);
-      const index = toRGB332(r, g, b);
+      const index = toRGB332({ r, g, b });
 
       if (index === 0xe3 || a === 0) {
         data[i] = 0xe3;

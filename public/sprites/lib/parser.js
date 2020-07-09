@@ -54,7 +54,7 @@ export function pixelsFromFile(file) {
           // transparent
           res.push(0xe3);
         } else {
-          res.push(toRGB332(r, g, b));
+          res.push(toRGB332({ r, g, b }));
         }
       }
 
@@ -190,7 +190,7 @@ export function transform({ pixels, width, alphaFirst = false }) {
       // transparent
       res.push(0xe3);
     } else {
-      res.push(toRGB332(r, g, b));
+      res.push(toRGB332({ r, g, b }));
     }
   }
 

@@ -14,19 +14,17 @@ import { Unpack } from '@remy/unpack';
 import { saveState, restoreState } from './state.js';
 import debounce from 'lodash.debounce';
 import trackDown from '../lib/track-down.js';
-import Palette, { makePixel } from './Palette.js';
+import palette from './Palette.js';
 
 const container = document.querySelector('#container');
 const exampleBasicLink = document.querySelector('#basic-example-link');
 const ctx = container.getContext('2d');
 const spritesContainer = document.querySelector('#sprites .container');
 const debug = document.querySelector('#debug');
-const picker = document.querySelector('.picker');
 const upload = document.querySelector('#upload input');
 const mapUpload = document.querySelector('#upload-map input');
 const currentSpriteId = document.querySelector('#current-sprite');
 const pickerColour = document.querySelector('.pickerColour');
-const palettePickerColour = document.querySelector('#palette .picker');
 const userToolPalette = document.querySelector('#palette .colour-picker');
 const buttons = $('[data-action]');
 const ONE_WEEK = 1000 * 60 * 60 * 24 * 7;
@@ -142,7 +140,7 @@ tabs.hook((tab) => {
     );
   }
 });
-const palette = new Palette({ node: palettePickerColour });
+
 const colour = new ColourPicker({ size: 8, node: pickerColour, palette });
 const tool = new Tool({ colour });
 const tileMap = new TileMap({ size: 16, sprites });
@@ -558,26 +556,20 @@ function fileHandler(file) {
   // renderCurrentSprite();
 }
 
-function render(data, into) {
-  into.innerHTML = '';
-  for (let i = 0; i < data.length; i++) {
-    let value = data[i];
-    into.appendChild(makePixel(value, i));
-  }
-}
-
-container.onmousemove = (e) => {
+const move = (e) => {
   let { x, y } = sprites.getCoords(e);
-  const value = sprites.pget({ x, y });
+  const index = sprites.pget({ x, y });
 
-  debug.innerHTML = `X:${x} Y:${y} -- ${value} 0x${value
-    .toString(16)
-    .padStart(2, '0')}`;
+  debug.innerHTML = `X:${x} Y:${y} ${palette.info(index)}`;
 };
 
-container.onmouseout = () => {
-  debug.innerHTML = '&nbsp;';
-};
+trackDown(container, {
+  move,
+  handler: move,
+  out() {
+    debug.innerHTML = '&nbsp;';
+  },
+});
 
 spritesContainer.addEventListener('click', (e) => {
   const node = e.target;

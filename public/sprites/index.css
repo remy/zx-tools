@@ -653,7 +653,7 @@ main:fullscreen > :last-child {
 }
 
 .pickerColour > div:after {
-  content: attr(data-value);
+  content: attr(data-hex);
   font-size: 9px;
   text-align: center;
   display: block;
@@ -664,6 +664,7 @@ main:fullscreen > :last-child {
 }
 
 .picker.sprite > div:hover:after {
+  font-size: 80%;
   content: attr(title);
   position: absolute;
   width: 192px;
@@ -734,12 +735,6 @@ main:fullscreen > :last-child {
   content: 'S';
 }
 
-#palette {
-  padding-bottom: 32px;
-  display: flex;
-  flex-direction: row;
-}
-
 #palette .tools {
   padding: 0 20px;
   margin-left: 0;
@@ -755,12 +750,17 @@ main:fullscreen > :last-child {
 }
 
 #palette #complete {
+  --scale: 12px;
   height: calc(32 * var(--scale));
   width: calc(16 * var(--scale));
 }
 
 #palette .current-palette {
   display: flex;
+}
+
+#palette > div:first-child {
+  margin-bottom: 32px;
 }
 
 #palette select,

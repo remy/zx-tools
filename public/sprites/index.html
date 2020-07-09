@@ -109,27 +109,43 @@
         </section>
 
         <section id="palette" data-title="Palette Editor">
-          <div class="current-palette">
-            <div class="active-palette palette">
-              <div class="picker sprite"></div>
+          <div class="flex-row">
+            <div class="current-palette">
+              <div class="active-palette palette">
+                <div class="picker sprite"></div>
+              </div>
             </div>
-          </div>
-          <div class="flex-column tools">
-            <div class="zoom"></div>
-            <label>Find a colour:</label>
-            <input placeholder="#ccc / red / 216" id="find-colour">
+            <div class="flex-column tools">
+              <div class="zoom"></div>
+              <label>Find a colour:</label>
+              <input placeholder="#ccc / red / 216" id="find-colour">
 
-            <label hidden>Global transparency:</label>
-            <input hidden placeholder="#ccc / red / 216" id="global-transparency">
-            <label hidden>Zoom on <select>
-                <option selected>both</option>
-                <option>left</option>
-                <option>right</option>
-              </select>
-            </label>
-            <div class="colour-picker"></div>
+              <label hidden>Global transparency:</label>
+              <input hidden placeholder="#ccc / red / 216" id="global-transparency">
+              <label hidden>Zoom on <select>
+                  <option selected>both</option>
+                  <option>left</option>
+                  <option>right</option>
+                </select>
+              </label>
+              <div class="colour-picker"></div>
+            </div>
+            <div id="complete" class="sprite picker"></div>
           </div>
-          <div id="complete" class="sprite picker"></div>
+          <div>
+            <details>
+              <summary>Todo</summary>
+              <ul>
+                <li>Configure global transparency</li>
+                <li>Configure priority on individual palette values</li>
+                <li>Support .npl file format</li>
+                <li>Sticky zoom</li>
+                <li>Generate palette based on image</li>
+                <li>Undo</li>
+                <li>Local state save/restore</li>
+              </ul>
+            </details>
+          </div>
         </section>
 
         <section class="container" id="tiles" data-title="Tile Map">

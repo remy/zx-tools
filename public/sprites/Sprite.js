@@ -1,5 +1,6 @@
-import { width, xyToIndex, colourTable, emptyCanvas } from './sprite-tools.js';
+import { width, xyToIndex, emptyCanvas } from './sprite-tools.js';
 import { transparent, toRGB332 } from './lib/colour.js';
+import palette from './Palette';
 
 export default class Sprite {
   scale = width;
@@ -116,7 +117,7 @@ export default class Sprite {
       if (a === 0) {
         this.pixels[i] = transparent;
       } else {
-        this.pixels[i] = toRGB332(r, g, b);
+        this.pixels[i] = toRGB332({ r, g, b });
       }
     }
   }
@@ -146,7 +147,7 @@ export default class Sprite {
     for (i; i < j; i++) {
       let index = pixels[i];
 
-      const { r, g, b, a } = colourTable[index];
+      const { r, g, b, a } = palette.getRGB(index);
       imageData.data[ptr * 4 + 0] = r;
       imageData.data[ptr * 4 + 1] = g;
       imageData.data[ptr * 4 + 2] = b;

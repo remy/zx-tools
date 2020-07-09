@@ -1,5 +1,6 @@
 import { $ } from '../lib/$.js';
 import { getCoords } from './sprite-tools.js';
+import palette from './Palette.js';
 
 export default class Tool {
   types = ['brush', 'fill', 'erase', 'pan'];
@@ -139,10 +140,11 @@ export default class Tool {
       512 / sprites.defaultScale,
       512 / sprites.defaultScale
     );
+
     let target = this.colour.value;
 
     if (this.selected === 'erase') {
-      target = this.colour.transparent;
+      target = palette.transparent;
     }
 
     // if nothing has changed, don't do the work

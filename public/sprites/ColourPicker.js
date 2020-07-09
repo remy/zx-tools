@@ -1,11 +1,15 @@
-import { transparent } from './lib/colour.js';
+import palette from './Palette';
 
 export default class ColourPicker {
-  transparent = transparent;
   _index = 0;
   _history = [];
 
-  constructor({ size, palette, node }) {
+  /**
+   * @param {Object} options
+   * @param {number} [options.size=8] Size of history
+   * @param {Element} options.node
+   */
+  constructor({ size = 8, node }) {
     this.size = size;
 
     const html = Array.from({ length: size }, (_, i) => {
@@ -13,12 +17,10 @@ export default class ColourPicker {
     }).join('');
     node.innerHTML = html;
 
-    this.palette = palette;
+    palette.hook((type, dataset) => {
+      if (type === 'change') this.history = this._history.slice(0, this.size);
 
-    palette.hook((dataset) => {
-      console.log(dataset);
-
-      if (dataset.index) {
+      if (type === 'select' && dataset.index) {
         this.value = dataset.index;
       }
     });
@@ -31,7 +33,7 @@ export default class ColourPicker {
     });
 
     this.container = node;
-    this.history = [0, 255, this.transparent];
+    this.history = [0, 255, palette.transparent];
     this.index = 0;
   }
 
@@ -43,25 +45,29 @@ export default class ColourPicker {
       return;
     }
 
+    console.log('adding', { index, colour });
+
     this._history.unshift(colour);
     this.history = this._history.slice(0, this.size);
     this.index = 0;
   }
 
-  set history(values) {
-    this._history = values;
-    values.forEach((value, i) => {
-      const el = document.querySelector('#picker-' + i);
-      el.title = `Key ${i} - ${value} -- 0x${value
-        .toString(16)
-        .padStart(2, '0')}`;
-      el.className = 'c2-' + this.palette.get(value);
-      el.dataset.value = value;
-    });
+  /**
+   * returns the palette index that's currently selected (not a colour)
+   */
+  get value() {
+    return this._history[this._index];
   }
 
-  get value() {
-    return this.palette.get(this._history[this._index]);
+  set history(values) {
+    this._history = values;
+    values.forEach((index, i) => {
+      const el = document.querySelector('#picker-' + i);
+      el.title = `Key ${i} - ${palette.info(index)}`;
+      el.className = 'c2-' + palette.get(index);
+      el.dataset.value = palette.get(index);
+      el.dataset.hex = palette.get(index).toString(16).toUpperCase();
+    });
   }
 
   set index(value) {
