@@ -115,6 +115,21 @@ h2 {
   flex-direction: row;
   flex-grow: 1;
   margin-bottom: 16px;
+  position: relative;
+}
+
+#sprite-editor .pickerColour {
+  padding-bottom: 28px;
+  margin-top: 0;
+}
+
+#sprite-editor .pickerColour:after {
+  content: 'alt+click to pick from sprite';
+  font-size: 9px;
+  position: absolute;
+  bottom: 0;
+  text-align: center;
+  width: 100%;
 }
 
 .pickerColour[data-selected='1'] div:nth-child(1),

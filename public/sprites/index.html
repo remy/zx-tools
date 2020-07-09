@@ -215,16 +215,21 @@
           <div class="help">
             <details>
               <summary>Usage</summary>
-              <p>Usage: If you change the palette ensure you download and load it using the <code>PALETTE</code>
-                keyword.</p>
               <p>Click on a palette index (left) then click on a new colour (right) to change the
-                palette.
-              </p>
-              <p>Legend: </p>
+                palette. Changes immediately update the sprite and tile previews.</p>
+              <p>To use an existing palette, drag the 512 byte palette file into this panel.If you change the palette
+                ensure you download and load it using the <code>PALETTE</code>
+                keyword.</p>
+              <p>Legend:</p>
               <ul>
                 <li>i: palette index in decimal</li>
                 <li>c: Next palette colour in 9bit hex</li>
                 <li>#: CSS hex colour</li>
+              </ul>
+              <p>Keys: </p>
+              <ul>
+                <li>cursor left/right: to shift selected palette index</li>
+                <li>. (period): copy selected colour and increment</li>
               </ul>
               <p>Please note: the palette editor is new (as of 9-July), so if you spot anything
                 untoward please <a href="https://github.com/remy/zx-tools/issues/new">raise an issue</a>.</p>
@@ -237,6 +242,7 @@
                 <li>Configure global transparency</li>
                 <li>Configure priority on individual palette values</li>
                 <li>Support .npl file format</li>
+                <li>Find and replace palette value</li>
                 <li>Sticky zoom</li>
                 <li>Generate palette based on image</li>
                 <li>Undo</li>
