@@ -283,6 +283,14 @@ export default class SpriteSheet extends Hooks {
 
   // paintPreview(i = this._current, allSubSprites = false) {}
 
+  paintAll() {
+    const current = this._current;
+    for (let i = 0; i < this.sprites.length; i++) {
+      this.paint(i);
+    }
+    this.paint(current); // crappy but works
+  }
+
   paint(i = this._current, allSubSprites = false) {
     const sprite = this.sprites[i];
     sprite.paint(this.ctx, {
@@ -298,10 +306,10 @@ export default class SpriteSheet extends Hooks {
       }
     } else {
       // paint into the sprite sheet
-      sprite.paint(this.previewCtx[this._current], { scale: 16 });
+      sprite.paint(this.previewCtx[i], { scale: 16 });
     }
 
     this.getPreviewElements().map((_) => _.classList.remove('focus'));
-    this.previewCtx[this._current].canvas.classList.add('focus');
+    this.previewCtx[i].canvas.classList.add('focus');
   }
 }

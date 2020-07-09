@@ -40,12 +40,16 @@ export default class ColourPicker {
   set value(index) {
     const colour = parseInt(index, 10);
 
+    const prev = this._history.indexOf(colour);
+
+    if (prev != -1) {
+      this._history.splice(prev, 1);
+    }
+
     if (colour === this._history[0]) {
       this.index = 0;
       return;
     }
-
-    console.log('adding', { index, colour });
 
     this._history.unshift(colour);
     this.history = this._history.slice(0, this.size);

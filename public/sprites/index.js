@@ -148,11 +148,12 @@ const tileMap = new TileMap({ size: 16, sprites });
 palette.hook((type) => {
   if (type !== 'change') return;
 
-  sprites.paint();
+  sprites.paintAll();
+
   tileMap.paint();
 });
 // const palettePicker = new ColourPicker(8, palettePickerColour.parentNode);
-palette.moveTo(tabs.selected);
+palette.moveTo(tabs.selected === 'sprite-editor' ? 'sprite-editor' : 'palette');
 palette.render();
 tileMap.hook(debounce(saveLocal, 2000));
 
