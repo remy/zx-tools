@@ -6,6 +6,7 @@ import {
   rgbFromNext,
   next512FromRGB,
   convertTo9Bit,
+  indexToNextLEShort,
 } from './lib/colour';
 import Hooks from '../lib/Hooks';
 
@@ -52,10 +53,11 @@ export class Palette extends Hooks {
     let data = this.data;
 
     dnd(node, (file) => {
-      data = new Uint16Array(file.buffer);
+      data = new Uint16Array(file.buffer).map((_) => nextLEShortToP(_));
       this.data = data;
       this.updateTable();
       this.render();
+      this.trigger('change');
     });
 
     const zoom = document.querySelector('#palette .zoom');
@@ -113,12 +115,17 @@ export class Palette extends Hooks {
     };
   }
 
-  info(index) {
+  /**
+   * Constructs a standard palette info string: i:index, c:$colour #:$rgb
+   * @param {number} index
+   * @returns {string}
+   */
+  info(index, value = this.get(index)) {
     let hex = this.getHex(index, '#');
-    if (this.transparency.includes(this.get(index))) {
+    if (this.transparency.includes(value)) {
       hex = 'transparent';
     }
-    return `i:${index} c:${this.get(index).toString(16).toUpperCase()} ${hex}`;
+    return `i:${index} c:${value.toString(16).toUpperCase()} ${hex}`;
   }
 
   /**
@@ -138,7 +145,6 @@ export class Palette extends Hooks {
       d.classList.add('transparent');
     }
 
-    // d.title = `i:${index} c:${value.toString(16).toUpperCase()} ${hex}`;
     d.title = this.info(index);
     return d;
   }
@@ -193,8 +199,8 @@ export class Palette extends Hooks {
 
     let index;
 
-    if (value.length <= 3 && /^\d+$/.test(value)) {
-      index = parseInt(value, 10);
+    if (/^(0x[\da-f]{1,3}$)|(\d{1,3}$)/.test(value)) {
+      index = parseInt(value, value.includes('0x') ? 16 : 10);
     } else {
       colourTest.style.backgroundColor = value;
 
@@ -206,6 +212,8 @@ export class Palette extends Hooks {
       const [, r, g, b] = match.map((_) => parseInt(_, 10));
       index = next512FromRGB({ r, g, b });
     }
+
+    if (index >= 512) return;
 
     this.zoom.className = `c2-${index} zoom`;
     this.complete.childNodes[index].classList.add('lock');
@@ -239,6 +247,10 @@ export class Palette extends Hooks {
     this.data = defaultPalette();
   }
 
+  export() {
+    return new Uint8Array(this.data.map((_) => indexToNextLEShort(_)).buffer);
+  }
+
   /**
    * Sets the palette index to given colour 8bit value, updating the currently
    * selected palette index if it was selected previously
@@ -247,15 +259,16 @@ export class Palette extends Hooks {
    */
   set(index, value) {
     this.data[index] = value;
+    this.table[index] = value;
+    this.rgb[index] = rgbFromNext(this.table[index]);
+
+    // note: .table and .rgb need to set ahead of using this
     const px = this.makePixel(value, index, 'c2');
     if (this.lock === this.node.childNodes[index]) {
       px.classList.add('lock');
       this.lock = px;
     }
     this.node.childNodes[index].replaceWith(px);
-
-    this.table[index] = nextLEShortToP(value);
-    this.rgb[index] = rgbFromNext(this.table[index]);
   }
 
   /**

@@ -98,6 +98,12 @@ export function nextLEShortToP(value) {
   return ((value & 0xff) << 1) + (value >> 8);
 }
 
+export function indexToNextLEShort(value) {
+  const LB = (value & 1) << 8;
+  const HB = value >> 1;
+  return LB + HB;
+}
+
 /**
  * Reads a 9bit value from the Spectrum Next palette and converts to RGB
  * @param {number} value

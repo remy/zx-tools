@@ -145,6 +145,12 @@ const colour = new ColourPicker({ size: 8, node: pickerColour, palette });
 const tool = new Tool({ colour });
 const tileMap = new TileMap({ size: 16, sprites });
 
+palette.hook((type) => {
+  if (type !== 'change') return;
+
+  sprites.paint();
+  tileMap.paint();
+});
 // const palettePicker = new ColourPicker(8, palettePickerColour.parentNode);
 palette.moveTo(tabs.selected);
 palette.render();
@@ -241,6 +247,10 @@ exampleBasicLink.addEventListener('mousedown', () => {
 
 buttons.on('click', async (e) => {
   const action = e.target.dataset.action;
+
+  if (action === 'download-pal') {
+    downloadPal();
+  }
 
   if (action === 'clear-map') {
     if (confirm('This will replace your current map, continue?')) {
@@ -642,6 +652,13 @@ mapUpload.addEventListener('change', (e) => {
 $('input[name="transparency"]').on('change', (e) => {
   document.documentElement.dataset.transparency = e.target.value;
 });
+
+function downloadPal() {
+  const filename = prompt('Filename:', 'untitled.pal');
+  if (filename) {
+    save(palette.export(), filename);
+  }
+}
 
 function downloadTiles() {
   const filename = prompt('Filename:', 'untitled.map');
