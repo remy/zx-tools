@@ -780,6 +780,10 @@ main:fullscreen > :last-child {
   margin-left: 0;
 }
 
+.palette-count {
+  display: none;
+}
+
 #palette .palette-count {
   position: absolute;
   width: 100%;
