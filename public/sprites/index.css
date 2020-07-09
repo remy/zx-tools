@@ -29,6 +29,7 @@ body {
 
 a {
   color: white;
+  font-weight: 400;
 }
 
 main {
@@ -46,7 +47,7 @@ input {
   color: #fff;
 }
 
-#sprite-editor {
+#sprite-editor > div {
   width: 100%;
   display: flex;
   flex-direction: row;
@@ -165,6 +166,8 @@ h2 {
   z-index: 11;
 }
 
+.pickerColour div[title~='transparent'],
+.picker div[title~='transparent'],
 .picker div.transparent {
   background: none;
 }
@@ -405,8 +408,29 @@ strong {
   display: block;
 }
 
+details summary {
+  font-weight: bold;
+  font-size: 120%;
+}
+
 details {
   margin-bottom: 20px;
+}
+
+details {
+  font-size: 90%;
+}
+
+.columns {
+  columns: 2;
+}
+
+.columns div {
+  break-inside: avoid;
+}
+
+.columns dt {
+  break-inside: avoid;
 }
 
 .tabbed {
@@ -446,7 +470,7 @@ details {
   background: linear-gradient(#111, black);
 }
 
-#importer {
+#importer > div {
   display: flex;
 }
 
