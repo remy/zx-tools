@@ -35,16 +35,18 @@ self.addEventListener('install', (e) => {
 // when the browser fetches a url, either response with
 // the cached object or go ahead and fetch the actual url
 self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
+  let req = event.request;
+  let url = new URL(req.url);
 
   if (url.pathname.endsWith('/')) {
-    event.request.url += 'index.html';
+    url.pathname += 'index.html';
+    req = url;
   }
 
   event.respondWith(
     // ensure we check the *right* cache to match against
     caches.open(cacheName).then((cache) => {
-      return cache.match(event.request).then((res) => {
+      return cache.match(req).then((res) => {
         return res || fetch(event.request);
       });
     })
