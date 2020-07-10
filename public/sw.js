@@ -9,23 +9,22 @@ self.addEventListener('install', (e) => {
     caches.open(cacheName).then((cache) => {
       return cache
         .addAll([
-          '/',
-          'index.html',
-          'index.css',
-          'favicon.ico',
-          'bas/index.html',
-          'bas/codemirror.scss',
-          'bas/index.css',
-          'lib/cm.js',
-          'bas/index.js',
-          'help/index.html',
-          'help/index.css',
-          'sprites/index.html',
-          'sprites/index.css',
-          'sprites/index.js',
-          'tools/index.html',
-          'tools/index.css',
-          'tools/index.js',
+          '/index.html',
+          '/index.css',
+          '/favicon.ico',
+          '/bas/index.html',
+          '/bas/codemirror.scss',
+          '/bas/index.css',
+          '/lib/cm.js',
+          '/bas/index.js',
+          '/help/index.html',
+          '/help/index.css',
+          '/sprites/index.html',
+          '/sprites/index.css',
+          '/sprites/index.js',
+          '/tools/index.html',
+          '/tools/index.css',
+          '/tools/index.js',
         ])
         .then(() => self.skipWaiting());
     })
@@ -38,7 +37,7 @@ self.addEventListener('fetch', (event) => {
   let req = event.request;
   let url = new URL(req.url);
 
-  if (url.pathname.endsWith('/')) {
+  if (!url.origin.includes('__localhost') && url.pathname.endsWith('/')) {
     url.pathname += 'index.html';
     req = url;
   }

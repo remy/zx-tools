@@ -48,15 +48,21 @@ export class Palette extends Hooks {
 
   updateCounts() {
     if (!window.sprites.data) return;
-    const indexMap = document.createElement('div');
-    indexMap.className = 'palette-count';
-    indexMap.innerHTML = Array.from(this.data)
+
+    let countMap = this.node.querySelector('.palette-count');
+
+    if (!countMap) {
+      countMap = document.createElement('div');
+      countMap.className = 'palette-count numeric-map';
+      this.node.appendChild(countMap);
+    }
+
+    countMap.innerHTML = Array.from(this.data)
       .map(
         (_, i) =>
           `<span>${window.sprites.data.filter((_) => _ === i).length}</span>`
       )
       .join('');
-    this.node.appendChild(indexMap);
   }
 
   attach() {
@@ -69,6 +75,7 @@ export class Palette extends Hooks {
       this.updateTable();
       this.render();
       this.trigger('change');
+      this.updateCounts();
     });
 
     const zoom = document.querySelector('#palette .zoom');
@@ -169,6 +176,7 @@ export class Palette extends Hooks {
   moveTo(id) {
     const root = document.querySelector(`#${id} .palette`);
     root.appendChild(this.node);
+    this.updateCounts();
   }
 
   /**

@@ -189,6 +189,7 @@ export default class TileMap extends Hooks {
       if (!this.indexMap) {
         this.indexMap = document.createElement('div');
         this.indexMap.id = 'index-map';
+        this.indexMap.className = 'numeric-map';
         this.ctx.canvas.parentElement.appendChild(this.indexMap);
       }
 

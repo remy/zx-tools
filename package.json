@@ -29,7 +29,7 @@
     "esm": "^3.2.25",
     "lodash.debounce": "^4.0.8",
     "multer": "^1.4.2",
-    "parcel-plugin-simple-sw": "^1.0.0",
+    "parcel-plugin-simple-sw": "^1.0.1",
     "txt2bas": "^1.12.2"
   },
   "devDependencies": {

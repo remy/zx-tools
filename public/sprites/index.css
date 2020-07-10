@@ -784,6 +784,10 @@ main:fullscreen > :last-child {
   display: none;
 }
 
+.numeric-map * {
+  font-family: monospace;
+}
+
 #palette .palette-count {
   position: absolute;
   width: 100%;
