@@ -1,5 +1,11 @@
 /* root index.css */
 
+html {
+  --c-bg: #f9f9f9;
+  --c-fg: #000;
+  background: var(--c-bg);
+}
+
 [hidden] {
   display: none !important;
 }
@@ -164,4 +170,72 @@ details footer {
 .flex-row {
   display: flex;
   flex-direction: row;
+}
+
+.toast {
+  position: fixed;
+  background: #fefefe;
+  bottom: 16px;
+  right: 16px;
+  width: 300px;
+  border-radius: 4px;
+  transition: all 200ms ease-out;
+  transform: translateY(400px);
+  overflow: hidden;
+  font-size: 0.75rem;
+  background-color: var(--c-bg);
+  background-clip: padding-box;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.1);
+}
+
+.show-toast .toast {
+  transform: translateY(0);
+}
+
+.toast .close {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #000;
+  text-shadow: 0 1px 0 #fff;
+  opacity: 0.5;
+  width: initial;
+}
+
+.toast-cloud {
+  fill: var(--c-fg);
+}
+
+.toast-cloud-tick {
+  fill: var(--c-bg);
+}
+
+.toast .close:hover {
+  border: 0;
+  outline: 0;
+  opacity: 1;
+}
+
+.toast-header {
+  padding: 8px 12px;
+
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #ccc;
+}
+
+.toast-header button {
+  background: none;
+  padding: 0;
+  color: black;
+}
+
+.toast-title {
+  margin-left: 8px;
+  flex: 1;
+}
+
+.toast-body {
+  padding: 12px;
 }

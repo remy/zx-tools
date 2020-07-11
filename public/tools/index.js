@@ -6,9 +6,9 @@ import { dither } from './lib/retrofy.js';
 import { Tzx, TapFile } from './lib/tzx.js';
 import { plus3DOSHeader, statements, file2txt } from 'txt2bas';
 import { charset } from './lib/font.js';
-import BmpDecoder from '../sprites/lib/bmp.js';
 import { Tapper } from './lib/tapper';
 import { toHex } from '../lib/to.js';
+import BmpEncoder from '../lib/bmpEncoder.js';
 
 let explore = null;
 const buttons = $('[data-action]');
@@ -381,29 +381,34 @@ function loadImage(file) {
   });
 }
 
-async function renderImageForBmp(file, data) {
+async function renderImageForBmp(file) {
   const canvas = document.createElement('canvas');
-  canvas.width = 256;
-  canvas.height = 192;
+  const width = 256;
+  const height = 192;
+  canvas.width = width;
+  canvas.height = height;
   const ctx = canvas.getContext('2d');
   const div = document.createElement('div');
   div.className = 'container';
   div.appendChild(canvas);
 
   const img = await loadImage(file);
-  ctx.drawImage(img, 0, 0);
-
-  const bmp = new BmpDecoder(data);
-  console.log(bmp);
+  ctx.drawImage(img, 0, 0); // TODO scale to 256x192
 
   const button = document.createElement('button');
   div.appendChild(button);
   button.onclick = async () => {
-    const file = await new Promise((resolve) => canvas.toBlob(resolve));
+    const imageData = ctx.getImageData(0, 0, width, height);
 
-    save(file, basename(file.name) + '.bmp');
+    const bmp = new BmpEncoder({
+      data: new Uint8Array(imageData.data.buffer),
+      width,
+      height,
+    });
+
+    save(bmp.encode(), basename(file.name) + '.bmp');
   };
-  button.innerText = 'Download BMP';
+  button.innerText = 'Download as 8bit BMP';
   result.prepend(div);
 }
 
@@ -458,14 +463,14 @@ async function fileHandler(data, file, id) {
       data = data.slice(128);
     }
     pixelsForSCR(data, container(name));
-  } else if (id === 'bmp-to-next') {
-    renderImageForBmp(file, data);
-  } else {
+  } else if (id === 'upload-convert') {
     const blob = new Blob([data], { type });
     const url = URL.createObjectURL(blob);
     const res = await dither({ url });
     pixelsForSCR(res, container(name, res));
     URL.revokeObjectURL(url);
+  } else {
+    renderImageForBmp(file, data);
   }
 }
 

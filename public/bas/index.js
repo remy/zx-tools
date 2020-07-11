@@ -8,7 +8,6 @@ import {
   file2bas,
   formatText,
   statements,
-  plus3DOSHeader,
 } from 'txt2bas';
 import './basic-syntax.js';
 import save from '../lib/save.js';

@@ -37,7 +37,7 @@ self.addEventListener('fetch', (event) => {
   let req = event.request;
   let url = new URL(req.url);
 
-  if (!url.origin.includes('__localhost') && url.pathname.endsWith('/')) {
+  if (url.pathname.endsWith('/')) {
     url.pathname += 'index.html';
     req = url;
   }

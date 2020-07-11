@@ -1,5 +1,5 @@
 import PNG from './png.js';
-import BMP from './bmp.js';
+import BMP from '../../lib/bmp.js';
 import { toRGB332 } from './colour.js';
 
 const p = 16; // 16x16 sprite
