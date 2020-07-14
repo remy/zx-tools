@@ -67,16 +67,33 @@
         </footer>
       </details>
       <details open>
-        <summary>.SCR, PNG, JPEG and BMP tools</summary>
+        <summary>Image and font conversion</summary>
+        <div>
+          <label for="bmp-to-next">Convert image to Spectrum Next bitmap: </label><input type="file" id="bmp-to-next">
+        </div>
+        <div>
+          <label for="font-import">Generate spectrum font data (select a TTF file): </label> <select id="font-size">
+            <option value="3">3px</option>
+            <option value="4">4px</option>
+            <option value="5">5px</option>
+            <option value="6">6px</option>
+            <option selected value="7">7px</option>
+            <option value="8">8px</option>
+            <option value="9">9px</option>
+            <option value="10">10px</option>
+            <option value="11">11px</option>
+            <option value="12">12px</option>
+            <option value="13">13px</option>
+            <option value="15">15px</option>
+            <option value="16">16px</option>
+          </select><input type="file" id="font-import">
+        </div>
         <div>
           <label for="upload">Upload a .SCR file to convert to png: </label><input type="file" id="upload">
         </div>
         <div>
           <label for="upload-convert">Convert jpg/png into 15 colour .SCR file: </label><input type="file"
             id="upload-convert">
-        </div>
-        <div>
-          <label for="bmp-to-next">Convert image to Spectrum Next bitmap: </label><input type="file" id="bmp-to-next">
         </div>
         <div id="result"></div>
       </details>

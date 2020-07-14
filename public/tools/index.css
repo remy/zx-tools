@@ -96,9 +96,15 @@ td .peek {
   pointer-events: initial;
 }
 
-.peek-contents canvas {
+canvas.font {
   image-rendering: crisp-edges;
-  width: 16px;
+  width: 32px;
+}
+
+canvas.font:hover {
+  outline: 1px solid #ccc;
+  position: relative;
+  z-index: 100;
 }
 
 summary {

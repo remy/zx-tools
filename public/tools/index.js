@@ -9,11 +9,13 @@ import { charset } from './lib/font.js';
 import { Tapper } from './lib/tapper';
 import { toHex } from '../lib/to.js';
 import BmpEncoder from '../lib/bmpEncoder.js';
+import fontMetrics, { computeHeightFromMetrics } from '../lib/fontMetrics';
 
 let explore = null;
 const buttons = $('[data-action]');
 
 const result = $('#result')[0];
+const fontSize = document.querySelector('#font-size');
 const tapExplore = $('#tap-explore-result')[0];
 const tapCreatorOutput = $('#tap-creator tbody')[0];
 
@@ -445,12 +447,116 @@ function container(filename, altDownload, r = result) {
   return ctx;
 }
 
+/**
+ * Print the single character and clean up the semi-opaque pixels
+ * @param {Canvas2DContext} ctx
+ * @param {String} c Character to render
+ * @returns {HTMLCanvasElement} canvas element
+ */
+function generateChr(c, i, font = '16px "test"', height = 8) {
+  const ctx = document.createElement('canvas').getContext('2d');
+
+  ctx.canvas.title = `"${c}" -- 0x${i.toString(16)}`;
+
+  ctx.canvas.width = 8;
+  ctx.canvas.height = 8;
+  ctx.imageSmoothingEnabled = false;
+  ctx.canvas.classList.add('font');
+  ctx.font = font;
+  ctx.fillStyle = 'black';
+  ctx.fillText(c, 0, height);
+
+  // now clean up the bit data
+  const imageData = ctx.getImageData(0, 0, 8, 8);
+  const bytes = new Uint8Array(8);
+  bytes.fill(0);
+  for (let i = 0; i < imageData.data.length; i += 4) {
+    const index = i / 4;
+    const byteIndex = (index / 8) | 0;
+    const bit = 7 - (index % 8);
+    const byte = bytes[byteIndex];
+    if (imageData.data[i + 3] === 255) {
+      // 1
+      bytes[byteIndex] = byte + (1 << bit);
+    } else if (imageData.data[i + 3] > 128) {
+      // 0
+      imageData.data[i + 0] = 0;
+      imageData.data[i + 1] = 0;
+      imageData.data[i + 2] = 0;
+      imageData.data[i + 3] = 255;
+    } else {
+      imageData.data[i + 3] = 0;
+    }
+  }
+
+  ctx.putImageData(imageData, 0, 0);
+
+  return { canvas: ctx.canvas, bytes };
+}
+
+function importFont(data, file) {
+  const { name, type } = file;
+  const blob = new Blob([data], { type });
+  const url = URL.createObjectURL(blob);
+
+  let f = new FontFace('test', `url(${url})`);
+  const bytes = new Uint8Array(768);
+
+  const render = () => {
+    const container = document.createElement('div');
+    result.appendChild(container);
+    const metrics = fontMetrics(data);
+    const fontSizeValue = parseInt(fontSize.value);
+    const computed = computeHeightFromMetrics(fontSizeValue, metrics);
+    console.log({ ...metrics, ...computed });
+
+    fontSize.onchange = () => {
+      result.removeChild(container);
+      render();
+    };
+
+    window.metrics = metrics;
+
+    for (let i = 0x20; i < 0x80; i++) {
+      let j = i;
+      if (j === 0x60) j = 163;
+      if (j === 0x7f) j = 169;
+      const c = generateChr(
+        String.fromCharCode(j),
+        i,
+        `${computed.fontSize}px/${computed.lineHeight} "test"`,
+        8
+      );
+      container.appendChild(c.canvas);
+      bytes.set(c.bytes, (i - 0x20) * 8);
+    }
+    const button = document.createElement('button');
+    container.appendChild(button);
+    button.textContent = 'Download font';
+    button.onclick = () => {
+      save(bytes, name.replace(/\.[...]/, '') + '.bin');
+    };
+  };
+
+  f.load()
+    .then((font) => {
+      // To use the font in a canvas, we need to add to document fonts
+      document.fonts.add(font);
+      render();
+    })
+    .catch((e) => console.log(e));
+}
+
 async function fileHandler(data, file, id) {
   const { name, type } = file;
   const ext = name.split('.').pop().toUpperCase();
 
   if (id === 'create-tap') {
     return createTapAddFile(data, file);
+  }
+
+  if (id === 'font-import') {
+    return importFont(data, file);
   }
 
   if (ext === 'TAP') {

@@ -1,4 +1,14 @@
-class ArrayNode extends Array {
+/**
+ * Class representing array-like NodeCollection
+ * @extends Array
+ * @augments NodeList
+ */
+class NodeListArray extends Array {
+  /**
+   * Create a new ArrayNode
+   * @constructor
+   * @augments NodeList
+   */
   constructor() {
     super();
 
@@ -27,22 +37,40 @@ class ArrayNode extends Array {
     });
   }
 
+  /**
+   * Bind event to the collection for a given event type
+   * @param {String} event Event name
+   * @param {Function} handler Event handler
+   * @param {Object} options Standard addEventListener options
+   */
   on(event, handler, options) {
     return this.filter((el) => el.addEventListener(event, handler, options));
   }
 
-  emit(type, data) {
-    const event = new Event(type, { data });
-    return this.filter((el) => el.dispatchEvent(event));
+  /**
+   * Trigger the given event on all attached handlers
+   * @param {String} event
+   * @param {*} data
+   * @returns {Array} filtered result of dispatchEvent
+   */
+  emit(event, data) {
+    const e = new Event(event, { data });
+    return this.filter((el) => el.dispatchEvent(e));
   }
 }
 
-export const $ = (s, ctx = document) => {
-  const res = ctx.querySelectorAll(s);
+/**
+ * Query the DOM for an array like collection of nodes
+ * @param {String} selector CSS selector
+ * @param {Element} [context=document] Query context
+ * @returns {NodeListArray} New array-like node list
+ */
+export const $ = (selector, context = document) => {
+  const res = context.querySelectorAll(selector);
 
   if (res.length === 0) {
-    console.warn(`${s} zero results`);
+    console.warn(`${selector} zero results`);
   }
 
-  return ArrayNode.from(res);
+  return NodeListArray.from(res);
 };

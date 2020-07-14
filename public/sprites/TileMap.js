@@ -38,6 +38,7 @@ export default class TileMap extends Hooks {
   history = [];
   _undoPtr = 0;
   showIndexOverlay = false;
+  filename = 'untitled.map';
 
   constructor({ size = 8, sprites }) {
     super();
@@ -154,6 +155,7 @@ export default class TileMap extends Hooks {
   serialize() {
     return {
       bank: Array.from(this.bank),
+      filename: this.filename,
       scale: this.scale,
       width: this.width,
       height: this.height,

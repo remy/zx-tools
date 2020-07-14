@@ -35,6 +35,8 @@ function defaultPalette(length = 256) {
  */
 export class Palette extends Hooks {
   _transparency = transparent;
+  filename = 'untitled.pal';
+
   /**
    * @param {Element} node DOM node to insert picker
    */
@@ -266,6 +268,15 @@ export class Palette extends Hooks {
 
   reset() {
     this.data = defaultPalette();
+  }
+
+  serialize() {
+    return {
+      filename: this.filename,
+      data: Array.from(
+        new Uint8Array(this.data.map((_) => indexToNextLEShort(_)).buffer)
+      ),
+    };
   }
 
   export() {

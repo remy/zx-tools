@@ -22,6 +22,7 @@ export function draw(data) {
   }
 
   ctx.putImageData(imageData, 0, 0);
+  ctx.canvas.classList.add('font');
 
   return ctx.canvas;
 }
