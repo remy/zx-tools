@@ -525,16 +525,18 @@ function importFont(data, file) {
         String.fromCharCode(j),
         i,
         `${computed.fontSize}px/${computed.lineHeight} "test"`,
-        8
+        metrics.capitalHeight
       );
       container.appendChild(c.canvas);
       bytes.set(c.bytes, (i - 0x20) * 8);
     }
     const button = document.createElement('button');
     container.appendChild(button);
-    button.textContent = 'Download font';
+    const base = name.replace(/\..*$/, '');
+    button.textContent = 'Download "' + base + '" font';
+    button.style.display = 'block';
     button.onclick = () => {
-      save(bytes, name.replace(/\.[...]/, '') + '.bin');
+      save(bytes, base + '.bin');
     };
   };
 

@@ -1,5 +1,4 @@
 import { Unpack, unpack } from '@remy/unpack';
-import { readFileSync } from 'fs';
 import { file2txt } from 'txt2bas';
 const decode = (d) => new TextDecoder().decode(d);
 

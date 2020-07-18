@@ -560,11 +560,6 @@ function renderSpritePreviews() {
 function fileHandler(file) {
   file = decode(file);
   sprites = generateNewSpriteSheet({ file });
-  // tileMap.sprites = sprites;
-  // tileMap.paint();
-
-  // renderSpritePreviews();
-  // renderCurrentSprite();
 }
 
 const move = (e) => {
@@ -724,11 +719,5 @@ document.onpaste = async (event) => {
 };
 
 generateNewSpriteSheet({ check: false });
-
-// render the colour picker
-// render(
-//   Uint8Array.from({ length: 256 }, (_, i) => i),
-// picker
-// );
 
 buildStyleSheet();
