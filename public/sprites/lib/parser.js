@@ -1,6 +1,7 @@
 import PNG from './png.js';
 import BMP from '../../lib/bmp.js';
-import { toRGB332 } from './colour.js';
+import { toRGB332, transparent } from './colour.js';
+import { toBinary } from '../../lib/to';
 
 const p = 16; // 16x16 sprite
 const encode = (s) => new TextEncoder().encode(s);
@@ -10,6 +11,12 @@ const gifSig = encode('GIF89a');
 
 export function decode(file) {
   const { isPNG, isBMP } = detect(file);
+
+  if (file.length === 768) {
+    if (confirm('Is this a binary font file?')) {
+      return font(file);
+    }
+  }
 
   if (isPNG) {
     return png(file);
@@ -100,7 +107,23 @@ export function detect(file) {
   return { isPNG, isBMP };
 }
 
-// FIXME, needed?
+function font(file) {
+  const res = new Uint8Array(256 * 4 * 16);
+  res.fill(transparent);
+  for (let i = 0; i < file.length; i++) {
+    const binary = toBinary(file[i]).split('');
+    for (let j = 0; j < 8; j++) {
+      if (binary[j] === '1') {
+        res[i * 8 + j] = 0;
+      } else {
+        // res.push(transparent);
+      }
+    }
+  }
+
+  return res;
+}
+
 export function bmp(file) {
   const bmp = new BMP(file);
   const pixels = bmp.data;
@@ -187,8 +210,7 @@ export function transform({ pixels, width, alphaFirst = false }) {
     ];
 
     if (a === 0 || r === undefined) {
-      // transparent
-      res.push(0xe3);
+      res.push(transparent);
     } else {
       res.push(toRGB332({ r, g, b }));
     }
