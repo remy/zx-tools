@@ -525,7 +525,7 @@ function importFont(data, file) {
         String.fromCharCode(j),
         i,
         `${computed.fontSize}px/${computed.lineHeight} "test"`,
-        metrics.capitalHeight
+        8
       );
       container.appendChild(c.canvas);
       bytes.set(c.bytes, (i - 0x20) * 8);
