@@ -75,6 +75,7 @@ export default class ColourPicker {
       const el = document.querySelector('#picker-' + i);
       el.title = `Key ${i} - ${palette.info(index)}`;
       el.className = 'c2-' + palette.get(index);
+      if (palette.getPriority(index)) el.classList.add('priority');
       el.dataset.value = palette.get(index);
       el.dataset.hex = palette.get(index).toString(16).toUpperCase();
     });

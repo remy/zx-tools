@@ -267,6 +267,8 @@ export class Palette extends Hooks {
         this.node.childNodes[i].classList.remove('priority');
       }
     }
+
+    this.trigger('change');
   }
 
   /**
