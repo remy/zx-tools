@@ -912,3 +912,40 @@ main:fullscreen > :last-child {
     width: 100%;
   }
 }
+
+label[for='has-priority'] {
+  margin-top: 16px;
+}
+
+.priority {
+  -webkit-clip-path: polygon(
+    16px -21px,
+    -371px -79.16%,
+    -372px 1908.32%,
+    497px 1891.67%,
+    2095.83% -179.17%,
+    100% 25%,
+    75% 0px
+  );
+  clip-path: polygon(
+    16px -21px,
+    -371px -79.16%,
+    -372px 1908.32%,
+    497px 1891.67%,
+    2095.83% -179.17%,
+    100% 25%,
+    75% 0px
+  );
+}
+
+._priority:before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  height: calc(var(--scale));
+  width: calc(var(--scale));
+  background: black;
+  transform: rotate(45deg) translateX(50%) translateY(50%);
+  transform-origin: 100% 125%;
+}

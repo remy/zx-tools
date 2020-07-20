@@ -26,6 +26,7 @@ const mapUpload = document.querySelector('#upload-map input');
 const currentSpriteId = document.querySelector('#current-sprite');
 const pickerColour = document.querySelector('.pickerColour');
 const userToolPalette = document.querySelector('#palette .colour-picker');
+const hasPriority = document.querySelector('#has-priority');
 const buttons = $('[data-action]');
 const ONE_WEEK = 1000 * 60 * 60 * 24 * 7;
 
@@ -145,13 +146,26 @@ const colour = new ColourPicker({ size: 8, node: pickerColour, palette });
 const tool = new Tool({ colour });
 const tileMap = new TileMap({ size: 16, sprites });
 
-palette.hook((type) => {
+palette.hook((type, node) => {
+  if (type === 'select') {
+    if (node) {
+      hasPriority.parentElement.hidden = false;
+      hasPriority.checked = palette.getPriority();
+    } else {
+      hasPriority.parentElement.hidden = true;
+    }
+    return;
+  }
   if (type !== 'change') return;
 
   sprites.paintAll();
 
   tileMap.paint();
 });
+
+hasPriority.onchange = (e) => {
+  palette.setPriority(e.target.checked);
+};
 // const palettePicker = new ColourPicker(8, palettePickerColour.parentNode);
 palette.moveTo(tabs.selected === 'sprite-editor' ? 'sprite-editor' : 'palette');
 palette.render();

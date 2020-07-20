@@ -3,6 +3,7 @@ export default class Hooks {
 
   /**
    * Bind a new listen
+   *
    * @param {Function} callback
    */
   hook(callback) {
@@ -11,7 +12,6 @@ export default class Hooks {
     );
 
     if (exists !== -1) {
-      console.log('removing existing hook callback');
       this.hooks.splice(exists, 1);
     }
 
@@ -20,7 +20,8 @@ export default class Hooks {
 
   /**
    * Trigger the linked hooks
-   * @param  {any} args
+   *
+   * @param {any} args
    */
   trigger(...args) {
     this.hooks.forEach((callback) => callback(...args));

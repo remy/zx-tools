@@ -1,4 +1,4 @@
-import dnd from '../lib/dnd';
+import drop from '../lib/dnd';
 import track from '../lib/track-down';
 import {
   transparent,
@@ -7,6 +7,7 @@ import {
   next512FromRGB,
   convertTo9Bit,
   indexToNextLEShort,
+  isPriority,
 } from './lib/colour';
 import Hooks from '../lib/Hooks';
 
@@ -21,31 +22,48 @@ document.body.appendChild(colourTest);
  * @property {number} a 255 - typically defaulted as our values don't have semi-opaque
  */
 
+/**
+ * @param {number} length
+ * @returns {Uint16Array}
+ */
 function byteArray(length = 256) {
   return Uint16Array.from({ length }, (_, i) => i);
 }
 
+/**
+ *
+ * @param {number} length
+ * @returns {Uint16Array}
+ */
 function defaultPalette(length = 256) {
-  return byteArray(length).map((_) => convertTo9Bit(_));
+  const bytes = byteArray(length).map((_) => convertTo9Bit(_));
+  return bytes;
 }
 
 /**
  * Represents a Spectrum Next palette
- * @extends Hooks
+ *
+ * @class
  */
 export class Palette extends Hooks {
   _transparency = transparent;
   filename = 'untitled.pal';
+  priority = new Set();
 
   /**
    * @param {Element} node DOM node to insert picker
+   * @param {Uint16Array} [data] initial palette data, defaults to Spectrum Next default
    */
   constructor(node, data = defaultPalette()) {
     super();
     this.data = data;
     this.updateTable();
 
+    /** @type {Element} */
     this.node = node;
+
+    /** @type {Element|null} current selected index node */
+    this.lock = null;
   }
 
   updateCounts() {
@@ -71,8 +89,25 @@ export class Palette extends Hooks {
     const node = this.node;
     let data = this.data;
 
-    dnd(node, (file) => {
-      data = new Uint16Array(file.buffer).map((_) => nextLEShortToP(_));
+    drop(node, (file) => {
+      this.priority = new Set();
+      data = new Uint16Array(file.buffer).map((_, i) => {
+        if (i === 1) {
+          console.log({
+            _,
+            _1: Uint16Array.of(_),
+            a: isPriority(_),
+            b: isPriority(Uint16Array.of(_)[0]),
+          });
+        }
+        if (isPriority(_)) {
+          this.priority.add(i);
+        }
+        return nextLEShortToP(_);
+      });
+
+      console.log(data.slice(0, 3));
+
       this.data = data;
       this.updateTable();
       this.render();
@@ -122,13 +157,14 @@ export class Palette extends Hooks {
         if (p.lock) {
           p.lock.classList.remove('lock');
         }
-        p.trigger('select', e.target.dataset);
         if (p.lock === e.target) {
           p.lock = null;
-          return;
+        } else {
+          p.lock = e.target;
         }
-        p.lock = e.target;
-        p.lock.classList.add('lock');
+
+        p.trigger('select', p.lock ? e.target.dataset : null);
+        if (p.lock) p.lock.classList.add('lock');
       },
     });
 
@@ -139,7 +175,9 @@ export class Palette extends Hooks {
 
   /**
    * Constructs a standard palette info string: i:index, c:$colour #:$rgb
+   *
    * @param {number} index
+   * @param {number} [value] value of colour, defaults palette index value
    * @returns {string}
    */
   info(index, value = this.get(index)) {
@@ -147,15 +185,21 @@ export class Palette extends Hooks {
     if (this.transparency.includes(value)) {
       hex = 'transparent';
     }
-    return `i:${index} c:${value.toString(16).toUpperCase()} ${hex}`;
+    let extra = '';
+    if (this.priority.has(index)) {
+      extra = ' Priority';
+    }
+    return `i:${index} c:${value.toString(16).toUpperCase()} ${hex + extra}`;
   }
 
   /**
    * Creates a palette pixel with dataset assigned
+   *
    * @param {number} value The Spectrum Next palette value
    * @param {number} index Index in the source palette
    * @param {string} [prefix=c] className prefix
-   * @returns Element
+   * @param {number[]} [transparency=[]]
+   * @returns {Element}
    */
   makePixel(value, index, prefix = 'c', transparency = []) {
     const d = document.createElement('div');
@@ -167,12 +211,17 @@ export class Palette extends Hooks {
       d.classList.add('transparent');
     }
 
+    if (this.getPriority(index)) {
+      d.classList.add('priority');
+    }
+
     d.title = this.info(index);
     return d;
   }
 
   /**
    * Moves the palette DOM tree to the new .palette selector under the given id
+   *
    * @param {string} id CSS id of node
    */
   moveTo(id) {
@@ -191,7 +240,46 @@ export class Palette extends Hooks {
   }
 
   /**
+   * @returns {number}
+   */
+  get selectedIndex() {
+    if (!this.lock) return null;
+    return parseInt(this.lock.dataset.index, 10);
+  }
+
+  /**
+   * @param {boolean} priority
+   */
+  setPriority(priority) {
+    if (!this.lock) {
+      console.log(`Can't call priority without a index selected`);
+      return;
+    }
+
+    const i = this.selectedIndex;
+
+    if (priority) {
+      this.priority.add(i);
+      this.node.childNodes[i].classList.add('priority');
+    } else {
+      if (this.priority.has(i)) {
+        this.priority.delete(i);
+        this.node.childNodes[i].classList.remove('priority');
+      }
+    }
+  }
+
+  /**
+   * @param {number} [index]
+   * @returns {boolean}
+   */
+  getPriority(index = this.selectedIndex) {
+    return index !== null ? this.priority.has(index) : false;
+  }
+
+  /**
    * The transparency as 8bit and 9bit values
+   *
    * @type {Array<number>}
    */
   get transparency() {
@@ -201,6 +289,7 @@ export class Palette extends Hooks {
 
   /**
    * Transparency as an 8bit value
+   *
    * @type {number}
    */
   get transparent() {
@@ -210,6 +299,7 @@ export class Palette extends Hooks {
   /**
    * Search for the closet matching colour from the complete table based on
    * a given CSS colour.
+   *
    * @see https://developer.mozilla.org/en-US/docs/Web/CSS/color_value#colors_table
    * @param {string} value
    */
@@ -242,14 +332,6 @@ export class Palette extends Hooks {
     this.complete.childNodes[index].classList.add('lock');
   }
 
-  sort() {
-    this.render(true);
-  }
-
-  unsorted() {
-    this.render(false);
-  }
-
   render(sort = false) {
     const into = this.node;
     into.innerHTML = '';
@@ -270,22 +352,38 @@ export class Palette extends Hooks {
     this.data = defaultPalette();
   }
 
+  /**
+   * Serialises the palette for local storage
+   *
+   * @returns {object}
+   */
   serialize() {
     return {
       filename: this.filename,
+      priority: Array.from(this.priority),
       data: Array.from(
         new Uint8Array(this.data.map((_) => indexToNextLEShort(_)).buffer)
       ),
     };
   }
 
+  /**
+   * Exports data for local file save to .pal file
+   *
+   * @returns {Uint8Array}
+   */
   export() {
-    return new Uint8Array(this.data.map((_) => indexToNextLEShort(_)).buffer);
+    return new Uint8Array(
+      this.data.map((_, i) =>
+        indexToNextLEShort(_, this.priority.has(i))
+      ).buffer
+    );
   }
 
   /**
    * Sets the palette index to given colour 8bit value, updating the currently
    * selected palette index if it was selected previously
+   *
    * @param {number} index palette index
    * @param {number} value colour value
    */
@@ -320,6 +418,7 @@ export class Palette extends Hooks {
 
   /**
    * Returns the spectrum next colour value for the given index
+   *
    * @param {number} index palette index
    * @returns {number} 9bit spectrum colour value
    */
@@ -329,6 +428,7 @@ export class Palette extends Hooks {
 
   /**
    * Returns an RGB object for the given palette index
+   *
    * @param {number} index
    * @returns {RGBA} RGB object
    */
@@ -341,6 +441,7 @@ export class Palette extends Hooks {
 
   /**
    * Returns an RGB hex string for the given palette index
+   *
    * @param {number} index palette index
    * @param {string} [prefix=#] String prefix
    * @returns {string} RGB hex for value at given index
@@ -364,6 +465,7 @@ export class Palette extends Hooks {
 
   /**
    * Increments the current select palette index
+   *
    * @returns {boolean} `true` if inc was successful
    */
   next() {
@@ -378,6 +480,7 @@ export class Palette extends Hooks {
 
   /**
    * Decrements the current select palette index
+   *
    * @returns {boolean} `true` if dec was successful
    */
   prev() {

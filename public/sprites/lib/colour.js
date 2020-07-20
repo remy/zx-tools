@@ -15,6 +15,7 @@
 
 /**
  * Calculate 8bit RGB332 value as RGB
+ *
  * @param {number} index
  * @returns {RGBA} rgba
  */
@@ -36,6 +37,12 @@ export function rgbFromIndex(index) {
   };
 }
 
+/**
+ * Converts 8bit colour to RGB
+ *
+ * @param {number} index
+ * @returns {RGB} rgb object
+ */
 export function rgbFrom8Bit(index) {
   index = convertTo9Bit(index);
 
@@ -53,8 +60,9 @@ export function rgbFrom8Bit(index) {
 }
 
 /**
- * Convert 24bit RGB to 8bit colour
+ * Convert 24bit RGB to 8bit colour -
  * {@link https://www.codeproject.com/Questions/1077234/How-to-convert-a-bit-rgb-to-bit-rgb Source}
+ *
  * @param {RGB} rgb
  * @returns {number} 8bit value
  */
@@ -78,6 +86,7 @@ export function toRGB332({ r, g, b } = {}) {
 
 /**
  * Converts RGB triplet to nearest spectrum next colour value
+ *
  * @param {RGB} rgb
  * @returns {number} 9bit spectrum next colour value
  */
@@ -91,21 +100,41 @@ export function next512FromRGB({ r, g, b }) {
 
 /**
  * Converts Spectrum Next little endian value to a 16bit/short colour value
- * @param {number} value
+ *
+ * @param {number} value little endian 16 bit value
  * @returns {number} 16bit colour value (not an index value)
  */
 export function nextLEShortToP(value) {
-  return ((value & 0xff) << 1) + (value >> 8);
+  return ((value & 0xff) << 1) + ((value >> 8) & 0x7f);
 }
 
-export function indexToNextLEShort(value) {
-  const LB = (value & 1) << 8;
-  const HB = value >> 1;
+/**
+ * Checks the MSB for priority flag - expected Big Endian
+ *
+ * @param {number} value
+ * @returns {boolean}
+ */
+export function isPriority(value) {
+  return !!(value & 0x8000);
+}
+
+/**
+ * Converts 512 RGB palette to Next compatible 16bit word
+ *
+ * @param {number} value
+ * @param {boolean} [priority=false]
+ * @returns {number} 2 byte value
+ */
+export function indexToNextLEShort(value, priority = false) {
+  let LB = (value & 1) << 8;
+  let HB = value >> 1;
+  if (priority) HB += 0x8000;
   return LB + HB;
 }
 
 /**
  * Reads a 9bit value from the Spectrum Next palette and converts to RGB
+ *
  * @param {number} value
  * @returns {RGBA} rgba
  */
@@ -122,19 +151,14 @@ export function rgbFromNext(value) {
   };
 }
 
-// 24bit colour to RRRGGGBBB - 9bit
-// export function toRGB333(r, g, b) {
-//   return (
-//     (Math.round(r / 32) << 6) + (Math.round(g / 32) << 3) + Math.round(b / 32)
-//   );
-// }
-
 /**
  * Converts an 8bit colour to 9bit by using high blue bit and mirroring as the
- * ninth bit (blue LSB), for example:
+ * ninth bit (blue LSB)
+ *
  * @param {number} value 8bit value
+ * @returns {number} 8bit value
  * @example
- * // Example: 10110011 (179) becomes 101100111 (359)
+ * 10110011 (179) becomes 101100111 (359)
  * convertTo9Bit(0b10110011)
  */
 export function convertTo9Bit(value) {

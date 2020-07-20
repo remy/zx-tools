@@ -1,11 +1,14 @@
 import palette from './Palette';
 
+/**
+ * @class
+ */
 export default class ColourPicker {
   _index = 0;
   _history = [];
 
   /**
-   * @param {Object} options
+   * @param {object} options
    * @param {number} [options.size=8] Size of history
    * @param {Element} options.node
    */
@@ -20,7 +23,7 @@ export default class ColourPicker {
     palette.hook((type, dataset) => {
       if (type === 'change') this.history = this._history.slice(0, this.size);
 
-      if (type === 'select' && dataset.index) {
+      if (type === 'select' && dataset && dataset.index) {
         this.value = dataset.index;
       }
     });
@@ -32,7 +35,10 @@ export default class ColourPicker {
       }
     });
 
+    /** @type {Element} */
     this.container = node;
+
+    /** @type {number[]} */
     this.history = [0, 255, palette.transparent];
     this.index = 0;
   }
@@ -57,7 +63,7 @@ export default class ColourPicker {
   }
 
   /**
-   * returns the palette index that's currently selected (not a colour)
+   * @returns {number} the palette index that's currently selected (not a colour)
    */
   get value() {
     return this._history[this._index];
