@@ -3,12 +3,26 @@ table {
   line-height: 1;
 }
 
+table *:not(input) {
+  user-select: none;
+}
+
 th {
   text-align: left;
 }
 
 input {
   font-size: inherit;
+}
+
+td {
+  cursor: pointer;
+}
+
+td input {
+  border: 0;
+  background: none;
+  padding: 0;
 }
 
 .wide {
@@ -31,4 +45,8 @@ td {
   margin: 0 2px;
   height: 100%;
   background: #aaa;
+}
+
+.bar {
+  cursor: ew-resize;
 }
