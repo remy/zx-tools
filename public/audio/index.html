@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>specnext AY audio generator</title>
+    <link rel="stylesheet" href="../index.css">
+    <link rel="stylesheet" href="./index.css">
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="96x96" href="/images/icons/icon-96x96.png">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="theme-color" content="#000000">
+  </head>
+
+  <body>
+    <nav>
+      <ul>
+        <li><a href="/bas/">Text 2 BASIC</a></li>
+        <li><a href="/sprites/">Sprites</a></li>
+        <li class="selected"><a href="/audio/">Audio</a></li>
+        <li><a href="/tools/">Tools</a></li>
+        <li><a href="/help/">Help</a></li>
+      </ul>
+    </nav>
+    <p>This is an (simplistic) AY audio generator to be used with Shiru's ayfx player - which I've also ported to a
+      NextBASIC driver.
+    </p>
+    <div>
+      <p>Player is here.</p>
+      <nav id="controls">
+        <button title="Enter">Play</button>
+        <button title="Enter when playing">Stop</button>
+        <span id="position">000/000</span>
+        <input type="text" id="name">
+      </nav>
+      <table>
+        <thead>
+          <tr>
+            <th>Pos</th>
+            <th>T</th>
+            <th>N</th>
+            <th>Per</th>
+            <th>Ns</th>
+            <th>V</th>
+            <th class="wide2">Period (linear)</th>
+            <th class="wide">Noise</th>
+            <th class="wide">Volume</th>
+          </tr>
+        </thead>
+        <tbody id="bank"></tbody>
+      </table>
+    </div>
+    <div>
+
+    </div>
+
+    <script src="/shared.js"></script>
+    <script src="./index.js"></script>
+  </body>
+
+</html>

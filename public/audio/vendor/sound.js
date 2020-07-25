@@ -34,8 +34,38 @@
 
 const JSSpeccy = {};
 
+/**
+ * @typedef {object} SoundGenerator
+ * @property {Function} UpdateBuzzer
+ */
+
+/**
+ * @typedef {object} Model
+ * @property {number} clockSpeed
+ * @property {number} frameLength
+ */
+
+/**
+ * Builds the audio processor for a spectrum
+ *
+ * @param {object} opts
+ * @param {Model} opts.model
+ * @param {SoundBackend} opts.soundBackend
+ * @returns {SoundGenerator}
+ */
 JSSpeccy.SoundGenerator = function (opts) {
-  var self = {};
+  const nop = () => {};
+
+  /** @type {SoundGenerator} */
+  var self = {
+    updateBuzzer: nop,
+    createSoundData: nop,
+    endFrame: nop,
+    selectSoundRegister: nop,
+    writeSoundRegister: nop,
+    readSoundRegister: nop,
+    reset: nop,
+  };
 
   var clockSpeed = opts.model.clockSpeed;
   var frameLength = opts.model.frameLength;
@@ -55,12 +85,7 @@ JSSpeccy.SoundGenerator = function (opts) {
 
   var frameCount = 0;
 
-  var audio = null;
-  var audioContext = null;
-  var audioNode = null;
-
   var WCount = 0;
-  var lCounter = 0;
 
   var aySoundData = new Array();
   var soundDataAyFrameBytes = 0;
@@ -89,13 +114,9 @@ JSSpeccy.SoundGenerator = function (opts) {
   var AY_ECOARSE = 12;
   var AY_ESHAPE = 13;
   var AY_PORTA = 14;
-  var AY_PORTB = 15;
-
-  var RegArray = new Int32Array(16);
-  var VolTableArray;
 
   var AY8912_sampleRate = 0;
-  var AY8912_register_latch = 0;
+  // var AY8912_register_latch = 0;
   var AY8912_Regs = new Int32Array(16);
   var AY8912_UpdateStep = 0; //Double;
   var AY8912_PeriodA = 0;
@@ -130,7 +151,7 @@ JSSpeccy.SoundGenerator = function (opts) {
   AY8912_init(clockSpeed / 2, sampleRate, 8);
 
   function AY8912_reset() {
-    AY8912_register_latch = 0;
+    // AY8912_register_latch = 0;
     AY8912_OutputA = 0;
     AY8912_OutputB = 0;
     AY8912_OutputC = 0;
@@ -189,7 +210,7 @@ JSSpeccy.SoundGenerator = function (opts) {
   //
 
   function AY8912_set_volume(volume, gain) {
-    var i, out1, out2;
+    var out1, out2;
 
     gain = gain & 0xff;
 
@@ -207,7 +228,7 @@ JSSpeccy.SoundGenerator = function (opts) {
     //  The AY-3-8912 has 16 levels, in a logarithmic scale (3dB per AY_STEP)
     //  The YM2149 still has 16 levels for the tone generators, but 32 for
     //  the envelope generator (1.5dB per AY_STEP).
-    for (var i = 31; i >= 0; i--) {
+    for (let i = 31; i >= 0; i--) {
       //* limit volume to avoid clipping */
       if (out2 > MAX_OUTPUT) AY8912_VolTable2[i] = MAX_OUTPUT;
       else AY8912_VolTable2[i] = Math.round(out2);
@@ -418,7 +439,7 @@ JSSpeccy.SoundGenerator = function (opts) {
     return AY8912_Regs[r];
   }
 
-  function AY8912_init(clock, sample_rate, sample_bits) {
+  function AY8912_init(clock, sample_rate) {
     AY8912_sampleRate = sample_rate;
     AY8912_set_clock(clock);
     AY8912_set_volume(255, 12);
@@ -697,6 +718,11 @@ JSSpeccy.SoundGenerator = function (opts) {
     }
   }
 
+  /**
+   *
+   * @param {number} val
+   * @param {number} currentTstates
+   */
   self.updateBuzzer = function (val, currentTstates) {
     if (val == 0) val = -1;
 
@@ -766,6 +792,18 @@ JSSpeccy.SoundGenerator = function (opts) {
   return self;
 };
 
+/**
+ * @typedef {object} SoundBackend
+ * @property {number} sampleRate - sample rate required by this backend
+ * @property {boolean} isEnabled - whether audio is currently enabled
+ * @property {Function} setSource - specify a function fn to be called whenever we want to receive audio data. fn is passed a buffer object to be filled
+ * @property {Function} setAudioState - if state == true, enable audio; if state == false, disable. Return new state (may not match the passed in state - e.g. if sound is unavailable, will always return false)w
+ * @property {Function} notifyReady - tell the backend that there is dataLength samples of audio data ready to be received via the callback we set with setSource. Ignored for event-based backends (= Web Audio) that trigger the callback whenever they feel like it...
+ */
+
+/**
+ * @returns {SoundBackend}
+ */
 JSSpeccy.SoundBackend = function () {
   var self = {};
 
@@ -798,7 +836,7 @@ JSSpeccy.SoundBackend = function () {
     }
 
     if (audioNode != null) {
-      onAudioProcess = function (e) {
+      window.onAudioProcess = function (e) {
         var buffer = e.outputBuffer.getChannelData(0);
         fillBuffer(buffer);
       };
@@ -808,16 +846,21 @@ JSSpeccy.SoundBackend = function () {
       self.setSource = function (fillBufferCallback) {
         fillBuffer = fillBufferCallback;
         if (self.isEnabled) {
-          audioNode.onaudioprocess = onAudioProcess;
+          audioNode.onaudioprocess = window.onAudioProcess;
           audioNode.connect(audioContext.destination);
         }
       };
+
+      /**
+       * @param {boolean} state whether audio is enabled or not
+       * @returns {boolean} new state
+       */
       self.setAudioState = function (state) {
         if (state) {
           /* enable */
           self.isEnabled = true;
           if (fillBuffer) {
-            audioNode.onaudioprocess = onAudioProcess;
+            audioNode.onaudioprocess = window.onAudioProcess;
             audioNode.connect(audioContext.destination);
           }
           return true;
@@ -829,7 +872,7 @@ JSSpeccy.SoundBackend = function () {
           return false;
         }
       };
-      self.notifyReady = function (dataLength) {
+      self.notifyReady = () => {
         /* do nothing */
       };
 
@@ -845,6 +888,11 @@ JSSpeccy.SoundBackend = function () {
       audio.mozSetup(1, self.sampleRate);
 
       self.isEnabled = false;
+
+      /**
+       * @param {boolean} state whether audio is enabled or not
+       * @returns {boolean} new state
+       */
       self.setAudioState = function (state) {
         self.isEnabled = state;
         return state;
@@ -857,7 +905,7 @@ JSSpeccy.SoundBackend = function () {
         var buffer = new Float32Array(dataLength);
         fillBuffer(buffer);
         if (self.isEnabled) {
-          var written = audio.mozWriteAudio(buffer);
+          audio.mozWriteAudio(buffer);
         }
       };
 
@@ -869,9 +917,11 @@ JSSpeccy.SoundBackend = function () {
 	call it on demand, so that it's not filling up a buffer indefinitely */
   self.sampleRate = 5500; /* something suitably low */
   self.isEnabled = false;
-  self.setAudioState = function (state) {
-    return false;
-  };
+
+  /**
+   * @returns {boolean} always false
+   */
+  self.setAudioState = () => false;
   self.setSource = function (fn) {
     fillBuffer = fn;
   };
@@ -881,3 +931,6 @@ JSSpeccy.SoundBackend = function () {
   };
   return self;
 };
+
+export const SoundBackend = JSSpeccy.SoundBackend;
+export const SoundGenerator = JSSpeccy.SoundGenerator;

@@ -1,0 +1,34 @@
+table {
+  width: 100%;
+  line-height: 1;
+}
+
+th {
+  text-align: left;
+}
+
+input {
+  font-size: inherit;
+}
+
+.wide {
+  width: 20%;
+}
+
+.wide2 {
+  width: 40%;
+}
+
+td {
+  position: relative;
+}
+
+[data-value] {
+  border: 1px solid #000;
+  position: relative;
+  display: block;
+  height: 16px;
+  margin: 0 2px;
+  height: 100%;
+  background: #aaa;
+}
