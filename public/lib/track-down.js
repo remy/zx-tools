@@ -8,6 +8,7 @@ const noop = () => {};
 
 /**
  * Track mouse movement and down
+ *
  * @param {Element} element Track events on this node
  * @param {Object} options
  * @param {eventHandler} options.handler Default handler for when user clicks, touches or moves the mouse whilst in a mousedown state
@@ -18,17 +19,19 @@ const noop = () => {};
  * @returns {Function} Cancel function to manually set mousedown state to off
  */
 export default function trackDown(
-  el,
+  element,
   { handler = noop, move = noop, start = noop, end = noop, out = noop }
 ) {
   let down = false;
 
-  el.addEventListener('mouseout', (e) => {
-    down = false;
-    out(e);
+  element.addEventListener('mouseout', (e) => {
+    if (e.target === element) {
+      down = false;
+      out(e);
+    }
   });
 
-  el.addEventListener('click', handler);
+  element.addEventListener('click', handler);
 
   const downHandler = (e) => {
     down = true;
@@ -48,12 +51,12 @@ export default function trackDown(
     }
   };
 
-  el.addEventListener('touchstart', downHandler, true);
-  el.addEventListener('mousedown', downHandler, true);
-  el.addEventListener('mouseup', upHandler, true);
-  el.addEventListener('touchend', upHandler, true);
-  el.addEventListener('mousemove', moveHandler, true);
-  el.addEventListener('touchmove', moveHandler, true);
+  element.addEventListener('touchstart', downHandler, true);
+  element.addEventListener('mousedown', downHandler, true);
+  document.documentElement.addEventListener('mouseup', upHandler, true);
+  document.documentElement.addEventListener('touchend', upHandler, true);
+  element.addEventListener('mousemove', moveHandler, true);
+  element.addEventListener('touchmove', moveHandler, true);
 
   return () => {
     down = false;
