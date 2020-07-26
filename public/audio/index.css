@@ -1,10 +1,19 @@
 table {
   width: 100%;
   line-height: 1;
+  border-collapse: collapse;
 }
 
-table *:not(input) {
+table *:not(input, .pos) {
   user-select: none;
+}
+
+tr {
+  border: 2px solid transparent;
+}
+
+tr[data-volume='0'] {
+  opacity: 0.5;
 }
 
 th {
@@ -69,7 +78,7 @@ td {
   position: relative;
 }
 
-.bar span {
+.bar {
   border: 1px solid #000;
   position: relative;
   display: block;
@@ -92,11 +101,11 @@ td {
   height: 16px;
 }
 
-.bar span {
+.bar {
   --width: attr(data-width);
 }
 
-.bar span label {
+.bar label {
   pointer-events: none;
 }
 
@@ -112,14 +121,18 @@ td {
   width: var(--width);
 }
 
-.bar [data-value='0'] label:before {
+.bar[data-value='0'] label:before {
   border-right: 0;
 }
 
-.bar [data-value='0'] input:focus + label:before {
+.bar[data-value='0'] input:focus + label:before {
   width: 1px;
 }
 
 .bar input:focus + label:before {
   outline: 5px auto Highlight;
+}
+
+input[type='range'] {
+  pointer-events: none;
 }

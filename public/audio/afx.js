@@ -1,7 +1,8 @@
 /**
  * @class
+ * @type {Effect}
  */
-class Effect {
+export class Effect {
   /** @type {EffectFrame[]} */
   frames = [];
 

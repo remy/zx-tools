@@ -2,65 +2,112 @@ import { SoundBackend, SoundGenerator } from './vendor/sound';
 import { Bank } from './afx';
 import track from '../lib/track-down';
 
-const soundBackend = SoundBackend();
+/**
+ * @typedef { import("./afx").Effect } Effect
+ */
+
+// const soundBackend = SoundBackend();
 
 /** @type {Bank|null} */
 let bank = null;
 
-soundBackend.notifyReady = (arg) => {
-  console.log('notifyReady(' + arg + ')');
-};
+// soundBackend.notifyReady = (arg) => {
+//   console.log('notifyReady(' + arg + ')');
+// };
 
-const soundGenerator = SoundGenerator({
-  soundBackend,
-  model: {
-    clockSpeed: 3546900,
-    frameLength: 70908,
-  },
-});
+// const soundGenerator = SoundGenerator({
+//   soundBackend,
+//   model: {
+//     clockSpeed: 3546900,
+//     frameLength: 70908,
+//   },
+// });
 
-window.soundBackend = soundBackend;
-window.soundGenerator = soundGenerator;
+// window.soundBackend = soundBackend;
+// window.soundGenerator = soundGenerator;
 
-console.log(soundBackend.setAudioState(true));
-console.log(soundBackend.isEnabled);
+// console.log(soundBackend.setAudioState(true));
+// console.log(soundBackend.isEnabled);
 
 let table = document.querySelector('table');
 const nameEl = document.querySelector('#name');
 const position = document.querySelector('#position');
 
 /** @type {boolean|null} */
-let startCheckState = { filter: '', checked: null };
+let startState = { filter: null, checked: null };
 
+/**
+ * track handler
+ *
+ * @param {Event} e
+ */
+const handler = ({ target, layerX }) => {
+  if (target.nodeName === 'LABEL') {
+    target = target.parentNode;
+  }
+
+  if (target.classList.contains('bar')) {
+    const name = target.name || target.dataset.name;
+
+    if (name === startState.filter || startState.filter === null) {
+      const p = ((100 / target.clientWidth) * layerX) / 100;
+      const max = 16 ** maxForInput(name);
+      const value = (p * max) | 0;
+      const input = target.querySelector('input');
+      input.value = value;
+
+      handleInput({ target: input });
+    }
+  }
+};
 track(table, {
   moveStart(e) {
-    if (e.target.nodeName === 'INPUT' && e.target.type === 'checkbox') {
-      if (startCheckState.checked === null) {
-        startCheckState.checked = !e.target.checked;
-        startCheckState.filter = e.target.name;
-      }
-      if (e.target.name === startCheckState.filter) {
-        e.target.checked = startCheckState.checked;
-      }
+    /** @type Element */
+    let target = e.target;
+    if (target.nodeName === 'LABEL') {
+      target = target.parentNode;
+    }
+    const name = target.name || target.dataset.name;
+    if (startState.filter !== null && name !== startState.filter) {
+      return;
+    }
+
+    if (startState.filter === null) {
+      console.log(
+        'setting filter to ' + name,
+        target.name,
+        target.dataset.name,
+        target
+      );
+
+      startState.filter = name;
+      startState.checked = !target.checked;
+    }
+
+    if (target.type === 'checkbox') {
+      target.checked = startState.checked;
     }
   },
-  end() {
-    startCheckState = { checked: null };
+  end(e) {
+    console.log('end on ', e.target);
+
+    startState = { checked: null, filter: null };
   },
-  handler(e) {
-    if (e.target.classList.contains('bar')) {
-      console.log('track');
-    }
-  },
+  handler,
+  start: handler,
 });
 
 /**
  * @param {string} text
+ * @param {string} id
+ * @param {string} [className]
  * @returns {Element}
  */
-function td(text) {
+function td(text, id, className) {
   const td = document.createElement('td');
+  td.id = id;
   td.textContent = text;
+  if (className) td.className = className;
   return td;
 }
 
@@ -85,9 +132,9 @@ function inputBar(name, value, pad) {
 function bar(name, value) {
   const max = 16 ** maxForInput(name) - 1;
   const td = document.createElement('td');
-  td.className = 'bar';
 
   const span = document.createElement('span');
+  span.className = 'bar';
   td.appendChild(span);
   const input = document.createElement('input');
   input.type = 'range';
@@ -97,6 +144,7 @@ function bar(name, value) {
 
   input.value = value;
   span.appendChild(input);
+  span.dataset.name = name;
 
   const label = document.createElement('label');
   label.style.setProperty('--width', `${(100 / max) * input.value}%`);
@@ -189,29 +237,38 @@ function maxForInput(name) {
 }
 
 document.body.addEventListener('focusout', (e) => {
-  if (e.target.type === 'text') {
-    if (e.target.value.trim() === '') {
-      e.target.value = 0;
-      const event = new Event('input');
-      e.target.dispatchEvent(event);
+  const { target } = e;
+  if (target.type === 'text' && target.id !== 'name') {
+    if (target.value.trim() === '') {
+      target.value = 0;
+      // const event = new Event('input');
+      // target.dispatchEvent(event);
     }
   }
 });
 
-table.addEventListener('input', (e) => {
-  const input = e.target;
+/**
+ * @param {Event} event
+ * @param {Element} event.target
+ */
+function handleInput({ target }) {
+  const input = target;
   const root = input.closest('tr');
-  const bar = root.querySelector(`.bar span input[name="${input.name}"]`)
-    .parentNode;
-  const text = root.querySelector(`input[name="${input.name}"][type="text"]`);
-  const range = root.querySelector(`input[name="${input.name}"][type="range"]`);
-  const maxLength = maxForInput(input.name);
+  const name = input.name;
+  const bar = root.querySelector(`.bar input[name="${name}"]`).parentNode;
+  const text = root.querySelector(`input[name="${name}"][type="text"]`);
+  const range = root.querySelector(`input[name="${name}"][type="range"]`);
+  const maxLength = maxForInput(name);
   const max = 16 ** maxLength - 1;
   let value = parseInt(input.value, 10);
 
   if (input.type === 'text') {
     value = parseInt('0x' + input.value.slice(-maxLength), 16);
     range.value = value;
+  }
+
+  if (name === 'volume') {
+    root.dataset.volume = value;
   }
 
   if (isNaN(value)) value = 0;
@@ -221,8 +278,10 @@ table.addEventListener('input', (e) => {
   const p = (100 / max) * value;
   bar.dataset.value = value;
   bar.querySelector('label').style.setProperty('--width', `${p}%`);
-  console.log(value, p, max, maxLength);
-});
+  console.log(bar);
+}
+
+table.addEventListener('input', handleInput);
 
 document.addEventListener('keydown', (e) => {
   if (e.key === '=' || e.key === '+') {
@@ -236,10 +295,45 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
+/**
+ * Generates the initial empty audio slots. Note that I've reduced this to
+ * 256 slots instead of the normal 4096 - because the browser poops itself.
+ */
+function init() {
+  const root = document.createElement('tbody');
+  const template = document.createElement('tr');
+  template.dataset.volume = 0;
+
+  template.appendChild(bool(false, 'tone'));
+  template.appendChild(bool(false, 'noise'));
+
+  const tone = inputBar('tone', 0, 3);
+  const noise = inputBar('noise', 0, 2);
+  const volume = inputBar('volume', 0, 1);
+
+  template.appendChild(tone.input);
+  template.appendChild(noise.input);
+  template.appendChild(volume.input);
+
+  template.appendChild(tone.bar);
+  template.appendChild(noise.bar);
+  template.appendChild(volume.bar);
+
+  for (let i = 0; i < 0xff; i++) {
+    const node = template.cloneNode(true);
+    node.prepend(td((i + 1).toString().padStart(3, '0'), 'pos' + i, 'pos'));
+    root.appendChild(node);
+  }
+
+  table.querySelector('tbody').replaceWith(root);
+}
+
 fetch('/assets/mummy.afb')
   .then((res) => res.arrayBuffer())
   .then((data) => {
     bank = new Bank(data);
     window.bank = bank;
-    showEffect(bank.effect);
+
+    // showEffect(bank.effect);
+    init();
   });

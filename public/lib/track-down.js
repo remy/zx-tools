@@ -68,11 +68,11 @@ export default function trackDown(
   };
 
   element.addEventListener('touchstart', downHandler, true);
-  element.addEventListener('mousedown', downHandler, true);
+  element.addEventListener('mousedown', downHandler, false);
   document.documentElement.addEventListener('mouseup', upHandler, true);
   document.documentElement.addEventListener('touchend', upHandler, true);
-  element.addEventListener('mousemove', moveHandler, true);
-  element.addEventListener('touchmove', moveHandler, true);
+  element.addEventListener('mousemove', moveHandler, false);
+  element.addEventListener('touchmove', moveHandler, false);
 
   return () => {
     down = false;
