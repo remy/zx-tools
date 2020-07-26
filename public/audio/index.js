@@ -37,11 +37,34 @@ const position = document.querySelector('#position');
 let startState = { filter: null, checked: null };
 
 /**
+ * Converts a number to hex in upper case and padded
+ *
+ * @param {number} value
+ * @param {number} [length]
+ * @returns {string} Hex encoded string
+ */
+function padHex(value, length) {
+  return value.toString(16).padStart(length, '0').toUpperCase();
+}
+
+/**
+ * Pad start helper
+ *
+ * @param {number} value
+ * @param {number} length
+ * @returns {string}
+ */
+function pad(value, length) {
+  return value.toString().padStart(length, '0');
+}
+
+/**
  * track handler
  *
- * @param {Event} e
+ * @param {Event} event
  */
-const handler = ({ target, layerX }) => {
+const handler = (event) => {
+  let { target, layerX } = event;
   if (target.nodeName === 'LABEL') {
     target = target.parentNode;
   }
@@ -57,6 +80,7 @@ const handler = ({ target, layerX }) => {
       input.value = value;
 
       handleInput({ target: input });
+      event.preventDefault();
     }
   }
 };
@@ -73,13 +97,6 @@ track(table, {
     }
 
     if (startState.filter === null) {
-      console.log(
-        'setting filter to ' + name,
-        target.name,
-        target.dataset.name,
-        target
-      );
-
       startState.filter = name;
       startState.checked = !target.checked;
     }
@@ -89,8 +106,6 @@ track(table, {
     }
   },
   end(e) {
-    console.log('end on ', e.target);
-
     startState = { checked: null, filter: null };
   },
   handler,
@@ -198,32 +213,65 @@ function bool(value, className) {
  */
 function showEffect(effect) {
   nameEl.value = effect.name;
-  position.textContent = `${(bank.selected + 1)
-    .toString()
-    .padStart(3, '0')}/${bank.effects.length.toString().padStart(3, '0')}`;
-  const root = document.createElement('tbody');
-  effect.frames.forEach((frame, i) => {
-    const tr = document.createElement('tr');
-    tr.appendChild(td(i.toString().padStart(3, '0')));
-    tr.appendChild(bool(frame.t, 'tone'));
-    tr.appendChild(bool(frame.n, 'noise'));
+  position.textContent = `${pad(bank.selected + 1, 3)}/${pad(
+    bank.effects.length,
+    3
+  )}`;
 
-    const tone = inputBar('tone', frame.tone, 3);
-    const noise = inputBar('noise', frame.noise, 2);
-    const volume = inputBar('volume', frame.volume, 1);
+  // old school!
+  const root = document.forms[0];
+  const trs = table.querySelector('tbody').childNodes;
 
-    tr.appendChild(tone.input);
-    tr.appendChild(noise.input);
-    tr.appendChild(volume.input);
+  const toneMax = 16 ** maxForInput('tone') - 1;
+  const noiseMax = 16 ** maxForInput('noise') - 1;
+  const volumeMax = 16 ** maxForInput('volume') - 1;
 
-    tr.appendChild(tone.bar);
-    tr.appendChild(noise.bar);
-    tr.appendChild(volume.bar);
-
-    root.appendChild(tr);
-  });
-
-  table.querySelector('tbody').replaceWith(root);
+  for (let i = 0; i < 0xff; i++) {
+    const frame = effect.frames[i];
+    const offset = i * 8; // 8 input elements
+    if (frame) {
+      trs[i].dataset.volume = frame.volume;
+      root[offset + 0].checked = frame.t;
+      root[offset + 1].checked = frame.n;
+      root[offset + 2].value = padHex(frame.tone, 3);
+      root[offset + 3].value = padHex(frame.noise, 2);
+      root[offset + 4].value = padHex(frame.volume, 1);
+      root[offset + 5].value = frame.tone;
+      root[offset + 6].value = frame.noise;
+      root[offset + 7].value = frame.volume;
+      root[offset + 5].parentElement.dataset.value = frame.tone;
+      root[offset + 6].parentElement.dataset.value = frame.noise;
+      root[offset + 7].parentElement.dataset.value = frame.volume;
+      root[offset + 5].nextSibling.style.setProperty(
+        '--width',
+        `${(100 / toneMax) * frame.tone}%`
+      );
+      root[offset + 6].nextSibling.style.setProperty(
+        '--width',
+        `${(100 / noiseMax) * frame.noise}%`
+      );
+      root[offset + 7].nextSibling.style.setProperty(
+        '--width',
+        `${(100 / volumeMax) * frame.volume}%`
+      );
+    } else {
+      trs[i].dataset.volume = 0;
+      root[offset + 0].checked = false;
+      root[offset + 1].checked = false;
+      root[offset + 2].value = padHex(0, 3);
+      root[offset + 3].value = padHex(0, 2);
+      root[offset + 4].value = padHex(0, 1);
+      root[offset + 5].value = 0;
+      root[offset + 6].value = 0;
+      root[offset + 7].value = 0;
+      root[offset + 5].parentElement.dataset.value = 0;
+      root[offset + 6].parentElement.dataset.value = 0;
+      root[offset + 7].parentElement.dataset.value = 0;
+      root[offset + 5].nextSibling.style = '';
+      root[offset + 6].nextSibling.style = '';
+      root[offset + 7].nextSibling.style = '';
+    }
+  }
 }
 
 /**
@@ -275,10 +323,9 @@ function handleInput({ target }) {
   text.value = value.toString(16).padStart(maxLength, '0').toUpperCase();
 
   // handle the bar change
-  const p = (100 / max) * value;
   bar.dataset.value = value;
+  const p = (100 / max) * value;
   bar.querySelector('label').style.setProperty('--width', `${p}%`);
-  console.log(bar);
 }
 
 table.addEventListener('input', handleInput);
