@@ -25,7 +25,7 @@ window.soundGenerator = soundGenerator;
 console.log(soundBackend.setAudioState(true));
 console.log(soundBackend.isEnabled);
 
-const table = document.querySelector('#bank');
+let table = document.querySelector('table');
 const nameEl = document.querySelector('#name');
 const position = document.querySelector('#position');
 
@@ -65,39 +65,25 @@ function td(text) {
 }
 
 /**
- *
+ * @param {string} name
  * @param {number} value
- * @param {number} max
  * @param {number} pad
  * @returns {{ input: Element, bar: Element }}
  */
-function inputBar(value, max, pad) {
-  const b = bar(value, max);
-  const i = input(value.toString(16).padStart(pad, '0').toUpperCase(), max);
-
-  const bInput = b.querySelector('input');
-  const iInput = i.querySelector('input');
-
-  iInput.addEventListener('input', () => {
-    bInput.value = iInput.value;
-    const event = new Event('input');
-    bInput.dispatchEvent(event);
-  });
-
-  bInput.addEventListener('input', () => {
-    const value = parseInt(bInput.value, 10);
-    iInput.value = value.toString(16).padStart(pad, '0').toUpperCase();
-  });
+function inputBar(name, value, pad) {
+  const b = bar(name, value);
+  const i = input(name, value.toString(16).padStart(pad, '0').toUpperCase());
 
   return { input: i, bar: b };
 }
 
 /**
+ * @param {string} name
  * @param {number} value
- * @param {number} max
  * @returns {Element}
  */
-function bar(value, max) {
+function bar(name, value) {
+  const max = 16 ** maxForInput(name) - 1;
   const td = document.createElement('td');
   td.className = 'bar';
 
@@ -107,37 +93,33 @@ function bar(value, max) {
   input.type = 'range';
   input.min = 0;
   input.max = max;
+  input.name = name;
 
   input.value = value;
   span.appendChild(input);
 
   const label = document.createElement('label');
+  label.style.setProperty('--width', `${(100 / max) * input.value}%`);
+
   span.appendChild(label);
-
-  const handler = () => {
-    const p = (100 / max) * input.value;
-    span.dataset.value = input.value;
-    label.style.setProperty('--width', `${p}%`);
-  };
-  input.addEventListener('input', handler);
-
-  handler();
+  span.dataset.value = value;
 
   return td;
 }
 
 /**
+ * @param {string} name
  * @param {number} value
- * @param {number} max
  * @returns {Element}
  */
-function input(value, max) {
+function input(name, value) {
   const td = document.createElement('td');
   const input = document.createElement('input');
   td.appendChild(input);
   input.value = value;
+  input.type = 'text';
+  input.name = name;
   input.size = value.length;
-  input.max = max;
   return td;
 }
 
@@ -171,16 +153,16 @@ function showEffect(effect) {
   position.textContent = `${(bank.selected + 1)
     .toString()
     .padStart(3, '0')}/${bank.effects.length.toString().padStart(3, '0')}`;
-  table.innerHTML = '';
+  const root = document.createElement('tbody');
   effect.frames.forEach((frame, i) => {
     const tr = document.createElement('tr');
     tr.appendChild(td(i.toString().padStart(3, '0')));
     tr.appendChild(bool(frame.t, 'tone'));
     tr.appendChild(bool(frame.n, 'noise'));
 
-    const tone = inputBar(frame.tone, 0xfff, 3);
-    const noise = inputBar(frame.noise, 0xff, 2);
-    const volume = inputBar(frame.volume, 0xf, 1);
+    const tone = inputBar('tone', frame.tone, 3);
+    const noise = inputBar('noise', frame.noise, 2);
+    const volume = inputBar('volume', frame.volume, 1);
 
     tr.appendChild(tone.input);
     tr.appendChild(noise.input);
@@ -190,18 +172,66 @@ function showEffect(effect) {
     tr.appendChild(noise.bar);
     tr.appendChild(volume.bar);
 
-    table.appendChild(tr);
+    root.appendChild(tr);
   });
+
+  table.querySelector('tbody').replaceWith(root);
 }
 
+/**
+ * @param {string} name enum of volume, noise, tone
+ * @returns {number}
+ */
+function maxForInput(name) {
+  if (name === 'volume') return 1;
+  if (name === 'noise') return 2;
+  if (name === 'tone') return 3;
+}
+
+document.body.addEventListener('focusout', (e) => {
+  if (e.target.type === 'text') {
+    if (e.target.value.trim() === '') {
+      e.target.value = 0;
+      const event = new Event('input');
+      e.target.dispatchEvent(event);
+    }
+  }
+});
+
+table.addEventListener('input', (e) => {
+  const input = e.target;
+  const root = input.closest('tr');
+  const bar = root.querySelector(`.bar span input[name="${input.name}"]`)
+    .parentNode;
+  const text = root.querySelector(`input[name="${input.name}"][type="text"]`);
+  const range = root.querySelector(`input[name="${input.name}"][type="range"]`);
+  const maxLength = maxForInput(input.name);
+  const max = 16 ** maxLength - 1;
+  let value = parseInt(input.value, 10);
+
+  if (input.type === 'text') {
+    value = parseInt('0x' + input.value.slice(-maxLength), 16);
+    range.value = value;
+  }
+
+  if (isNaN(value)) value = 0;
+  text.value = value.toString(16).padStart(maxLength, '0').toUpperCase();
+
+  // handle the bar change
+  const p = (100 / max) * value;
+  bar.dataset.value = value;
+  bar.querySelector('label').style.setProperty('--width', `${p}%`);
+  console.log(value, p, max, maxLength);
+});
+
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'ArrowLeft') {
-    bank.selected--;
+  if (e.key === '=' || e.key === '+') {
+    bank.selected++;
     showEffect(bank.effect);
   }
 
-  if (e.key === 'ArrowRight') {
-    bank.selected++;
+  if (e.key === '-' || e.key === '_') {
+    bank.selected--;
     showEffect(bank.effect);
   }
 });
