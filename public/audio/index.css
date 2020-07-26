@@ -17,12 +17,44 @@ input {
 
 td {
   cursor: pointer;
+  padding: 0;
 }
 
 td input {
   border: 0;
   background: none;
   padding: 0;
+  margin: 0;
+}
+
+.bool input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  z-index: 10;
+  cursor: pointer;
+}
+
+.bool input:focus + label:before {
+  outline: 5px auto Highlight;
+}
+
+.bool input:checked + label.tone:before {
+  content: 'T';
+}
+
+.bool input:checked + label.noise:before {
+  content: 'N';
+}
+
+.bool input + label:before {
+  content: '-';
+  width: 100%;
+  font-size: inherit;
+  line-height: inherit;
 }
 
 .wide {
@@ -37,16 +69,57 @@ td {
   position: relative;
 }
 
-[data-value] {
+.bar span {
   border: 1px solid #000;
   position: relative;
   display: block;
   height: 16px;
   margin: 0 2px;
   height: 100%;
-  background: #aaa;
 }
 
+.bar input {
+  width: 100%;
+}
+
+.bar input,
 .bar {
   cursor: ew-resize;
+}
+
+.bar input {
+  opacity: 0;
+  height: 16px;
+}
+
+.bar span {
+  --width: attr(data-width);
+}
+
+.bar span label {
+  pointer-events: none;
+}
+
+.bar label:before {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-right: 1px solid black;
+  content: '';
+  background: #aaa;
+  display: block;
+  width: var(--width);
+}
+
+.bar [data-value='0'] label:before {
+  border-right: 0;
+}
+
+.bar [data-value='0'] input:focus + label:before {
+  width: 1px;
+}
+
+.bar input:focus + label:before {
+  outline: 5px auto Highlight;
 }
