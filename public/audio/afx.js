@@ -1,3 +1,5 @@
+import effectToWave from './ayplay';
+
 /**
  * @class
  * @type {Effect}
@@ -8,6 +10,14 @@ export class Effect {
 
   /** @type {string} */
   name = '';
+
+  /**
+   * @param {Uint8Array} [data]
+   * @param {number} [length]
+   */
+  constructor(data = null, length) {
+    if (data) this.load(data, length);
+  }
 
   /** @type {number} */
   get length() {
@@ -25,6 +35,52 @@ export class Effect {
    */
   push(frame) {
     return this.frames.push(frame);
+  }
+
+  /**
+   * @returns {Uint8Array} WAV encoded data
+   */
+  play() {
+    return effectToWave(this);
+  }
+
+  /**
+   * @param {Uint8Array} data
+   * @param {number} length Length of bytes
+   * @returns {number} number of bytes used
+   */
+  load(data, length) {
+    const view = new DataView(data.buffer);
+    let offset = 0;
+    for (; offset < length; ) {
+      const frame = new EffectFrame();
+      const byte = view.getUint8(offset++);
+
+      let tone = 0;
+      let noise = 0;
+
+      if (byte & (1 << 5)) {
+        tone = view.getUint16(offset, true) & 0xfff;
+        offset += 2;
+      }
+
+      if (byte & (1 << 6)) {
+        noise = view.getUint8(offset++);
+        if (byte === 0xd0 && noise >= 0x20) {
+          break;
+        }
+        noise &= 0x1f;
+      }
+
+      frame.tone = tone;
+      frame.noise = noise;
+      frame.volume = byte & 0x0f;
+      frame.t = !(byte & (1 << 4));
+      frame.n = !(byte & (1 << 7));
+      this.frames.push(frame);
+    }
+
+    return offset;
   }
 }
 
@@ -93,6 +149,21 @@ export class Bank {
     return this.effects[this._selected];
   }
 
+  /**
+   * Loads a new effect, sets the current point to it, and returns it
+   *
+   * @param {Uint8Array} data
+   * @returns {Effect}
+   */
+  addEffect(data) {
+    const effect = new Effect(data, data.length);
+
+    this.effects.push(effect);
+    this._selected = this.effects.length - 1;
+
+    return effect;
+  }
+
   loadBank() {
     const data = this.data;
     const view = new DataView(data);
@@ -141,37 +212,15 @@ export class Bank {
       const end = offset + length;
 
       const effect = new Effect();
+      const endPos = effect.load(
+        new Uint8Array(view.buffer.slice(offset, end)),
+        length
+      );
 
-      for (; offset < end; ) {
-        const frame = new EffectFrame();
-        const byte = view.getUint8(offset++);
-
-        let tone = 0;
-        let noise = 0;
-
-        if (byte & (1 << 5)) {
-          tone = view.getUint16(offset, true) & 0xfff;
-          offset += 2;
-        }
-
-        if (byte & (1 << 6)) {
-          noise = view.getUint8(offset++);
-          if (byte === 0xd0 && noise >= 0x20) {
-            break;
-          }
-          noise &= 0x1f;
-        }
-
-        frame.tone = tone;
-        frame.noise = noise;
-        frame.volume = byte & 0x0f;
-        frame.t = !(byte & (1 << 4));
-        frame.n = !(byte & (1 << 7));
-        effect.push(frame);
-      }
-
-      if (offset < end) {
-        effect.name = new TextDecoder().decode(data.slice(offset, end - 1));
+      if (offset + endPos < end) {
+        effect.name = new TextDecoder().decode(
+          data.slice(offset + endPos, end - 1)
+        );
       }
 
       effects.push(effect);

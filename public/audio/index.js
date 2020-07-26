@@ -1,33 +1,14 @@
-import { SoundBackend, SoundGenerator } from './vendor/sound';
 import { Bank } from './afx';
 import track from '../lib/track-down';
+import drop from '../lib/dnd';
+import save from '../lib/save.js';
 
 /**
  * @typedef { import("./afx").Effect } Effect
  */
 
-// const soundBackend = SoundBackend();
-
 /** @type {Bank|null} */
 let bank = null;
-
-// soundBackend.notifyReady = (arg) => {
-//   console.log('notifyReady(' + arg + ')');
-// };
-
-// const soundGenerator = SoundGenerator({
-//   soundBackend,
-//   model: {
-//     clockSpeed: 3546900,
-//     frameLength: 70908,
-//   },
-// });
-
-// window.soundBackend = soundBackend;
-// window.soundGenerator = soundGenerator;
-
-// console.log(soundBackend.setAudioState(true));
-// console.log(soundBackend.isEnabled);
 
 let table = document.querySelector('table');
 const nameEl = document.querySelector('#name');
@@ -105,7 +86,7 @@ track(table, {
       target.checked = startState.checked;
     }
   },
-  end(e) {
+  end() {
     startState = { checked: null, filter: null };
   },
   handler,
@@ -331,6 +312,15 @@ function handleInput({ target }) {
 table.addEventListener('input', handleInput);
 
 document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    play(bank.effect);
+  }
+
+  if (e.key === 'D') {
+    const data = bank.effect.play();
+    save(data, 'untitled.wav');
+  }
+
   if (e.key === '=' || e.key === '+') {
     bank.selected++;
     showEffect(bank.effect);
@@ -341,6 +331,35 @@ document.addEventListener('keydown', (e) => {
     showEffect(bank.effect);
   }
 });
+
+/**
+ *
+ * @param {Effect} effect
+ */
+function play(effect) {
+  const data = effect.play();
+  if (!window.AudioContext) {
+    if (!window.webkitAudioContext) {
+      alert(
+        'Your browser does not support any AudioContext and cannot play back this audio.'
+      );
+      return;
+    }
+    window.AudioContext = window.webkitAudioContext;
+  }
+
+  const context = new AudioContext();
+
+  context.decodeAudioData(data.buffer, function (buffer) {
+    // Create a source node from the buffer
+    var source = context.createBufferSource();
+    source.buffer = buffer;
+    // Connect to the final output node (the speakers)
+    source.connect(context.destination);
+    // Play immediately
+    source.start(0);
+  });
+}
 
 /**
  * Generates the initial empty audio slots. Note that I've reduced this to
@@ -375,12 +394,24 @@ function init() {
   table.querySelector('tbody').replaceWith(root);
 }
 
+drop(document.documentElement, (data, file) => {
+  if (file.name.toLowerCase().endsWith('.afx')) {
+    // then it's a single effect - let's add it
+    bank.addEffect(data);
+  } else {
+    // assume it's a bank
+
+    bank = new Bank(data);
+  }
+  showEffect(bank.effect);
+});
+
 fetch('/assets/mummy.afb')
   .then((res) => res.arrayBuffer())
   .then((data) => {
     bank = new Bank(data);
     window.bank = bank;
 
-    // showEffect(bank.effect);
     init();
+    showEffect(bank.effect);
   });
