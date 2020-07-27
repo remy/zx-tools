@@ -48,6 +48,12 @@ function createNewBank(data) {
       });
 
       totalEffects.textContent = pad(length - 1, 3);
+
+      const effect = bank.effect;
+      if (effect) {
+        const exported = btoa(Array.from(bank.effect.export()).join(','));
+        window.history.replaceState(null, null, '?src=' + exported);
+      }
     }
   });
 
@@ -584,3 +590,14 @@ buttons.on('click', async (e) => {
 });
 
 init();
+if (window.location.search.includes('src=')) {
+  const q = new URLSearchParams(window.location.search);
+  const d = Uint8Array.from(
+    atob(q.get('src'))
+      .split(',')
+      .map((_) => parseInt(_))
+  );
+  bank.delete(0);
+  bank.addEffect(d);
+  showEffect(bank.effect);
+}
