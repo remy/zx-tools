@@ -1,4 +1,7 @@
 import effectToWave from './ayplay';
+import { encode } from '../lib/encode';
+
+const maxEffectLength = 0x1000;
 
 /**
  * @class
@@ -49,6 +52,44 @@ export class Effect {
     this.frames.set(index, frame);
 
     return frame;
+  }
+
+  export() {
+    const data = new Uint8Array(maxEffectLength * 4);
+    const length = this.length;
+    let tone = 0;
+    let noise = 0;
+    let ptr = 0;
+    let it;
+
+    for (let i = 0; i < length; i++) {
+      const frame = this.get(i);
+      it = frame.volume & 0x0f;
+      it |= frame.t ? 0 : 1 << 4;
+      it |= frame.n ? 0 : 1 << 7;
+      if (frame.tone != tone) {
+        tone = frame.tone;
+        it |= 1 << 5;
+      }
+      if (frame.noise != noise) {
+        noise = frame.noise;
+        it |= 1 << 6;
+      }
+      data[ptr++] = it;
+      if (it & (1 << 5)) {
+        data[ptr] = tone & 0xfff;
+        data[ptr + 1] = (tone & 0xfff) >> 8;
+        ptr += 2;
+      }
+      if (it & (1 << 6)) {
+        data[ptr++] = noise & 0x1f;
+      }
+    }
+
+    data[ptr++] = 0xd0; // effect group end marker
+    data[ptr++] = 0x20;
+
+    return new Uint8Array(data.slice(0, ptr));
   }
 
   /**
@@ -121,10 +162,10 @@ class EffectFrame {
   volume = 0;
 
   /** @type {number} tone 16 bit tone period */
-  tone = 0;
+  tone = -1;
 
   /** @type {number} noise 8 bit noise period */
-  noise = 0;
+  noise = -1;
 }
 
 /**
@@ -136,6 +177,17 @@ export class Bank {
 
   /** @private */
   _selected = 0;
+
+  /**
+   * @param {Uint8Array} data source data from a .afb file
+   */
+  constructor(data) {
+    this.data = data;
+    if (data) this.loadBank(data);
+    else {
+      this.effects.push(new Effect());
+    }
+  }
 
   /** @type {number} Current selected bank */
   get selected() {
@@ -155,31 +207,57 @@ export class Bank {
     return this._selected;
   }
 
-  /**
-   *
-   * @param {Uint8Array} data source data from a .afb file
-   */
-  constructor(data) {
-    this.data = data;
-    this.loadBank();
-  }
-
   /** @type {Effect} */
   get effect() {
     return this.effects[this._selected];
   }
 
   /**
+   * @returns {Uint8Array} afb bank compatible data
+   */
+  save() {
+    const length = this.effects.length;
+    const data = new Uint8Array(maxEffectLength * length + 260 * length);
+
+    data[0] = length & 0xff;
+    let pp = 2 * length + 1;
+    let i, offset;
+
+    for (i = 0; i < length; i++) {
+      offset = pp - i * 2 - 2;
+      data[1 + i * 2] = offset;
+      data[1 + i * 2 + 1] = offset >> 8;
+      const effect = this.effects[i];
+      const effectData = effect.export();
+      data.set(effectData, pp);
+      pp += effectData.length;
+
+      if (effect.name.length) {
+        data.set(encode(effect.name), pp);
+        pp += effect.name.length;
+        data[pp++] = 0;
+      }
+    }
+
+    return data.slice(0, pp);
+  }
+
+  /**
    * Loads a new effect, sets the current point to it, and returns it
    *
    * @param {Uint8Array} data
+   * @param {string} [name]
+   * @param {boolean} [select=true]
    * @returns {Effect}
    */
-  addEffect(data) {
+  addEffect(data, name = 'noname', select = true) {
     const effect = new Effect(data, data.length);
+    effect.name = name;
 
     this.effects.push(effect);
-    this._selected = this.effects.length - 1;
+    if (select) {
+      this._selected = this.effects.length - 1;
+    }
 
     return effect;
   }
@@ -201,14 +279,21 @@ export class Bank {
    * Removes and effect from the bank
    *
    * @param {number} index index of effect
+   * @returns {Effect}
    */
   delete(index = this._selected) {
-    console.log('TODO: ' + index);
+    const effect = this.effects[index];
+    this.effects.splice(index, 1);
+    return effect;
   }
 
-  loadBank() {
-    const data = this.data;
-    const view = new DataView(data);
+  /**
+   * Load the file as bank of effects
+   *
+   * @param {Uint8Array} data afb bank data from AYFX Editor
+   */
+  loadBank(data) {
+    const view = new DataView(data.buffer);
     const total = view.getUint8(0);
     const effects = [];
 

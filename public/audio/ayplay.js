@@ -1,3 +1,4 @@
+import { encode } from '../lib/encode';
 /**
  * @typedef { import("./afx").Effect } Effect
  */
@@ -5,12 +6,6 @@
 const AY_CLOCK = 1773400;
 const MIX_RATE = 44100;
 const max_fx_len = 0x1000;
-
-/**
- * @param {string} s string to encode
- * @returns {Uint8Array}
- */
-const encode = (s) => new TextEncoder().encode(s);
 
 const volTab = Int32Array.from([
   0,

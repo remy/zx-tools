@@ -4,6 +4,15 @@ table {
   border-collapse: collapse;
 }
 
+thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--c-bg);
+  border-bottom: 16px solid var(--c-bg);
+  border-top: 16px solid var(--c-bg);
+}
+
 table *:not(input, .pos) {
   user-select: none;
 }
@@ -20,7 +29,9 @@ th {
   text-align: left;
 }
 
-input {
+input,
+select,
+option {
   font-size: inherit;
 }
 

@@ -1,14 +1,10 @@
 /**
  * Class representing array-like NodeCollection
- * @extends Array
- * @augments NodeList
+ *
+ * @class
+ * @augments Element
  */
 class NodeListArray extends Array {
-  /**
-   * Create a new ArrayNode
-   * @constructor
-   * @augments NodeList
-   */
   constructor() {
     super();
 
@@ -39,9 +35,11 @@ class NodeListArray extends Array {
 
   /**
    * Bind event to the collection for a given event type
-   * @param {String} event Event name
+   *
+   * @param {string} event Event name
    * @param {Function} handler Event handler
-   * @param {Object} options Standard addEventListener options
+   * @param {object} options Standard addEventListener options
+   * @returns {Element[]}
    */
   on(event, handler, options) {
     return this.filter((el) => el.addEventListener(event, handler, options));
@@ -49,7 +47,8 @@ class NodeListArray extends Array {
 
   /**
    * Trigger the given event on all attached handlers
-   * @param {String} event
+   *
+   * @param {string} event
    * @param {*} data
    * @returns {Array} filtered result of dispatchEvent
    */
@@ -61,7 +60,8 @@ class NodeListArray extends Array {
 
 /**
  * Query the DOM for an array like collection of nodes
- * @param {String} selector CSS selector
+ *
+ * @param {string} selector CSS selector
  * @param {Element} [context=document] Query context
  * @returns {NodeListArray} New array-like node list
  */

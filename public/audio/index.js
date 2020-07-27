@@ -1,4 +1,5 @@
 import { Bank } from './afx';
+import { $ } from '../lib/$';
 import track from '../lib/track-down';
 import drop from '../lib/dnd';
 import save from '../lib/save.js';
@@ -8,10 +9,16 @@ import save from '../lib/save.js';
  */
 
 /** @type {Bank|null} */
-let bank = null;
+let bank = new Bank();
+window.bank = bank;
 
 let emptyBanks = new Set();
 
+/** @type {AudioBufferSourceNode|null} */
+let playingSource = null;
+
+const buttons = $('[data-action]');
+const importCollection = document.querySelector('#import-collection');
 let table = document.querySelector('table');
 const nameEl = document.querySelector('#name');
 const position = document.querySelector('#position');
@@ -344,27 +351,6 @@ table.addEventListener('input', handleRangeAdjust);
 table.addEventListener('change', handleCheckboxUpdate);
 table.addEventListener('update', handleCheckboxUpdate);
 
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') {
-    play(bank.effect);
-  }
-
-  if (e.key === 'D') {
-    const data = bank.effect.play();
-    save(data, (bank.effect.name || 'untitled') + '.wav');
-  }
-
-  if (e.key === '=' || e.key === '+') {
-    bank.selected++;
-    showEffect(bank.effect);
-  }
-
-  if (e.key === '-' || e.key === '_') {
-    bank.selected--;
-    showEffect(bank.effect);
-  }
-});
-
 /**
  * @param {Effect} effect
  */
@@ -383,13 +369,16 @@ function play(effect) {
   const context = new AudioContext();
 
   context.decodeAudioData(data.buffer, function (buffer) {
+    if (playingSource) {
+      playingSource.stop();
+    }
     // Create a source node from the buffer
-    var source = context.createBufferSource();
-    source.buffer = buffer;
+    playingSource = context.createBufferSource();
+    playingSource.buffer = buffer;
     // Connect to the final output node (the speakers)
-    source.connect(context.destination);
+    playingSource.connect(context.destination);
     // Play immediately
-    source.start(0);
+    playingSource.start(0);
   });
 }
 
@@ -428,24 +417,90 @@ function init() {
   table.querySelector('tbody').replaceWith(root);
 }
 
-drop(document.documentElement, (data, file) => {
+drop(document.documentElement, (data, file, files) => {
+  if (files.length > 1) {
+    // collect other files too - assume they're afx
+    // skip the first file since we have this
+    Array.from(files)
+      .slice(1)
+      .forEach((file) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          bank.addEffect(
+            new Uint8Array(event.target.result),
+            file.name.replace(/\.afx/, ''),
+            false
+          );
+          position.textContent = `${pad(bank.selected + 1, 3)}/${pad(
+            bank.effects.length,
+            3
+          )}`;
+        };
+        reader.readAsArrayBuffer(file);
+      });
+  }
   if (file.name.toLowerCase().endsWith('.afx')) {
     // then it's a single effect - let's add it
-    bank.addEffect(data);
+    bank.addEffect(data, file.name.replace('.afx', ''));
   } else {
     // assume it's a bank
-
     bank = new Bank(data);
   }
   showEffect(bank.effect);
 });
 
-fetch('/assets/mummy.afb')
-  .then((res) => res.arrayBuffer())
-  .then((data) => {
-    bank = new Bank(data);
-    window.bank = bank;
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    play(bank.effect);
+  }
 
-    init();
+  if (e.key === 'D') {
+    const data = bank.save();
+    save(data, 'untitled' + '.afb');
+  }
+
+  if (e.key === '=' || e.key === '+') {
+    bank.selected++;
     showEffect(bank.effect);
-  });
+  }
+
+  if (e.key === '-' || e.key === '_') {
+    bank.selected--;
+    showEffect(bank.effect);
+  }
+});
+
+buttons.on('click', async (e) => {
+  const action = e.target.dataset.action;
+
+  if (action === 'stop') {
+    if (playingSource) {
+      playingSource.stop();
+    }
+    return;
+  }
+
+  if (action === 'play') {
+    return play(bank.effect);
+  }
+
+  if (action === 'import') {
+    const collection = importCollection.value;
+    console.log(collection);
+
+    if (collection) {
+      fetch('/assets/' + collection + '.afb')
+        .then((res) => res.arrayBuffer())
+        .then((data) => {
+          const b = new Bank(new Uint8Array(data));
+
+          b.effects.forEach((effect) => {
+            bank.effects.push(effect);
+          });
+          showEffect(bank.effect);
+        });
+    }
+  }
+});
+
+init();
