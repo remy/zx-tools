@@ -5,8 +5,8 @@ import effectToWave from './ayplay';
  * @type {Effect}
  */
 export class Effect {
-  /** @type {EffectFrame[]} */
-  frames = [];
+  /** @type {Map<EffectFrame>} */
+  frames = new Map();
 
   /** @type {string} */
   name = '';
@@ -21,12 +21,34 @@ export class Effect {
 
   /** @type {number} */
   get length() {
-    return this.frames.length;
+    return this.frames.size;
   }
 
   /** @type {EffectFrame} */
   get last() {
-    return this.frames[this.frames.length - 1];
+    return this.frames.get(this.frames.size - 1);
+  }
+
+  /**
+   * Gets the specific frame, also creating it if it doesn't exist
+   *
+   * @param {number} index
+   * @param {boolean} [getEmpty=false] by default get will make a new frame, this disables that
+   * @returns {EffectFrame}
+   */
+  get(index, getEmpty = false) {
+    if (this.frames.has(index)) {
+      return this.frames.get(index);
+    }
+
+    const frame = new EffectFrame();
+
+    if (getEmpty) {
+      return frame;
+    }
+    this.frames.set(index, frame);
+
+    return frame;
   }
 
   /**
@@ -34,7 +56,7 @@ export class Effect {
    * @returns {number} - length of frames
    */
   push(frame) {
-    return this.frames.push(frame);
+    return this.frames.set(this.frames.size, frame);
   }
 
   /**
@@ -77,7 +99,7 @@ export class Effect {
       frame.volume = byte & 0x0f;
       frame.t = !(byte & (1 << 4));
       frame.n = !(byte & (1 << 7));
-      this.frames.push(frame);
+      this.push(frame);
     }
 
     return offset;
@@ -144,8 +166,6 @@ export class Bank {
 
   /** @type {Effect} */
   get effect() {
-    console.log('returning ' + this._selected);
-
     return this.effects[this._selected];
   }
 
@@ -162,6 +182,28 @@ export class Bank {
     this._selected = this.effects.length - 1;
 
     return effect;
+  }
+
+  /**
+   * Create a new empty effect
+   *
+   * @returns {Effect}
+   */
+  add() {
+    const effect = new Effect();
+    this.effects.push(effect);
+    this._selected = this.effects.length - 1;
+
+    return effect;
+  }
+
+  /**
+   * Removes and effect from the bank
+   *
+   * @param {number} index index of effect
+   */
+  delete(index = this._selected) {
+    console.log('TODO: ' + index);
   }
 
   loadBank() {

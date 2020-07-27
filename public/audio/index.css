@@ -51,11 +51,11 @@ td input {
   outline: 5px auto Highlight;
 }
 
-.bool input:checked + label.tone:before {
+.bool input:checked + label.t:before {
   content: 'T';
 }
 
-.bool input:checked + label.noise:before {
+.bool input:checked + label.n:before {
   content: 'N';
 }
 

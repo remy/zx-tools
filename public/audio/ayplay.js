@@ -12,7 +12,7 @@ const max_fx_len = 0x1000;
  */
 const encode = (s) => new TextEncoder().encode(s);
 
-const volTab = [
+const volTab = Int32Array.from([
   0,
   836 / 3,
   1212 / 3,
@@ -29,7 +29,7 @@ const volTab = [
   46421 / 3,
   55195 / 3,
   65535 / 3,
-];
+]);
 
 /**
  * @class
@@ -62,14 +62,14 @@ class Chip {
   /** @type {Tone[]} */
   tone = [new Tone()];
 
-  /** @type {Noise[]}*/
-  noise = [];
+  /** @type {Noise}*/
+  noise = new Noise();
 
   /** @type {number[]}*/
-  reg = new Array(16);
+  reg = new Int32Array(16);
 
   /** @type {number[]}*/
-  dac = new Array(1);
+  dac = new Uint8Array(1);
 
   /** @type {number} */
   out = 0;
@@ -170,9 +170,11 @@ function ayOut(ay, reg, value) {
  */
 export default function effectToWave(effect) {
   let ay = new Chip();
-  let ifrq = MIX_RATE / 25;
+  window.ay = ay;
+  let ifrq = MIX_RATE / 50;
 
-  let slen = ifrq * effect.frames.filter((f) => f.volume > 0).length;
+  let frameCount = effect.length + 3;
+  let slen = ifrq * frameCount;
   let flen = slen * 2 + 44;
   let waveSize = flen;
   const data = new Uint8Array(waveSize);
@@ -190,7 +192,7 @@ export default function effectToWave(effect) {
   view.setUint32(32, 2, true);
   view.setUint32(34, 16, true); // this seems like a mistake…
   data.set(encode('data'), 36);
-  view.setUint32(40, slen * 2);
+  view.setUint32(40, slen * 2, true);
 
   let pp = 44;
   let icnt = 0;
@@ -198,30 +200,45 @@ export default function effectToWave(effect) {
   // pp = off;
 
   let i = 0;
+  let printed = false;
+
+  let tick = (AY_CLOCK / 8 / MIX_RATE) | 0;
+
+  const waveData = new Uint8Array(slen * 2);
 
   for (let aa = 0; aa < slen; aa++) {
-    ayTick(ay, AY_CLOCK / 8 / MIX_RATE);
+    ayTick(ay, tick);
 
     if (icnt++ >= ifrq) {
       icnt = 0;
 
-      if (pp < max_fx_len) {
-        ayOut(ay, 0, effect.frames[i].tone & 255);
-        ayOut(ay, 1, effect.frames[i].tone >> 8);
-        ayOut(ay, 6, effect.frames[i].noise);
-        ayOut(
-          ay,
-          7,
-          0xf6 | (effect.frames[i].t ? 0 : 1) | (effect.frames[i].n ? 0 : 8)
-        );
-        ayOut(ay, 8, effect.frames[i].volume);
+      if (i < max_fx_len) {
+        const frame = effect.get(i, true);
+        ayOut(ay, 0, frame.tone & 255);
+        ayOut(ay, 1, frame.tone >> 8);
+        ayOut(ay, 6, frame.noise);
+        ayOut(ay, 7, 0xf6 | (frame.t ? 0 : 1) | (frame.n ? 0 : 8));
+        ayOut(ay, 8, frame.volume);
       }
 
       i++;
     }
 
-    view.setUint8(pp + aa, ay.out / (AY_CLOCK / 8 / MIX_RATE));
+    waveData[aa * 2] = ay.out / tick; // (AY_CLOCK / 8 / MIX_RATE);
+    waveData[aa * 2 + 1] = ay.out / tick; // (AY_CLOCK / 8 / MIX_RATE);
+    if (waveData[aa] && !printed) {
+      const frame = effect.get(i, true);
+      console.log(waveData[aa], aa, ay.out);
+      console.log(0, frame.tone & 255);
+      console.log(1, frame.tone >> 8);
+      console.log(6, frame.noise);
+      console.log(7, 0xf6 | (frame.t ? 0 : 1) | (frame.n ? 0 : 8));
+      console.log(8, frame.volume);
+      printed = true;
+    }
   }
+
+  data.set(waveData, pp);
 
   return data;
 }

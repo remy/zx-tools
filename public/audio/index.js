@@ -10,6 +10,8 @@ import save from '../lib/save.js';
 /** @type {Bank|null} */
 let bank = null;
 
+let emptyBanks = new Set();
+
 let table = document.querySelector('table');
 const nameEl = document.querySelector('#name');
 const position = document.querySelector('#position');
@@ -60,7 +62,7 @@ const handler = (event) => {
       const input = target.querySelector('input');
       input.value = value;
 
-      handleInput({ target: input });
+      handleRangeAdjust({ target: input });
       event.preventDefault();
     }
   }
@@ -84,6 +86,7 @@ track(table, {
 
     if (target.type === 'checkbox') {
       target.checked = startState.checked;
+      target.dispatchEvent(new CustomEvent('update', { bubbles: true }));
     }
   },
   end() {
@@ -170,20 +173,20 @@ function input(name, value) {
 /**
  *
  * @param {boolean} value
- * @param {string} className
+ * @param {string} name
  * @returns {Element}
  */
-function bool(value, className) {
+function bool(value, name) {
   const td = document.createElement('td');
   td.className = 'bool';
   const input = document.createElement('input');
   const label = document.createElement('label');
   td.appendChild(input);
   td.appendChild(label);
-  label.className = className;
+  label.className = name;
   input.type = 'checkbox';
   input.checked = value;
-  input.name = className;
+  input.name = name;
   return td;
 }
 
@@ -208,7 +211,8 @@ function showEffect(effect) {
   const volumeMax = 16 ** maxForInput('volume') - 1;
 
   for (let i = 0; i < 0xff; i++) {
-    const frame = effect.frames[i];
+    emptyBanks.delete(i);
+    const frame = effect.frames.get(i);
     const offset = i * 8; // 8 input elements
     if (frame) {
       trs[i].dataset.volume = frame.volume;
@@ -236,6 +240,10 @@ function showEffect(effect) {
         `${(100 / volumeMax) * frame.volume}%`
       );
     } else {
+      if (emptyBanks.has(i)) {
+        continue;
+      }
+      emptyBanks.add(i);
       trs[i].dataset.volume = 0;
       root[offset + 0].checked = false;
       root[offset + 1].checked = false;
@@ -280,19 +288,40 @@ document.body.addEventListener('focusout', (e) => {
  * @param {Event} event
  * @param {Element} event.target
  */
-function handleInput({ target }) {
-  const input = target;
-  const root = input.closest('tr');
-  const name = input.name;
+function handleCheckboxUpdate({ target }) {
+  const root = target.closest('tr');
+  const frame = bank.effect.get(parseInt(root.dataset.frame, 10));
+  const name = target.name;
+
+  console.log('here', target.type);
+
+  if (target.type === 'checkbox') {
+    frame[name] = target.checked;
+    return;
+  }
+}
+
+/**
+ * @param {Event} event
+ * @param {Element} event.target
+ */
+function handleRangeAdjust({ target }) {
+  const root = target.closest('tr');
+  const frame = bank.effect.get(parseInt(root.dataset.frame, 10));
+  const name = target.name;
+
+  // just in case
+  if (target.type !== 'text' && target.type !== 'range') return;
+
   const bar = root.querySelector(`.bar input[name="${name}"]`).parentNode;
   const text = root.querySelector(`input[name="${name}"][type="text"]`);
   const range = root.querySelector(`input[name="${name}"][type="range"]`);
   const maxLength = maxForInput(name);
   const max = 16 ** maxLength - 1;
-  let value = parseInt(input.value, 10);
+  let value = parseInt(target.value, 10);
 
-  if (input.type === 'text') {
-    value = parseInt('0x' + input.value.slice(-maxLength), 16);
+  if (target.type === 'text') {
+    value = parseInt('0x' + target.value.slice(-maxLength), 16);
     range.value = value;
   }
 
@@ -303,13 +332,17 @@ function handleInput({ target }) {
   if (isNaN(value)) value = 0;
   text.value = value.toString(16).padStart(maxLength, '0').toUpperCase();
 
+  frame[name] = value;
+
   // handle the bar change
   bar.dataset.value = value;
   const p = (100 / max) * value;
   bar.querySelector('label').style.setProperty('--width', `${p}%`);
 }
 
-table.addEventListener('input', handleInput);
+table.addEventListener('input', handleRangeAdjust);
+table.addEventListener('change', handleCheckboxUpdate);
+table.addEventListener('update', handleCheckboxUpdate);
 
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') {
@@ -318,7 +351,7 @@ document.addEventListener('keydown', (e) => {
 
   if (e.key === 'D') {
     const data = bank.effect.play();
-    save(data, 'untitled.wav');
+    save(data, (bank.effect.name || 'untitled') + '.wav');
   }
 
   if (e.key === '=' || e.key === '+') {
@@ -333,7 +366,6 @@ document.addEventListener('keydown', (e) => {
 });
 
 /**
- *
  * @param {Effect} effect
  */
 function play(effect) {
@@ -370,8 +402,8 @@ function init() {
   const template = document.createElement('tr');
   template.dataset.volume = 0;
 
-  template.appendChild(bool(false, 'tone'));
-  template.appendChild(bool(false, 'noise'));
+  template.appendChild(bool(false, 't'));
+  template.appendChild(bool(false, 'n'));
 
   const tone = inputBar('tone', 0, 3);
   const noise = inputBar('noise', 0, 2);
@@ -386,8 +418,10 @@ function init() {
   template.appendChild(volume.bar);
 
   for (let i = 0; i < 0xff; i++) {
+    emptyBanks.add(i);
     const node = template.cloneNode(true);
-    node.prepend(td((i + 1).toString().padStart(3, '0'), 'pos' + i, 'pos'));
+    node.prepend(td(i.toString().padStart(3, '0'), 'pos' + i, 'pos'));
+    node.dataset.frame = i;
     root.appendChild(node);
   }
 
