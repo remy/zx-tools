@@ -6,11 +6,12 @@ import save from '../lib/save.js';
 
 /**
  * @typedef { import("./afx").Effect } Effect
+ * @typedef { import("./afx").Bank } Bank
  */
 
 /** @type {Bank|null} */
-let bank = new Bank();
-window.bank = bank;
+let bank = null;
+bank = createNewBank();
 
 let emptyBanks = new Set();
 
@@ -21,10 +22,37 @@ const buttons = $('[data-action]');
 const importCollection = document.querySelector('#import-collection');
 let table = document.querySelector('table');
 const nameEl = document.querySelector('#name');
-const position = document.querySelector('#position');
+const position = document.querySelector('#current-position');
+const totalEffects = document.querySelector('#total-effects');
 
 /** @type {boolean|null} */
 let startState = { filter: null, checked: null };
+
+/**
+ * @param {Uint8Array} [data]
+ * @returns {Bank}
+ */
+function createNewBank(data) {
+  bank = new Bank(data);
+  window.bank = bank;
+
+  bank.hook((type) => {
+    if (type === 'update-effects') {
+      const length = bank.length;
+      const selected = bank.selected;
+      position.innerHTML = Array.from({ length }, (_, i) => {
+        return `<option ${selected === i ? 'selected' : ''} value="${i}">${pad(
+          i,
+          3
+        )}</option>`;
+      });
+
+      totalEffects.textContent = pad(length - 1, 3);
+    }
+  });
+
+  return bank;
+}
 
 /**
  * Converts a number to hex in upper case and padded
@@ -204,10 +232,7 @@ function bool(value, name) {
  */
 function showEffect(effect) {
   nameEl.value = effect.name;
-  position.textContent = `${pad(bank.selected + 1, 3)}/${pad(
-    bank.effects.length,
-    3
-  )}`;
+  position.value = bank.selected;
 
   // old school!
   const root = document.forms[0];
@@ -300,8 +325,6 @@ function handleCheckboxUpdate({ target }) {
   const frame = bank.effect.get(parseInt(root.dataset.frame, 10));
   const name = target.name;
 
-  console.log('here', target.type);
-
   if (target.type === 'checkbox') {
     frame[name] = target.checked;
     return;
@@ -352,6 +375,16 @@ table.addEventListener('change', handleCheckboxUpdate);
 table.addEventListener('update', handleCheckboxUpdate);
 
 /**
+ * Stops current playing source and playing source to null
+ */
+function stop() {
+  if (playingSource) {
+    playingSource.stop();
+    playingSource = null;
+  }
+}
+
+/**
  * @param {Effect} effect
  */
 function play(effect) {
@@ -369,14 +402,16 @@ function play(effect) {
   const context = new AudioContext();
 
   context.decodeAudioData(data.buffer, function (buffer) {
-    if (playingSource) {
-      playingSource.stop();
-    }
+    stop();
     // Create a source node from the buffer
     playingSource = context.createBufferSource();
     playingSource.buffer = buffer;
     // Connect to the final output node (the speakers)
-    playingSource.connect(context.destination);
+
+    const gainNode = context.createGain();
+    gainNode.gain.value = 0.5;
+    playingSource.connect(gainNode);
+    gainNode.connect(context.destination);
     // Play immediately
     playingSource.start(0);
   });
@@ -417,6 +452,17 @@ function init() {
   table.querySelector('tbody').replaceWith(root);
 }
 
+/**
+ * Prompt to download the effects bank
+ */
+function download() {
+  const filename = prompt('Filename:', 'untitled.afb');
+  if (filename) {
+    const data = bank.export();
+    save(data, filename);
+  }
+}
+
 drop(document.documentElement, (data, file, files) => {
   if (files.length > 1) {
     // collect other files too - assume they're afx
@@ -431,10 +477,10 @@ drop(document.documentElement, (data, file, files) => {
             file.name.replace(/\.afx/, ''),
             false
           );
-          position.textContent = `${pad(bank.selected + 1, 3)}/${pad(
-            bank.effects.length,
-            3
-          )}`;
+          // position.textContent = `${pad(bank.selected, 3)}/${pad(
+          //   bank.effects.length - 1,
+          //   3
+          // )}`;
         };
         reader.readAsArrayBuffer(file);
       });
@@ -444,19 +490,39 @@ drop(document.documentElement, (data, file, files) => {
     bank.addEffect(data, file.name.replace('.afx', ''));
   } else {
     // assume it's a bank
-    bank = new Bank(data);
+    createNewBank(data);
   }
   showEffect(bank.effect);
 });
 
+position.addEventListener('change', (e) => {
+  bank.selected = parseInt(e.target.value, 10);
+  showEffect(bank.effect);
+});
+
 document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    return stop();
+  }
+
+  if (e.key === 'Delete' || (e.key === 'Backspace' && e.shiftKey)) {
+    if (confirm('Delete the current effect?')) {
+      bank.delete(bank.selected);
+    }
+  }
+
+  if (e.key === 'Enter' && e.shiftKey) {
+    bank.add();
+    return;
+  }
+
   if (e.key === 'Enter') {
-    play(bank.effect);
+    return play(bank.effect);
   }
 
   if (e.key === 'D') {
-    const data = bank.save();
-    save(data, 'untitled' + '.afb');
+    download();
+    return;
   }
 
   if (e.key === '=' || e.key === '+') {
@@ -473,11 +539,19 @@ document.addEventListener('keydown', (e) => {
 buttons.on('click', async (e) => {
   const action = e.target.dataset.action;
 
+  if (action === 'save-effect') {
+    return save(
+      bank.effect.export(),
+      (bank.effect.name || pad(bank.selected, 3)) + '.afx'
+    );
+  }
+
+  if (action === 'download') {
+    return download();
+  }
+
   if (action === 'stop') {
-    if (playingSource) {
-      playingSource.stop();
-    }
-    return;
+    return stop();
   }
 
   if (action === 'play') {
@@ -486,7 +560,6 @@ buttons.on('click', async (e) => {
 
   if (action === 'import') {
     const collection = importCollection.value;
-    console.log(collection);
 
     if (collection) {
       fetch('/assets/' + collection + '.afb')
@@ -494,9 +567,16 @@ buttons.on('click', async (e) => {
         .then((data) => {
           const b = new Bank(new Uint8Array(data));
 
+          if (bank.effects.length === 1) {
+            if (bank.effect.length === 0) {
+              bank.delete(0);
+            }
+          }
+
           b.effects.forEach((effect) => {
             bank.effects.push(effect);
           });
+          bank.trigger('update-effects');
           showEffect(bank.effect);
         });
     }

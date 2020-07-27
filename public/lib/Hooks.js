@@ -1,4 +1,8 @@
+/**
+ * @class
+ */
 export default class Hooks {
+  /** @type {Function[]}*/
   hooks = [];
 
   /**

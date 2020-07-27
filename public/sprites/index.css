@@ -563,21 +563,6 @@ details {
   font-size: 90%;
 }
 
-.keys {
-  list-style: none;
-  padding-left: 0;
-}
-
-.keys dd {
-  margin-bottom: 16px;
-  line-height: 1.2;
-}
-
-.keys dt {
-  font-weight: bold;
-  line-height: 1.2;
-}
-
 .col2 {
   columns: 2;
 }

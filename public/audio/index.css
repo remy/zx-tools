@@ -147,3 +147,27 @@ td {
 input[type='range'] {
   pointer-events: none;
 }
+
+#import-collection + button {
+  display: none;
+}
+
+#import-collection:invalid {
+  box-shadow: none;
+}
+
+#import-collection:valid + button {
+  display: inline-block;
+}
+
+details[open] summary {
+  font-weight: bold;
+}
+
+details {
+  margin-bottom: 20px;
+}
+
+details[open] {
+  padding-bottom: 40px;
+}

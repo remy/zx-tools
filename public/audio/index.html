@@ -4,7 +4,9 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width">
-    <title>specnext AY audio generator</title>
+    <title>Remy's AY audio generator and driver for the ZX Spectrum Next</title>
+    <meta name="description"
+      content="Remy's ZX Spectrum Next tools: txt2bas, bas2txt, sprite editor, tilemaps, palette editor, audio effects and image and font tools">
     <link rel="stylesheet" href="../index.css">
     <link rel="stylesheet" href="./index.css">
     <link rel="shortcut icon" href="/favicon.ico">
@@ -23,27 +25,81 @@
         <li><a href="/help/">Help</a></li>
       </ul>
     </nav>
-    <p>This is an (simplistic) AY audio generator to be used with Shiru's ayfx player - which I've also ported to a
-      NextBASIC driver.
+    <p>This is an (simplistic) AY audio generator to be used with <a
+        href="https://shiru.untergrund.net/software.shtml#old">Shiru's AYFX player</a>. Generate SFX below, download the
+      bank and play back in NextBASIC using my <a href="https://github.com/remy/next-ayfx">AYFX Driver</a>.
     </p>
-    <div>
-      <nav>
-        <button data-action="play" title="[E]nter">Play</button>
-        <button data-action="stop" title="[E]nter when playing">Stop</button>
-        <span id="position">000/000</span>
+    <details>
+      <summary>Usage</summary>
+      <p>Pos is frame number. You can drag and select the effects by selecting the frame numbers for copy, paste and
+        delete features.</p>
+      <p>T, N are the AY mixer bits. Per is the tone period. Ns is the noise period. V is the volume.
+      </p>
+      <p>You can click and drag any column and it will let you change all the values in the column.</p>
+      <p>To playback audio, make sure that the volume has a value larger than zero, and the T or N are enabled. You can
+        also import a collection for some inspiration.</p>
+      <p>The editor also supports drag and drop of individual effects (with the suffix .afx) or banks (usually suffixed
+        with .afb).</p>
+      <h2>Keyboard Shortcuts</h2>
+      <dl class="keys columns">
+        <div>
+          <dt>Enter</dt>
+          <dd>Play the current effect</dd>
+        </div>
+        <div>
+          <dt>Escape</dt>
+          <dd>Stop playback</dd>
+        </div>
+        <div>
+          <dt>+ (or =)</dt>
+          <dd>Move to next effect</dd>
+        </div>
+        <div>
+          <dt>- (or _)</dt>
+          <dd>Move to previous effect</dd>
+        </div>
+        <div>
+          <dt>Shift+Enter</dt>
+          <dd>Add new effect</dd>
+        </div>
+        <div>
+          <dt>del</dt>
+          <dd>Delete current effect</dd>
+        </div>
+        <div>
+          <dt>D</dt>
+          <dd>download effects bank</dd>
+        </div>
+
+        <div>
+          <dt>Tab</dt>
+          <dd>Move focus to a control. Sliders can be changed using cursor keys</dd>
+        </div>
+
+      </dl>
+    </details>
+    <main>
+
+      <div>
+        <span id="position"><select id="current-position">
+            <option>000</option>
+          </select>/<span id="total-effects">000</span></span>
         <input type="text" id="name">
+        <button data-action="save-effect" title="Save single effect">Save FX</button>
+        <button data-action="play" title="Enter">Play</button>
+        <button data-action="stop" title="Shift + Enter">Stop</button>
         <button data-action="download" title="[D]ownload .afb for playback on Spectrum">Download Bank</button>
         <span>
-          <select id="import-collection">
-            <option value="-1">[import collection]</option>
+          <select required id="import-collection">
+            <option value="">[import collection]</option>
             <option value="tests">Test effects (19)</option>
             <option value="zxgames">ZX Games (94)</option>
             <option value="zxmsx">ZX MSX Demos (143)</option>
             <option value="streets">Streets of Rage 2 (25)</option>
           </select>
-          <button data-action="import">Import</button>
+          <button data-action="import">import</button>
         </span>
-      </nav>
+      </div>
       <form>
         <table>
           <thead>
@@ -62,10 +118,7 @@
           <tbody id="bank"></tbody>
         </table>
       </form>
-    </div>
-    <div>
-
-    </div>
+    </main>
 
     <script src="/shared.js"></script>
     <script src="./index.js"></script>

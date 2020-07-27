@@ -1,5 +1,6 @@
 import effectToWave from './ayplay';
 import { encode } from '../lib/encode';
+import Hooks from '../lib/Hooks';
 
 const maxEffectLength = 0x1000;
 
@@ -170,8 +171,9 @@ class EffectFrame {
 
 /**
  * @class
+ * @augments Hooks
  */
-export class Bank {
+export class Bank extends Hooks {
   /** @type {Effect[]} */
   effects = [];
 
@@ -182,11 +184,17 @@ export class Bank {
    * @param {Uint8Array} data source data from a .afb file
    */
   constructor(data) {
+    super();
     this.data = data;
     if (data) this.loadBank(data);
     else {
       this.effects.push(new Effect());
     }
+  }
+
+  /** @type {number} total number of effects */
+  get length() {
+    return this.effects.length;
   }
 
   /** @type {number} Current selected bank */
@@ -204,6 +212,8 @@ export class Bank {
       this._selected = value;
     }
 
+    this.trigger('update-effects');
+
     return this._selected;
   }
 
@@ -215,7 +225,7 @@ export class Bank {
   /**
    * @returns {Uint8Array} afb bank compatible data
    */
-  save() {
+  export() {
     const length = this.effects.length;
     const data = new Uint8Array(maxEffectLength * length + 260 * length);
 
@@ -259,6 +269,8 @@ export class Bank {
       this._selected = this.effects.length - 1;
     }
 
+    this.trigger('update-effects', effect);
+
     return effect;
   }
 
@@ -272,6 +284,8 @@ export class Bank {
     this.effects.push(effect);
     this._selected = this.effects.length - 1;
 
+    this.trigger('update-effects', effect);
+
     return effect;
   }
 
@@ -284,6 +298,7 @@ export class Bank {
   delete(index = this._selected) {
     const effect = this.effects[index];
     this.effects.splice(index, 1);
+    this.trigger('update-effects', effect);
     return effect;
   }
 
@@ -354,5 +369,6 @@ export class Bank {
     }
 
     this.effects = effects;
+    this.trigger('update-effects');
   }
 }
