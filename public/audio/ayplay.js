@@ -224,18 +224,10 @@ export default function effectToWave(effect) {
       i++;
     }
 
-    waveData[aa * 2] = ay.out / tick; // (AY_CLOCK / 8 / MIX_RATE);
-    waveData[aa * 2 + 1] = ay.out / tick; // (AY_CLOCK / 8 / MIX_RATE);
-    if (waveData[aa] && !printed) {
-      const frame = effect.get(i, true);
-      console.log(waveData[aa], aa, ay.out);
-      console.log(0, frame.tone & 255);
-      console.log(1, frame.tone >> 8);
-      console.log(6, frame.noise);
-      console.log(7, 0xf6 | (frame.t ? 0 : 1) | (frame.n ? 0 : 8));
-      console.log(8, frame.volume);
-      printed = true;
-    }
+    const point = ay.out / tick;
+
+    waveData[aa * 2] = point;
+    waveData[aa * 2 + 1] = point >> 8;
   }
 
   data.set(waveData, pp);
