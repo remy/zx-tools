@@ -154,8 +154,15 @@ select {
   vertical-align: middle;
 }
 
-p {
+p,
+hr {
   max-width: 720px;
+}
+
+hr {
+  border: 1px solid #666;
+  border-radius: 4px;
+  margin-left: 0;
 }
 
 details footer {

@@ -3,6 +3,7 @@ import { $ } from '../lib/$';
 import track from '../lib/track-down';
 import drop from '../lib/dnd';
 import save from '../lib/save.js';
+import debounce from 'lodash.debounce';
 
 /**
  * @typedef { import("./afx").Effect } Effect
@@ -48,17 +49,20 @@ function createNewBank(data) {
       });
 
       totalEffects.textContent = pad(length - 1, 3);
-
-      const effect = bank.effect;
-      if (effect) {
-        const exported = btoa(Array.from(bank.effect.export()).join(','));
-        window.history.replaceState(null, null, '?src=' + exported);
-      }
+      updateUrl();
     }
   });
 
   return bank;
 }
+
+const updateUrl = debounce(() => {
+  const effect = bank.effect;
+  if (effect) {
+    const exported = btoa(Array.from(bank.effect.export()).join(','));
+    window.history.replaceState(null, null, '#src=' + exported);
+  }
+}, 250);
 
 /**
  * Converts a number to hex in upper case and padded
@@ -299,6 +303,8 @@ function showEffect(effect) {
       root[offset + 7].nextSibling.style = '';
     }
   }
+
+  updateUrl();
 }
 
 /**
@@ -316,8 +322,6 @@ document.body.addEventListener('focusout', (e) => {
   if (target.type === 'text' && target.id !== 'name') {
     if (target.value.trim() === '') {
       target.value = 0;
-      // const event = new Event('input');
-      // target.dispatchEvent(event);
     }
   }
 });
@@ -333,6 +337,7 @@ function handleCheckboxUpdate({ target }) {
 
   if (target.type === 'checkbox') {
     frame[name] = target.checked;
+    updateUrl();
     return;
   }
 }
@@ -374,6 +379,7 @@ function handleRangeAdjust({ target }) {
   bar.dataset.value = value;
   const p = (100 / max) * value;
   bar.querySelector('label').style.setProperty('--width', `${p}%`);
+  updateUrl();
 }
 
 table.addEventListener('input', handleRangeAdjust);
@@ -483,10 +489,6 @@ drop(document.documentElement, (data, file, files) => {
             file.name.replace(/\.afx/, ''),
             false
           );
-          // position.textContent = `${pad(bank.selected, 3)}/${pad(
-          //   bank.effects.length - 1,
-          //   3
-          // )}`;
         };
         reader.readAsArrayBuffer(file);
       });
@@ -542,6 +544,10 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
+nameEl.addEventListener('input', (e) => {
+  bank.effect.name = e.target.value.trim();
+});
+
 buttons.on('click', async (e) => {
   const action = e.target.dataset.action;
 
@@ -590,8 +596,9 @@ buttons.on('click', async (e) => {
 });
 
 init();
-if (window.location.search.includes('src=')) {
-  const q = new URLSearchParams(window.location.search);
+if (window.location.hash.includes('src=')) {
+  const q = new URLSearchParams(window.location.hash.substring(1));
+
   const d = Uint8Array.from(
     atob(q.get('src'))
       .split(',')

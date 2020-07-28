@@ -161,6 +161,10 @@ input[type='range'] {
   display: inline-block;
 }
 
+summary {
+  max-width: 100px;
+}
+
 details[open] summary {
   font-weight: bold;
 }
