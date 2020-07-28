@@ -32,12 +32,12 @@ export default class BmpEncoder {
     this.height = height;
     this.extraBytes = this.width % 4;
     this.rgbSize = width * height;
-    this.headerInfoSize = 40;
+    this.headerInfoSize = 40; // DIB header length (excludes the 16 bytes for the bitmap header)
 
     /******************header***********************/
     this.flag = 'BM';
     this.reserved = 0;
-    this.offset = this.headerInfoSize + (1 << 8);
+    this.offset = 16 + this.headerInfoSize + (1 << 8) * 4;
     this.fileSize = this.rgbSize + this.offset;
     this.planes = 1;
     this.bitPP = 8; // NOTE - this is expected to be an 8bit image
@@ -93,7 +93,7 @@ export default class BmpEncoder {
   }
 
   encode() {
-    this.view = new DataView(new ArrayBuffer(this.offset + this.bytes.length));
+    this.view = new DataView(new ArrayBuffer(this.offset + this.rgbSize));
     this.pos = 0;
 
     this.write('Uint8', this.flag.charCodeAt(0));
@@ -107,7 +107,7 @@ export default class BmpEncoder {
     this.write('Uint16', this.planes);
     this.write('Uint16', this.bitPP);
     this.write('Uint32', this.compress);
-    this.write('Uint32', this.rgbSize);
+    this.write('Uint32', this.rgbSize); // rawSize
     this.write('Uint32', this.hr);
     this.write('Uint32', this.vr);
     this.write('Uint32', this.colors);

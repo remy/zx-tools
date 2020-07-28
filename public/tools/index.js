@@ -392,24 +392,31 @@ async function renderImageForBmp(file) {
   const ctx = canvas.getContext('2d');
   const div = document.createElement('div');
   div.className = 'container';
-  div.appendChild(canvas);
 
-  const img = await loadImage(file);
+  let img = await loadImage(file);
   ctx.drawImage(img, 0, 0); // TODO scale to 256x192
+  const imageData = ctx.getImageData(0, 0, width, height);
+  const bmp = new BmpEncoder({
+    data: new Uint8Array(imageData.data.buffer),
+    width,
+    height,
+  });
+  const bmpData = bmp.encode();
+
+  let renderedImage = new Image();
+  const blob = new Blob([bmpData], { type: 'image/bmp' });
+  const url = URL.createObjectURL(blob);
+
+  renderedImage.src = url;
+
+  div.appendChild(renderedImage);
 
   const button = document.createElement('button');
   div.appendChild(button);
   button.onclick = async () => {
-    const imageData = ctx.getImageData(0, 0, width, height);
-
-    const bmp = new BmpEncoder({
-      data: new Uint8Array(imageData.data.buffer),
-      width,
-      height,
-    });
-
-    save(bmp.encode(), basename(file.name) + '.bmp');
+    save(bmpData, basename(file.name) + '.bmp');
   };
+
   button.innerText = 'Download as 8bit BMP';
   result.prepend(div);
 }
