@@ -1,6 +1,6 @@
 // we'll version our cache (and learn how to delete caches in
 // some other post)
-const cacheName = 'v1::static';
+const cacheName = 'v2::static';
 
 self.addEventListener('install', (e) => {
   // once the SW is installed, go ahead and fetch the resources
@@ -22,6 +22,9 @@ self.addEventListener('install', (e) => {
           '/sprites/index.html',
           '/sprites/index.css',
           '/sprites/index.js',
+          '/audio/index.html',
+          '/audio/index.css',
+          '/audio/index.js',
           '/tools/index.html',
           '/tools/index.css',
           '/tools/index.js',
