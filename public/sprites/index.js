@@ -110,6 +110,12 @@ function generateNewSpriteSheet({
       console.log(
         'State restored from ' + new Date(restored.lastSaved).toLocaleString()
       );
+    } else {
+      data = Uint8Array.from({ length: 256 * 16 * 4 }, (_, i) => {
+        if (check == false && i < 256) return i;
+        return transparent;
+      });
+      sprites = newSpriteSheet(data);
     }
   } else {
     sprites = newSpriteSheet(data);
