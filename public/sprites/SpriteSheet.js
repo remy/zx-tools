@@ -3,7 +3,11 @@ import Hooks from '../lib/Hooks.js';
 import { width, pixelLength, getCoords } from './sprite-tools.js';
 import palette from './Palette.js';
 
+/**
+ * @class
+ */
 export default class SpriteSheet extends Hooks {
+  /** @type {Sprite[]} */
   sprites = [];
   previewCtx = [];
   history = [];
@@ -20,6 +24,8 @@ export default class SpriteSheet extends Hooks {
     [0, 16],
     [16, 16],
   ];
+  /** @type {string} */
+  filename = 'untitled.spr';
 
   constructor(data, { ctx, scale = 2, subSprites } = {}) {
     super();
@@ -54,6 +60,7 @@ export default class SpriteSheet extends Hooks {
 
   serialize() {
     return {
+      filename: this.filename,
       data: Array.from(this.data),
     };
   }

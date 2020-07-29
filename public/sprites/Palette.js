@@ -47,6 +47,8 @@ function defaultPalette(length = 256) {
  */
 export class Palette extends Hooks {
   _transparency = transparent;
+
+  /** @type {string} */
   filename = 'untitled.pal';
   priority = new Set();
 
@@ -85,34 +87,34 @@ export class Palette extends Hooks {
       .join('');
   }
 
+  /**
+   * Loads the palette based on file data from a .pal file
+   *
+   * @param {Uint8Array} data
+   */
+  restoreFromData(data) {
+    this.priority = new Set();
+    data = new Uint16Array(data.buffer).map((_, i) => {
+      if (isPriority(_)) {
+        this.priority.add(i);
+      }
+      return nextLEShortToP(_);
+    });
+
+    this.data = data;
+    this.updateTable();
+    this.render();
+    this.trigger('change');
+    this.updateCounts();
+  }
+
   attach() {
     const node = this.node;
     let data = this.data;
 
-    drop(node, (file) => {
-      this.priority = new Set();
-      data = new Uint16Array(file.buffer).map((_, i) => {
-        if (i === 1) {
-          console.log({
-            _,
-            _1: Uint16Array.of(_),
-            a: isPriority(_),
-            b: isPriority(Uint16Array.of(_)[0]),
-          });
-        }
-        if (isPriority(_)) {
-          this.priority.add(i);
-        }
-        return nextLEShortToP(_);
-      });
-
-      console.log(data.slice(0, 3));
-
-      this.data = data;
-      this.updateTable();
-      this.render();
-      this.trigger('change');
-      this.updateCounts();
+    drop(node, (data, file) => {
+      this.restoreFromData(data);
+      this.filename = file.name;
     });
 
     const zoom = document.querySelector('#palette .zoom');
@@ -363,9 +365,7 @@ export class Palette extends Hooks {
     return {
       filename: this.filename,
       priority: Array.from(this.priority),
-      data: Array.from(
-        new Uint8Array(this.data.map((_) => indexToNextLEShort(_)).buffer)
-      ),
+      data: Array.from(this.export()),
     };
   }
 

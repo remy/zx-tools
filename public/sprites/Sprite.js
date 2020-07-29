@@ -2,13 +2,15 @@ import { width, xyToIndex, emptyCanvas } from './sprite-tools.js';
 import { transparent, toRGB332 } from './lib/colour.js';
 import palette from './Palette';
 
+/**
+ * @class
+ */
 export default class Sprite {
   scale = width;
   _lastIndex = null;
   cachedSource = [];
 
   /**
-   *
    * @param {Uint8Array} pixels
    */
   constructor(pixels) {
@@ -19,19 +21,32 @@ export default class Sprite {
     this.subSprite = 0;
   }
 
+  /** @type {number} */
   set subSprite(value) {
     this._subSprite = value;
     document.body.dataset.subSprite = value;
   }
 
+  /** @type {number} */
   get subSprite() {
     return this._subSprite;
   }
 
+  /** @type {HTMLCanvasElement} */
   get canvas() {
     return this.ctx.canvas;
   }
 
+  /**
+   * Gets the pixel at given X/Y (or index)
+   *
+   * @param {object} options
+   * @param {number} options.x
+   * @param {number} options.y
+   * @param {number} [options.index]
+   * @param {number} [options.scale=this.scale]
+   * @returns {number} Pixel value at given position
+   */
   pget({ index = null, x = null, y, scale = this.scale }) {
     index = xyToIndex({ x, y, w: scale });
 
@@ -42,6 +57,16 @@ export default class Sprite {
     return this.pixels[index];
   }
 
+  /**
+   * Sets the pixel at given X/Y (or index) to `value`
+   *
+   * @param {object} options
+   * @param {number} options.value
+   * @param {number} options.x
+   * @param {number} options.y
+   * @param {number} [options.index]
+   * @param {number} [options.scale=this.scale]
+   */
   pset({ index = null, x = null, y, value, scale = this.scale }) {
     index = xyToIndex({ x, y, w: scale });
 

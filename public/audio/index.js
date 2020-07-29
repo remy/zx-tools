@@ -552,10 +552,18 @@ buttons.on('click', async (e) => {
   const action = e.target.dataset.action;
 
   if (action === 'save-effect') {
-    return save(
-      bank.effect.export(),
-      (bank.effect.name || pad(bank.selected, 3)) + '.afx'
+    const filename = prompt(
+      'Save single effect (optionally extension to .afx)',
+      (bank.effect.name || pad(bank.selected, 3)) + '.wav'
     );
+
+    if (filename) {
+      if (filename.endsWith('.afx')) {
+        return save(bank.effect.export(), filename);
+      } else {
+        return save(bank.effect.play(), filename);
+      }
+    }
   }
 
   if (action === 'download') {

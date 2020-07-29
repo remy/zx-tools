@@ -16,6 +16,10 @@ import debounce from 'lodash.debounce';
 import trackDown from '../lib/track-down.js';
 import palette from './Palette.js';
 
+/**
+ * @typedef { import("../lib/dnd").DropCallback } DropCallback
+ */
+
 const container = document.querySelector('#container');
 const exampleBasicLink = document.querySelector('#basic-example-link');
 const ctx = container.getContext('2d');
@@ -50,48 +54,65 @@ function newSpriteSheet(file) {
   return sprites;
 }
 
-function saveLocal() {
+const saveLocal = debounce(() => {
   console.log('saving state locally');
+  saveState({ spriteSheet: sprites, tileMap, palette });
+}, 500);
 
-  saveState({ spriteSheet: sprites, tileMap });
-}
-
-function generateNewSpriteSheet({ check = true, file = null } = {}) {
-  if (!file && check) {
+/**
+ *
+ * @param {object} options
+ * @param {boolean} options.check confirm whether we should replace the current sprite sheet
+ * @param {Uint8Array} [options.data]
+ * @param {File} [options.file]
+ * @returns {SpriteSheet}
+ */
+function generateNewSpriteSheet({
+  check = true,
+  data = null,
+  file = { name: 'untitled.spr' },
+} = {}) {
+  if (!data && check) {
     if (!confirm('Are you sure you want to create a blank new sprite sheet?')) {
       return;
     }
     localStorage.removeItem('spriteSheet');
+    data = Uint8Array.from({ length: 256 * 16 * 4 }, (_, i) => {
+      if (check == false && i < 256) return i;
+      return transparent;
+    });
   }
 
   let spriteData;
 
-  const restored = restoreState();
+  if (!data) {
+    const restored = restoreState();
 
-  if (!check && restored.lastSaved > Date.now() - ONE_WEEK) {
-    spriteData = Uint8Array.from(restored.spriteSheet.data);
-    sprites = newSpriteSheet(spriteData);
+    if (!check && restored.lastSaved > Date.now() - ONE_WEEK) {
+      spriteData = Uint8Array.from(restored.spriteSheet.data);
+      sprites = newSpriteSheet(spriteData);
 
-    if (restored.tileMap) {
-      const tileMapData = restored.tileMap;
-      tileMap.load({
-        sprites,
-        bank: new Uint8Array(tileMapData.bank),
-        dimensions: tileMapData,
-      });
-      tileMap.paint();
+      sprites.filename = restored.spriteSheet.filename;
+      file.name = sprites.filename;
+      palette.restoreFromData(Uint8Array.from(restored.palette.data));
+      palette.filename = restored.palette.filename;
+
+      if (restored.tileMap) {
+        const tileMapData = restored.tileMap;
+        tileMap.load({
+          sprites,
+          bank: new Uint8Array(tileMapData.bank),
+          dimensions: tileMapData,
+        });
+        tileMap.filename = tileMapData.filename;
+        tileMap.paint();
+      }
+      console.log(
+        'State restored from ' + new Date(restored.lastSaved).toLocaleString()
+      );
     }
-    console.log(
-      'State restored from ' + new Date(restored.lastSaved).toLocaleString()
-    );
   } else {
-    sprites = newSpriteSheet(
-      file ||
-        Uint8Array.from({ length: 256 * 16 * 4 }, (_, i) => {
-          if (check == false && i < 256) return i;
-          return transparent;
-        })
-    );
+    sprites = newSpriteSheet(data);
   }
 
   sprites.hook(() => {
@@ -104,6 +125,7 @@ function generateNewSpriteSheet({ check = true, file = null } = {}) {
   sprites.hook(debounce(saveLocal, 2000));
 
   sprites.current = 0; // triggers complete draw
+  sprites.filename = file.name;
 
   // FIXME not quite right…
   tileMap.sprites = sprites;
@@ -118,7 +140,7 @@ function generateNewSpriteSheet({ check = true, file = null } = {}) {
 }
 
 function download() {
-  const filename = prompt('Filename:', 'untitled.spr');
+  const filename = prompt('Filename:', sprites.filename);
   if (filename) {
     save(sprites.data, filename);
   }
@@ -181,6 +203,7 @@ if (!document.body.prepend) {
   document.querySelector('#tile-map-container').prepend(tileMap.ctx.canvas);
 }
 
+/** @type {DropCallback} */
 async function fileToImageWindow(data, file) {
   const res = await parseNoTransformFile(data, file);
   const ctx = document.querySelector('#importer canvas.png').getContext('2d');
@@ -193,8 +216,9 @@ async function fileToImageWindow(data, file) {
   imageWindow.paint();
 }
 
-function fileToTile(file) {
-  const unpack = new Unpack(file);
+/** @type {DropCallback} */
+function fileToTile(data, file) {
+  const unpack = new Unpack(data);
 
   const header = unpack.parse(
     `<A8$sig
@@ -217,16 +241,17 @@ function fileToTile(file) {
     const dims = prompt('Tile map width?');
     const width = parseInt(dims.trim(), 10);
     dimensions.width = width; // aka autostart
-    dimensions.height = file.length / width;
-    bank = new Uint8Array(file);
+    dimensions.height = data.length / width;
+    bank = new Uint8Array(data);
   } else if (header.hOffset !== 0x8000) {
     // then we've got a version where I tucked the dimensions in the file
     dimensions.width = header.autostart; // aka autostart
     dimensions.height = (header.length - 128) / dimensions.width; // header is 128 bytes
-    bank = new Uint8Array(file.slice(unpack.offset));
+    bank = new Uint8Array(data.slice(unpack.offset));
   } else {
-    bank = new Uint8Array(file.slice(unpack.offset));
+    bank = new Uint8Array(data.slice(unpack.offset));
   }
+  tileMap.filename = file.name;
   tileMap.load({ bank, dimensions });
   tileMap.sprites = sprites; // just in case
   tileMap.paint();
@@ -571,9 +596,10 @@ function renderSpritePreviews() {
   });
 }
 
-function fileHandler(file) {
-  file = decode(file);
-  sprites = generateNewSpriteSheet({ file });
+/** @type {DropCallback} */
+function fileHandler(data, file) {
+  data = decode(data);
+  sprites = generateNewSpriteSheet({ file, data });
 }
 
 const move = (e) => {
@@ -654,7 +680,7 @@ mapUpload.addEventListener('change', (e) => {
   const droppedFile = e.target.files[0];
   const reader = new FileReader();
   reader.onload = (event) => {
-    fileToTile(new Uint8Array(event.target.result));
+    fileToTile(new Uint8Array(event.target.result), droppedFile);
   };
   reader.readAsArrayBuffer(droppedFile);
 });
@@ -664,14 +690,14 @@ $('input[name="transparency"]').on('change', (e) => {
 });
 
 function downloadPal() {
-  const filename = prompt('Filename:', 'untitled.pal');
+  const filename = prompt('Filename:', palette.filename);
   if (filename) {
     save(palette.export(), filename);
   }
 }
 
 function downloadTiles() {
-  const filename = prompt('Filename:', 'untitled.map');
+  const filename = prompt('Filename:', tileMap.filename);
   if (filename) {
     const includeHeader = $('#include-tile-header').checked;
     let length = tileMap.bank.length;
@@ -696,6 +722,8 @@ function downloadTiles() {
     save(data, filename);
   }
 }
+
+document.documentElement.addEventListener('drop', () => saveLocal(), true);
 
 // support native paste of pngs
 document.onpaste = async (event) => {

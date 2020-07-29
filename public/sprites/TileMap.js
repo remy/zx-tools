@@ -38,6 +38,8 @@ export default class TileMap extends Hooks {
   history = [];
   _undoPtr = 0;
   showIndexOverlay = false;
+
+  /** @type {string} */
   filename = 'untitled.map';
 
   constructor({ size = 8, sprites }) {

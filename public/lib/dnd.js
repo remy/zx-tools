@@ -1,14 +1,16 @@
 /**
- * @callback Callback
+ * @callback DropCallbackX
  * @param {Uint8Array} data
  * @param {File} file
  * @param {File[]} files
  */
 
+/** @typedef {(data: Uint8Array, file: File, files: File[]) => boolean} DropCallback */
+
 /**
  *
  * @param {Element} root
- * @param {Callback} callback
+ * @param {DropCallback} callback
  */
 export default function drop(root, callback) {
   root.ondragover = () => false;
