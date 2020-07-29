@@ -553,7 +553,7 @@ buttons.on('click', async (e) => {
 
   if (action === 'save-effect') {
     const filename = prompt(
-      'Save single effect (optionally extension to .afx)',
+      'Save single effect (default is wave file, change extension to .afx for AYFX effect)',
       (bank.effect.name || pad(bank.selected, 3)) + '.wav'
     );
 
