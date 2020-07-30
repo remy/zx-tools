@@ -10,10 +10,6 @@ import debounce from 'lodash.debounce';
  * @typedef { import("./afx").Bank } Bank
  */
 
-/** @type {Bank|null} */
-let bank = null;
-bank = createNewBank();
-
 let emptyBanks = new Set();
 
 /** @type {AudioBufferSourceNode|null} */
@@ -21,13 +17,40 @@ let playingSource = null;
 
 const buttons = $('[data-action]');
 const importCollection = document.querySelector('#import-collection');
-let table = document.querySelector('table');
+const table = document.querySelector('table');
 const nameEl = document.querySelector('#name');
 const position = document.querySelector('#current-position');
 const totalEffects = document.querySelector('#total-effects');
+const startState = { filter: null, checked: null };
 
-/** @type {boolean|null} */
-let startState = { filter: null, checked: null };
+const updateUrl = debounce(() => {
+  const effect = bank.effect;
+  if (effect) {
+    const exported = btoa(Array.from(bank.effect.export()).join(','));
+    window.history.replaceState(null, null, '#src=' + exported);
+  }
+}, 250);
+
+/** @type {Bank|null} */
+let bank = null;
+bank = createNewBank();
+
+/**
+ * Updates the total count of effects on the screen
+ */
+function updateTotals() {
+  const length = bank.length;
+  const selected = bank.selected;
+  position.innerHTML = Array.from({ length }, (_, i) => {
+    return `<option ${selected === i ? 'selected' : ''} value="${i}">${pad(
+      i,
+      3
+    )}</option>`;
+  });
+
+  totalEffects.textContent = pad(length - 1, 3);
+  updateUrl();
+}
 
 /**
  * @param {Uint8Array} [data]
@@ -38,31 +61,15 @@ function createNewBank(data) {
   window.bank = bank;
 
   bank.hook((type) => {
+    console.log('event');
     if (type === 'update-effects') {
-      const length = bank.length;
-      const selected = bank.selected;
-      position.innerHTML = Array.from({ length }, (_, i) => {
-        return `<option ${selected === i ? 'selected' : ''} value="${i}">${pad(
-          i,
-          3
-        )}</option>`;
-      });
-
-      totalEffects.textContent = pad(length - 1, 3);
-      updateUrl();
+      updateTotals();
     }
   });
+  updateTotals();
 
   return bank;
 }
-
-const updateUrl = debounce(() => {
-  const effect = bank.effect;
-  if (effect) {
-    const exported = btoa(Array.from(bank.effect.export()).join(','));
-    window.history.replaceState(null, null, '#src=' + exported);
-  }
-}, 250);
 
 /**
  * Converts a number to hex in upper case and padded
