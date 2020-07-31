@@ -423,10 +423,10 @@ async function renderImageForBmp(file) {
   button.onclick = () => save(bmpData, basename(filename) + '.bmp');
 
   const buttonNXI = document.createElement('button');
-  buttonNXI.innerText = 'Download as NXI';
+  buttonNXI.innerText = 'Download as SL2';
   div.appendChild(buttonNXI);
   buttonNXI.onclick = () =>
-    save(Uint8Array.from(bmp.pixels), basename(filename) + '.nxi');
+    save(Uint8Array.from(bmp.pixels), basename(filename) + '.sl2');
 
   const buttonNXIp = document.createElement('button');
   buttonNXIp.innerText = 'NXI with palette';
