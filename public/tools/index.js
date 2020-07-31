@@ -366,7 +366,11 @@ function renderBlockTable(blocks) {
 }
 
 function basename(filename) {
-  return filename.split('.').slice(0, -1).join('.');
+  const parts = filename.split('.').filter(Boolean);
+  if (parts.length === 1) {
+    return parts[0];
+  }
+  return parts.slice(0, -1).join('.');
 }
 
 function loadImage(file) {
@@ -394,7 +398,7 @@ async function renderImageForBmp(file) {
   div.className = 'container';
 
   let img = await loadImage(file);
-  ctx.drawImage(img, 0, 0); // TODO scale to 256x192
+  ctx.drawImage(img, 0, 0);
   const imageData = ctx.getImageData(0, 0, width, height);
   const bmp = new BmpEncoder({
     data: new Uint8Array(imageData.data.buffer),
@@ -411,13 +415,30 @@ async function renderImageForBmp(file) {
 
   div.appendChild(renderedImage);
 
+  const filename = file.name;
+
   const button = document.createElement('button');
+  button.innerText = 'Download as 8bit BMP';
   div.appendChild(button);
-  button.onclick = async () => {
-    save(bmpData, basename(file.name) + '.bmp');
+  button.onclick = () => save(bmpData, basename(filename) + '.bmp');
+
+  const buttonNXI = document.createElement('button');
+  buttonNXI.innerText = 'Download as NXI';
+  div.appendChild(buttonNXI);
+  buttonNXI.onclick = () =>
+    save(Uint8Array.from(bmp.pixels), basename(filename) + '.nxi');
+
+  const buttonNXIp = document.createElement('button');
+  buttonNXIp.innerText = 'NXI with palette';
+  div.appendChild(buttonNXIp);
+  buttonNXIp.onclick = () => {
+    const bytes = new Uint8Array(bmp.palette.length + bmp.pixels.length);
+    bytes.set(bmp.pixels, 0);
+    bytes.set(bmp.palette, bmp.pixels.length);
+
+    save(bytes, basename(filename) + '.nxi');
   };
 
-  button.innerText = 'Download as 8bit BMP';
   result.prepend(div);
 }
 

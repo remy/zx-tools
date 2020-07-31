@@ -79,6 +79,9 @@ export default class BmpEncoder {
       index[i] = pData.indexOf(pixels[i]);
     }
 
+    this.pixels = pixels;
+    this.palette = palette;
+
     const bytes = new Uint8Array(palette.length + index.length);
     bytes.set(palette, 0);
     bytes.set(index, palette.length);

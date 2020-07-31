@@ -21,7 +21,7 @@ const table = document.querySelector('table');
 const nameEl = document.querySelector('#name');
 const position = document.querySelector('#current-position');
 const totalEffects = document.querySelector('#total-effects');
-const startState = { filter: null, checked: null };
+let startState = { filter: null, checked: null };
 
 const updateUrl = debounce(() => {
   const effect = bank.effect;
