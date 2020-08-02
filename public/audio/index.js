@@ -540,6 +540,12 @@ document.addEventListener('keydown', (e) => {
     return;
   }
 
+  if (e.key === 'z' && (e.metaKey || e.ctrlKey)) {
+    bank.effect.undo();
+    showEffect(bank.effect);
+    return;
+  }
+
   if (e.key === '=' || e.key === '+') {
     bank.selected++;
     showEffect(bank.effect);

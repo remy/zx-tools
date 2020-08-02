@@ -12,6 +12,9 @@ export class Effect {
   /** @type {Map<EffectFrame>} */
   frames = new Map();
 
+  /** @type {EffectFrame[]} */
+  history = [];
+
   /** @type {string} */
   name = '';
 
@@ -31,6 +34,22 @@ export class Effect {
   /** @type {EffectFrame} */
   get last() {
     return this.frames.get(this.frames.size - 1);
+  }
+
+  /**
+   * Capture current state of the frames (for undo)
+   */
+  snapshot() {
+    this.history.push([...this.frames.entries()]);
+  }
+
+  /**
+   * pop the state and undo
+   */
+  undo() {
+    const frameSet = this.history.pop();
+    if (!frameSet) return;
+    this.frames = new Map(frameSet);
   }
 
   /**
