@@ -19,6 +19,7 @@ table *:not(input, .pos) {
 
 tr {
   border: 2px solid transparent;
+  position: relative;
 }
 
 tr[data-volume='0'] {
@@ -61,6 +62,12 @@ td input {
 .bool input:focus + label:before {
   outline: 5px auto Highlight;
   outline: 5px auto -webkit-focus-ring-color;
+}
+
+tr:focus {
+  outline: 5px auto Highlight;
+  outline: 5px auto -webkit-focus-ring-color;
+  z-index: 10;
 }
 
 .bool input:checked + label.t:before {

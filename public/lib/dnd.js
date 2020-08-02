@@ -1,10 +1,3 @@
-/**
- * @callback DropCallbackX
- * @param {Uint8Array} data
- * @param {File} file
- * @param {File[]} files
- */
-
 /** @typedef {(data: Uint8Array, file: File, files: File[]) => boolean} DropCallback */
 
 /**

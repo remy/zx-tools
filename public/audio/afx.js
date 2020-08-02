@@ -40,16 +40,28 @@ export class Effect {
    * Capture current state of the frames (for undo)
    */
   snapshot() {
-    this.history.push([...this.frames.entries()]);
+    this.history.push([...this.frames.values()].map((_) => _.export()));
   }
 
   /**
    * pop the state and undo
    */
   undo() {
-    const frameSet = this.history.pop();
+    let frameSet = this.history.pop();
     if (!frameSet) return;
-    this.frames = new Map(frameSet);
+    this.frames = new Map(
+      frameSet.map((_, i) => {
+        return [i, new EffectFrame(_)];
+      })
+    );
+  }
+
+  /**
+   * Resets the effect state to empty
+   */
+  clear() {
+    this.frames.clear();
+    this.name = '';
   }
 
   /**
@@ -72,6 +84,22 @@ export class Effect {
     this.frames.set(index, frame);
 
     return frame;
+  }
+
+  /** @typedef {(frame: EffectFrame, index: number, all: EffectFrame[])} EachCallback */
+
+  /**
+   * Apples given function against each frame
+   *
+   * @param {EachCallback} callback
+   */
+  each(callback) {
+    const frameSet = [...this.frames.entries()];
+    frameSet.forEach(callback);
+  }
+
+  toArray() {
+    return [...this.frames.values()];
   }
 
   export() {
@@ -128,11 +156,37 @@ export class Effect {
   }
 
   /**
+   * Deletes a number of frames at given index
+   *
+   * @param {number} index
+   * @param {number} [count=1]
+   */
+  delete(index, count = 1) {
+    const frameSet = [...this.frames.entries()];
+    frameSet.splice(index, count);
+    this.frames = new Map(frameSet);
+  }
+
+  /**
+   * Inserts frames at given position
+   *
+   * @param {number} index
+   * @param {EffectFrame[]} frames
+   */
+  insertBefore(index, frames) {
+    if (!Array.isArray(frames)) frames = [frames];
+    const frameSet = this.toArray();
+    frameSet.splice(index, 0, ...frames);
+
+    this.frames = new Map(frameSet.map((frame, i) => [i, frame]));
+  }
+
+  /**
    * @param {Uint8Array} data
-   * @param {number} length Length of bytes
+   * @param {number} [length] Length of bytes
    * @returns {number} number of bytes used
    */
-  load(data, length) {
+  load(data, length = data.length) {
     const view = new DataView(data.buffer);
     let offset = 0;
     for (; offset < length; ) {
@@ -186,6 +240,32 @@ class EffectFrame {
 
   /** @type {number} noise 8 bit noise period */
   noise = -1;
+
+  /**
+   * @param {object} [o] optional constructor object
+   */
+  constructor(o) {
+    if (o) {
+      this.t = o.t;
+      this.n = o.n;
+      this.volume = o.volume;
+      this.tone = o.tone;
+      this.noise = o.noise;
+    }
+  }
+
+  /**
+   * @returns {object} copy of the class
+   */
+  export() {
+    return {
+      t: this.t,
+      n: this.n,
+      volume: this.volume,
+      tone: this.tone,
+      noise: this.noise,
+    };
+  }
 }
 
 /**

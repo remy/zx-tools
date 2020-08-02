@@ -2,6 +2,7 @@
  * Class representing array-like NodeCollection
  *
  * @class
+ * @augments Array
  * @augments Element
  */
 class NodeListArray extends Array {

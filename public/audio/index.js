@@ -35,6 +35,8 @@ const updateUrl = debounce(() => {
 let bank = null;
 bank = createNewBank();
 
+const copyBank = new Bank();
+
 /**
  * Updates the total count of effects on the screen
  */
@@ -61,7 +63,6 @@ function createNewBank(data) {
   window.bank = bank;
 
   bank.hook((type) => {
-    console.log('event');
     if (type === 'update-effects') {
       updateTotals();
     }
@@ -100,7 +101,7 @@ function pad(value, length) {
  */
 const handler = (event) => {
   let { target, layerX } = event;
-  if (target.nodeName === 'LABEL') {
+  if (target.tagName === 'LABEL') {
     target = target.parentNode;
   }
 
@@ -123,7 +124,7 @@ track(table, {
   moveStart(e) {
     /** @type Element */
     let target = e.target;
-    if (target.nodeName === 'LABEL') {
+    if (target.tagName === 'LABEL') {
       target = target.parentNode;
     }
     const name = target.name || target.dataset.name;
@@ -145,7 +146,10 @@ track(table, {
     startState = { checked: null, filter: null };
   },
   handler,
-  start: handler,
+  start: (event) => {
+    bank.effect.snapshot();
+    handler(event);
+  },
 });
 
 /**
@@ -253,7 +257,7 @@ function showEffect(effect) {
 
   // old school!
   const root = document.forms[0];
-  const trs = table.querySelector('tbody').childNodes;
+  const trs = Array.from(table.querySelector('tbody').childNodes).slice(1);
 
   const toneMax = 16 ** maxForInput('tone') - 1;
   const noiseMax = 16 ** maxForInput('noise') - 1;
@@ -443,6 +447,7 @@ function play(effect) {
 function init() {
   const root = document.createElement('tbody');
   const template = document.createElement('tr');
+  template.tabIndex = 0;
   template.dataset.volume = 0;
 
   template.appendChild(bool(false, 't'));
@@ -460,6 +465,10 @@ function init() {
   template.appendChild(noise.bar);
   template.appendChild(volume.bar);
 
+  const empty = document.createElement('tr');
+  empty.dataset.empty = 'otherwise causes odd height bug';
+  root.appendChild(empty);
+
   for (let i = 0; i < 0xff; i++) {
     emptyBanks.add(i);
     const node = template.cloneNode(true);
@@ -470,6 +479,72 @@ function init() {
 
   table.querySelector('tbody').replaceWith(root);
 }
+
+/**
+ * Reads the selected text in the document and returns as a list of int ids
+ *
+ * @returns {number[]}
+ */
+function getSelection() {
+  let range = [];
+  try {
+    const selection = document.getSelection();
+    let end = selection.focusNode;
+    if (end.nodeName === '#text') end = end.parentNode;
+    selection.collapseToStart();
+    let start = selection.anchorNode;
+    if (start.nodeName === '#text') start = start.parentNode;
+
+    start = parseInt(start.closest('tr').dataset.frame, 10);
+    end = parseInt(end.closest('tr').dataset.frame, 10);
+
+    range = Array.from({ length: end + 1 - start }, (_, i) => i + start);
+  } catch (e) {
+    //noop;
+  }
+  return range;
+}
+
+table.addEventListener('copy', (event) => {
+  const effect = bank.effect;
+  copyBank.effect.clear();
+  const selection = getSelection();
+  selection.forEach((id) => {
+    copyBank.effect.push(effect.get(id));
+  });
+  event.clipboardData.setData('text/plain', copyBank.effect.export().join(','));
+  event.preventDefault();
+});
+
+document.documentElement.addEventListener('paste', (event) => {
+  const focused = document.activeElement;
+  if (focused.tagName === 'INPUT') {
+    return;
+  }
+  let insert = focused.tagName === 'TR';
+  let paste = Uint8Array.from(
+    (event.clipboardData || window.clipboardData)
+      .getData('text')
+      .split(',')
+      .map((_) => parseInt(_, 10))
+  );
+
+  bank.effect.snapshot();
+
+  if (insert) {
+    // prepend
+    const start = parseInt(focused.dataset.frame, 10);
+    copyBank.effect.clear();
+    copyBank.effect.load(paste);
+    bank.effect.insertBefore(start, copyBank.effect.toArray());
+  } else {
+    bank.effect.load(paste);
+  }
+
+  showEffect(bank.effect);
+
+  event.preventDefault();
+});
 
 /**
  * Prompt to download the effects bank
@@ -520,7 +595,16 @@ document.addEventListener('keydown', (e) => {
     return stop();
   }
 
-  if (e.key === 'Delete' || (e.key === 'Backspace' && e.shiftKey)) {
+  if (e.key === 'Delete' || e.key === 'Backspace') {
+    e.preventDefault();
+    const selection = getSelection();
+    if (selection.length) {
+      bank.effect.snapshot();
+      bank.effect.delete(selection[0], selection.length);
+      showEffect(bank.effect);
+      return;
+    }
+
     if (confirm('Delete the current effect?')) {
       bank.delete(bank.selected);
     }
@@ -528,6 +612,7 @@ document.addEventListener('keydown', (e) => {
 
   if (e.key === 'Enter' && e.shiftKey) {
     bank.add();
+    showEffect(bank.effect);
     return;
   }
 
