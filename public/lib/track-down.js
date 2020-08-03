@@ -50,9 +50,11 @@ export default function trackDown(
   };
 
   const upHandler = (e) => {
-    down = false;
     moveStartTracker.clear();
-    end(e);
+    if (down) {
+      down = false;
+      end(e);
+    }
   };
 
   const moveHandler = (e) => {
