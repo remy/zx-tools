@@ -318,7 +318,7 @@ export default class TileMap extends Hooks {
   }
 
   toBasic() {
-    const str = `#autoline
+    const str = `#autoline 10
     RUN AT 3
     LAYER 2,1: CLS
     LOAD "MY_SPRITES.spr" BANK 13:; spritesheet
