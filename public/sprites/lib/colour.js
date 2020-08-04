@@ -76,14 +76,6 @@ export function toRGB332({ r, g, b } = {}) {
   );
 }
 
-// export function toNext256(r, g, b) {
-//   r = ((r / 32) | 0) << 6;
-//   g = ((g / 32) | 0) << 3;
-//   b = (b / 32) | 0;
-
-//   return (r + g + b) & 0xff;
-// }
-
 /**
  * Converts RGB triplet to nearest spectrum next colour value
  *

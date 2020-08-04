@@ -295,9 +295,9 @@ export default class SpriteSheet extends Hooks {
   paintAll() {
     const current = this._current;
     for (let i = 0; i < this.sprites.length; i++) {
-      this.paint(i);
+      this.paint(i, true);
     }
-    this.paint(current); // crappy but works
+    this.paint(current, true); // crappy but works
   }
 
   paint(i = this._current, allSubSprites = false) {

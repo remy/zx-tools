@@ -353,7 +353,12 @@ export class Palette extends Hooks {
   }
 
   reset() {
+    this.priority = new Set();
     this.data = defaultPalette();
+    this.updateTable();
+    this.render();
+    this.trigger('change');
+    this.updateCounts();
   }
 
   /**

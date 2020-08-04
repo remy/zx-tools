@@ -298,6 +298,10 @@ buttons.on('click', async (e) => {
     downloadPal();
   }
 
+  if (action === 'reset-pal') {
+    palette.reset();
+  }
+
   if (action === 'clear-map') {
     if (confirm('This will replace your current map, continue?')) {
       localStorage.removeItem('tileMap');
