@@ -131,6 +131,14 @@ export function bmp(file) {
   return transform({ pixels, width: bmp.width, alphaFirst: true });
 }
 
+const fn = (i) => {
+  const COLS = 8;
+  const x = i % COLS;
+  const y = (i / COLS) | 0;
+
+  return 8 * y + x;
+};
+
 export function parseNoTransformFile(data, file) {
   const known = importable(data);
 
@@ -138,20 +146,47 @@ export function parseNoTransformFile(data, file) {
     return pixelsFromFile(file);
   }
 
-  alert('spr import is not fully supported (yet)');
+  // alert('spr import has limited support');
+
+  const type = confirm(
+    'How are the sprites arranged? OK = 16x16, Cancel = 8x8'
+  );
+
+  let res = null;
+  let width = 16;
+  let height = 64 * 16;
+  if (!type) {
+    // rearrange the pixels
+    width = 8;
+    height = 256 * 8;
+    res = new Uint8Array(data.length);
+    for (let i = 0; i < data.length; i++) {
+      res[i] = data[fn(i)];
+    }
+  } else {
+    res = data;
+  }
+
+  return {
+    data: res,
+    width,
+    height,
+  };
+
   // assume this is a sprite and chunk it to be ordered like a png
 
   // const length = 4 * 16;
-  const res = new Uint8Array(file.length);
+  // const res = new Uint8Array(file.length);
   for (let i = 0; i < file.length; i += 1) {
     // file is the sprite data, arrayed in 16x16 px all in a row
-    const ptr =
-      (((i % 16) + 256 * ((i / 16) | 0)) % 4096) + 16 * ((i / 256) | 0);
+    // const ptr =
+    // (((i % 16) + 256 * ((i / 16) | 0)) % 4096) + 16 * ((i / 256) | 0);
+    const ptr = fn(i);
 
     if (i >= 4096 && i < 4096 + 256) console.log({ ptr, i });
 
     // data[ptr] = file[i];
-    res[i] = file[ptr];
+    res[i] = file[i];
   }
   return {
     data: res,

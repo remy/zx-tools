@@ -95,8 +95,8 @@
                         d="M19 21H8V7h11m0-2H8a2 2 0 00-2 2v14a2 2 0 002 2h11a2 2 0 002-2V7a2 2 0 00-2-2m-3-4H4a2 2 0 00-2 2v14h2V3h12V1z" />
                     </svg>
                   </button>
-                  <button data-action="paste"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                      viewBox="0 0 24 24" fill="#fff">
+                  <button title="Hold shift to paste over, otherwise paste replaces" data-action="paste"><svg
+                      xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#fff">
                       <path
                         d="M19 20H5V4h2v3h10V4h2m-7-2a1 1 0 011 1 1 1 0 01-1 1 1 1 0 01-1-1 1 1 0 011-1m7 0h-4.18C14.4.84 13.3 0 12 0c-1.3 0-2.4.84-2.82 2H5a2 2 0 00-2 2v16a2 2 0 002 2h14a2 2 0 002-2V4a2 2 0 00-2-2z" />
                     </svg>
@@ -313,7 +313,10 @@
                 <div class="button-group">
                   <label><input id="copy-as-8x8" type="checkbox"> Copy as 8x8 sprite set</label>
                 </div>
-                <button data-action="copy">Copy to sprite</button>
+                <div class="button-group">
+                  <button title="Replace the sprite entirely" data-action="copy">Copy&nbsp;in</button>
+                  <button title="Copy pixels into existing sprite" data-action="copy-over">Copy&nbsp;over</button>
+                </div>
                 <div class="button-group">
                   <button data-action="zoom-in"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#fff"
                       width="24" height="24">
@@ -328,14 +331,14 @@
                         d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zM7 9h5v1H7z" />
                     </svg>
                   </button>
-                  <!-- <button action="shift-left"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#fff"
-                    width="24" height="24">
-                    <path d="M14 7l-5 5 5 5V7z" />
-                    <path d="M24 0v24H0V0h24z" fill="none" /></svg></button>
-                <button action="shift-right"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#fff"
-                    width="24" height="24">
-                    <path d="M10 17l5-5-5-5v10z" />
-                    <path d="M0 24V0h24v24H0z" fill="none" /></svg></button> -->
+                  <button action="shift-left"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#fff"
+                      width="24" height="24">
+                      <path d="M14 7l-5 5 5 5V7z" />
+                      <path d="M24 0v24H0V0h24z" fill="none" /></svg></button>
+                  <button action="shift-right"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#fff"
+                      width="24" height="24">
+                      <path d="M10 17l5-5-5-5v10z" />
+                      <path d="M0 24V0h24v24H0z" fill="none" /></svg></button>
                 </div>
                 <div class="range">
                   <label>Mask %
@@ -411,73 +414,6 @@
               </dl>
             </div>
           </div>
-          <details id="change-log">
-            <summary>Change log</summary>
-            <div>
-              <ul>
-                <li>2020 May 20
-                  <ul>
-                    <li>Add: auto save on spritesheet and tilemap</li>
-                    <li>Add: 8x8 tilemap support</li>
-                    <li>Add: Live example BASIC code for tile</li>
-                  </ul>
-                </li>
-                <li>2020 May 16
-                  <ul>
-                    <li>Add: headerless map download option</li>
-                  </ul>
-                <li>2020 April 23
-                  <ul>
-                    <li>Add: map dimension control</li>
-                    <li>Add: upload map button</li>
-                    <li>Add: sample sprites via Rob Uttley</li>
-                  </ul>
-                </li>
-                <li>2020 April 20
-                  <ul>
-                    <li>Add: rotate sprite</li>
-                    <li>Add: mirror sprite on X &amp; Y axis</li>
-                  </ul>
-                </li>
-                <li>2020 April 9
-                  <ul>
-                    <li>Fix: pan sprites with cursors</li>
-                    <li>Fix: tile map doesn't fill screen</li>
-                    <li>Fix: better use of screen space</li>
-                    <li>Fix: more tooltips on hover</li>
-                  </ul>
-                </li>
-                <li>2020 April 5
-                  <ul>
-                    <li>Add: png import tool</li>
-                  </ul>
-                </li>
-                <li>2020 April 2
-                  <ul>
-                    <li>Add: tile map editor</li>
-                    <li>Add: paste png support</li>
-                    <li>Add: drop multiple png files for new sprites</li>
-                  </ul>
-                </li>
-                <li>2020 March 25
-                  <ul>
-                    <li>Add: pan</li>
-                    <li>Add: select sprite from preview sheet</li>
-                    <li>Perf: refactor to use canvas over divs</li>
-                  </ul>
-                </li>
-                <li>2020 March 23
-                  <ul>
-                    <li>Add: fill</li>
-                    <li>Add: key shortcuts for Brush, Fill, Erase</li>
-                    <li>Add: support for arbitrary upload size</li>
-                    <li>Add: show coordinates on main draw area</li>
-                    <li>Fix: highlighting colours from 7-8</li>
-                  </ul>
-                </li>
-              </ul>
-            </div>
-          </details>
         </section>
 
       </div>

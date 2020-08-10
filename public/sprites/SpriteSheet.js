@@ -75,9 +75,8 @@ export default class SpriteSheet extends Hooks {
     this.clipboard.subSprite = this.sprite.subSprite;
   }
 
-  paste() {
+  paste(over = false) {
     if (this.clipboard.pixels) {
-      // debugger;
       let pixels = this.clipboard.pixels;
       let offset = this._current * pixelLength;
       if (this.defaultScale === 8) {
@@ -85,6 +84,18 @@ export default class SpriteSheet extends Hooks {
         pixels = new Uint8Array(pixels.slice(i, i + 64));
         offset = this._current * pixelLength + this.sprite.subSprite * 64;
       }
+
+      if (over) {
+        const data = this.data.slice(offset, offset + pixelLength);
+
+        for (let i = 0; i < data.length; i++) {
+          if (pixels[i] !== palette.transparent) {
+            data[i] = pixels[i];
+          }
+        }
+        pixels = data;
+      }
+
       this.set(pixels, offset);
       if (this.defaultScale === 8) {
         // this.renderSubSprites();

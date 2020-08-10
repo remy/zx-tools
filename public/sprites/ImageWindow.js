@@ -114,8 +114,12 @@ export default class ImageWindow {
     this.paint(x | 0, y | 0);
   }
 
-  copy(as8x8 = false) {
-    const data = new Uint8Array(16 * 16);
+  /**
+   * @param {boolean} [as8x8=false]
+   * @param {boolean|Uint8Array} [over=false]
+   */
+  copy(as8x8 = false, over = false) {
+    const data = over || new Uint8Array(16 * 16);
     const ctx = this.__ctx;
 
     const { x, y } = this.coords();
@@ -135,7 +139,7 @@ export default class ImageWindow {
       const index = toRGB332({ r, g, b });
 
       if (index === 0xe3 || a === 0) {
-        data[i] = 0xe3;
+        if (!over) data[i] = 0xe3;
       } else {
         data[i] = index;
       }

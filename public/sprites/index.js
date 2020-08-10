@@ -285,6 +285,10 @@ $('#png-import-tools button').on('click', (e) => {
   if (action === 'copy') {
     imageWindow.copy($('#copy-as-8x8').checked);
   }
+
+  if (action === 'copy-over') {
+    imageWindow.copy($('#copy-as-8x8').checked, sprites.sprite.pixels);
+  }
 });
 
 exampleBasicLink.addEventListener('mousedown', () => {
@@ -395,7 +399,7 @@ buttons.on('click', async (e) => {
   }
 
   if (action === 'paste') {
-    sprites.paste();
+    sprites.paste(event.shiftKey);
   }
 
   if (action === 'clear') {
