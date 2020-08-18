@@ -9,6 +9,7 @@ import { charset } from './lib/font.js';
 import { Tapper } from './lib/tapper';
 import { toHex } from '../lib/to.js';
 import BmpEncoder from '../lib/bmpEncoder.js';
+import exploreGde from './lib/gde';
 import fontMetrics, { computeHeightFromMetrics } from '../lib/fontMetrics';
 
 let explore = null;
@@ -593,6 +594,10 @@ async function fileHandler(data, file, id) {
     exploreTap(data);
   } else if (ext === 'TZX') {
     exploreTzx(data);
+  } else if (ext === 'GDE') {
+    const { url, navigate } = exploreGde(data);
+    window.open(url);
+    window.gdeNavigate = navigate;
   } else if (ext === 'SCR') {
     if (data.length === 128 + 6912) {
       // includes a header - just drop it

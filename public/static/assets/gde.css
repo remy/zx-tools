@@ -1,0 +1,168 @@
+html {
+  --c-input-bg: #fff;
+  --c-bg: #f9f9f9;
+  --c-bg-alt: #1a1a1a;
+  --c-text: #212121;
+  --c-cta: #1565c0;
+  --c-metadata: #5f5f5f;
+  --c-input-fg: #212121;
+  --c-text-dark-bg: #999999;
+  --c-input-border: #e0e0e0;
+  --c-text-dark: #999999;
+  --c-heading-article: #000;
+  --c-heading-bg: #eeeeee;
+  --c-code-bg: #f5f5f5;
+  --c-code-fg: #000;
+  --c-bg-cta: #fff;
+}
+@media (prefers-color-scheme: dark) {
+  html {
+    --c-code-bg: #2d2d2d;
+    --c-code-fg: #ddd;
+    --c-cta: #03a9f4;
+    --c-bg: #262626;
+    --c-bg-alt: #222;
+    --c-bg-cta: #222;
+    --c-text: #d6d6d6;
+    --c-text-dark: #8b8b8b;
+    --c-text-dark-bg: #dfdfdf;
+    --c-input-bg: #3b3a3a;
+    --c-input-fg: #fff;
+    --c-heading-article: #fff;
+    --c-heading-bg: #111;
+    --c-input-border: #000;
+  }
+}
+
+body {
+  min-height: 100vh;
+  margin: 20px auto;
+  padding: 0px;
+  padding-bottom: 80px;
+  white-space: pre-line;
+  max-width: 80ch;
+}
+
+main {
+  flex: 1;
+}
+
+*,
+input {
+  box-sizing: border-box;
+  font-family: monospace;
+  font-size: 1.1rem;
+}
+
+input {
+  font-weight: bold;
+  text-align: right;
+  outline: none;
+  min-width: 100px;
+  border: 1px solid transparent;
+  width: 30vw;
+}
+
+input[readonly] {
+  border-color: transparent;
+}
+
+li > * {
+  padding: 3px;
+}
+
+li {
+  color: var(--c-text-dark);
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+span.result:before {
+  content: ': ';
+}
+
+span.result > .decimal {
+  color: var(--c-text);
+  padding-left: 10px;
+}
+
+button {
+  border-radius: 5px;
+  padding: 2px 10px;
+  height: 28px;
+  cursor: pointer;
+}
+
+html {
+  background: var(--c-bg);
+  color: var(--c-text);
+}
+
+input,
+select,
+button {
+  background: var(--c-input-bg);
+  color: var(--c-input-fg);
+  padding: 4px;
+  border-radius: 2px;
+}
+
+select,
+button {
+  border: 1px solid var(--c-input-border);
+  background: rgba(1, 1, 1, 0.1);
+}
+
+input {
+  border-radius: 0;
+}
+
+button {
+  padding: 8px 16px;
+  height: auto;
+  /*! border: 0; */
+}
+
+.right {
+  float: right;
+}
+
+.center {
+  text-align: center;
+}
+
+li > * {
+  color: var(--c-text-dark);
+}
+
+input:focus {
+  color: var(--c-input-fg);
+}
+
+footer {
+  padding-top: 20px;
+}
+
+footer nav ul {
+  display: flex;
+  justify-content: space-around;
+}
+
+footer * {
+  font-size: 0.8rem;
+}
+
+footer p {
+  margin: 16px 0;
+}
+
+footer p:last-child {
+  margin-bottom: 0;
+}
+
+a {
+  color: var(--c-cta);
+}
