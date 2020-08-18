@@ -36,11 +36,13 @@ html {
 
 body {
   min-height: 100vh;
-  margin: 20px auto;
+  margin: auto;
   padding: 0px;
-  padding-bottom: 80px;
-  white-space: pre-line;
+  /* padding-bottom: 80px; */
+  white-space: pre;
   max-width: 80ch;
+  display: flex;
+  flex-direction: column;
 }
 
 main {
@@ -52,6 +54,15 @@ input {
   box-sizing: border-box;
   font-family: monospace;
   font-size: 1.1rem;
+  line-height: 1.2;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-size: revert;
+  margin: 0;
 }
 
 input {
@@ -143,7 +154,13 @@ input:focus {
 }
 
 footer {
-  padding-top: 20px;
+  padding: 20px;
+  white-space: initial;
+}
+
+footer .info {
+  display: flex;
+  justify-content: space-between;
 }
 
 footer nav ul {

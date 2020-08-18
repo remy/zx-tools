@@ -595,7 +595,7 @@ async function fileHandler(data, file, id) {
   } else if (ext === 'TZX') {
     exploreTzx(data);
   } else if (ext === 'GDE') {
-    const { url, navigate } = exploreGde(data);
+    const { url, navigate } = exploreGde(data, name);
     window.open(url);
     window.gdeNavigate = navigate;
   } else if (ext === 'SCR') {

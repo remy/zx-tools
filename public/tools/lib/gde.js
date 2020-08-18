@@ -12,10 +12,12 @@ const decode = (d) => new TextDecoder().decode(d);
 
 /**
  * @param {Uint8Array} data
+ * @param {string} name
  * @returns {gde}
  */
-export default function explodeGde(data) {
+export default function explodeGde(data, name) {
   const contents = decode(data);
+
   const lines = contents.split('\n');
 
   const metadata = {};
@@ -36,26 +38,38 @@ export default function explodeGde(data) {
     r: '<span class="right">',
   };
 
-  const urlLength = `blob:${location.origin}/`.length + 36;
-  const link = (/**@type string */ s) => s; //.padEnd(urlLength, ' ');
-
   const blockTags = ['h1', 'h2', 'h3', 'h4', 'c', 'r'];
 
   const toMarkdown = (line) => {
     const blocks = [];
-    line = line.replace(/@{(.*?)}/g, (all, match) => {
-      if (blockTags.includes(match)) {
-        blocks.push(match);
-        return '';
-      }
-      if (tags[match]) return tags[match];
-      if (!match.includes('LINK')) {
-        throw new Error('Unknown tag: ' + match);
-      }
-      const parts = match.split(/"(.*)"\sLINK\s(.*$)/).filter(Boolean);
+    line = line
+      .replace(/[<>]/, (m) => {
+        return { '<': '&lt;', '>': '&gt;' }[m];
+      })
+      .replace(/@{(.*?)}|@@/g, (all, match) => {
+        if (all === '@@') return all;
+        if (blockTags.includes(match)) {
+          blocks.push(match);
+          return '';
+        }
+        if (tags[match]) return tags[match];
+        if (!match.includes('LINK')) {
+          throw new Error(
+            'Unknown tag: ' + JSON.stringify(match) + ', line: ' + line
+          );
+        }
+        const link = match.split(/"(.*)"\sLINK\s(.*$)/).filter(Boolean);
 
-      return `<a href="${link(parts[1])}">${parts[0].trim()}</a>`;
-    });
+        const spacer = link[0].match(/(\s+)/g);
+        let left = '';
+        let right = '';
+        if (spacer) {
+          left = ' '.repeat(spacer[0].length);
+          if (spacer.length > 1) right = ' '.repeat(spacer.pop().length);
+        }
+
+        return `${left}<a href="${link[1]}">${link[0].trim()}</a>${right}`;
+      });
 
     let className = '';
     if (blocks.includes('r')) {
@@ -99,10 +113,10 @@ export default function explodeGde(data) {
 <html>
 <head>
   <title>${metadata.title}</title>
-  <base href="${window.location.origin}">
+  <base href="${location.origin}">
   <link href="/assets/gde.css" rel="stylesheet">
 </head>
-<body>
+<body><main>
 `;
 
   lines.forEach((line) => {
@@ -115,7 +129,7 @@ export default function explodeGde(data) {
       switch (command) {
         case 'node':
           node = {
-            id: param,
+            id: param.toLowerCase(),
             content: head(metadata),
           };
           nodes.push(node);
@@ -127,25 +141,31 @@ export default function explodeGde(data) {
         default:
           metadata[command] = param;
       }
-    } else {
+    } else if (node) {
       // convert to markdown
       node.content += toMarkdown(line) + '\n';
     }
   });
 
   const footer = (node) => `
-<footer>
-  <nav>
+</main><footer><p class="info"><span class="name">${name}</span> <span class="node-id">${node.id.toUpperCase()}</span></p><nav>
     <ul>
-      <li><a href="${link(node.prev)}">Previous</a></li>
-      <li><a href="${link(metadata.index)}">Index</a></li>
-      <li><a href="${link(node.next)}">Next</a></li>
+      <li>${
+        node.prev
+          ? `<a href="${node.prev.toLowerCase()}">Previous</a>`
+          : '&nbsp;'
+      }</li>
+      <li><a href="${nodes[0].id.toLowerCase()}">Main</a></li>
+      <li><a href="${metadata.index.toLowerCase()}">Index</a></li>
+      <li>${
+        node.next ? `<a href="${node.next.toLowerCase()}">Next</a>` : '&nbsp;'
+      }</li>
+
     </ul>
   </nav>
 </footer>
 <script>
 document.body.addEventListener('click', (e) => {
-  debugger;
   if (e.target.nodeName !== 'A') return;
   e.preventDefault();
   window.location = window.opener.gdeNavigate(e.target.pathname);
@@ -166,7 +186,9 @@ document.body.addEventListener('click', (e) => {
     const html = node.content;
     let index = -1;
     while ((index = html.indexOf('a href="', index + 1)) != -1) {
-      const filename = html.substring(index + 8, html.indexOf('"', index + 8));
+      const filename = html
+        .substring(index + 8, html.indexOf('"', index + 8))
+        .toLowerCase();
       const n = nodes.find((_) => _.id === filename);
 
       if (!n) {
@@ -174,14 +196,12 @@ document.body.addEventListener('click', (e) => {
       } else {
         linkIndex[filename] = n.url;
       }
-
-      // if (ctr > 100) break;
     }
   });
 
-  const index = nodes.find((_) => _.id === 'INDEX');
+  const index = nodes[0];
 
-  const navigate = (key) => linkIndex[key.substr(1)];
+  const navigate = (key) => linkIndex[key.substr(1).toLowerCase()];
 
   return { url: index.url, navigate };
 }
