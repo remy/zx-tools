@@ -54,9 +54,7 @@ export default function explodeGde(data, name) {
         }
         if (tags[match]) return tags[match];
         if (!match.includes('LINK')) {
-          throw new Error(
-            'Unknown tag: ' + JSON.stringify(match) + ', line: ' + line
-          );
+          return '';
         }
         const link = match.split(/"(.*)"\sLINK\s(.*$)/).filter(Boolean);
 
@@ -68,7 +66,7 @@ export default function explodeGde(data, name) {
           if (spacer.length > 1) right = ' '.repeat(spacer.pop().length);
         }
 
-        return `${left}<a href="${link[1]}">${link[0].trim()}</a>${right}`;
+        return `${left}<a href="${link[1].toLowerCase()}">${link[0].trim()}</a>${right}`;
       });
 
     let className = '';
@@ -156,7 +154,11 @@ export default function explodeGde(data, name) {
           : '&nbsp;'
       }</li>
       <li><a href="${nodes[0].id.toLowerCase()}">Main</a></li>
-      <li><a href="${metadata.index.toLowerCase()}">Index</a></li>
+      <li>${
+        metadata.index
+          ? `<a href="${metadata.index.toLowerCase()}">Index</a>`
+          : '&nbsp;'
+      }</li>
       <li>${
         node.next ? `<a href="${node.next.toLowerCase()}">Next</a>` : '&nbsp;'
       }</li>
