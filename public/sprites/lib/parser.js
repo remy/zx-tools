@@ -12,8 +12,11 @@ const gifSig = encode('GIF89a');
 export function decode(file) {
   const { isPNG, isBMP } = detect(file);
 
-  if (file.length === 768) {
+  if (file.length === 768 || file.length === 768 + 128) {
     if (confirm('Is this a binary font file?')) {
+      if (file.length > 768) {
+        file = file.slice(128);
+      }
       return font(file);
     }
   }
