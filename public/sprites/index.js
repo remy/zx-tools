@@ -703,6 +703,14 @@ $('input[name="transparency"]').on('change', (e) => {
   document.documentElement.dataset.transparency = e.target.value;
 });
 
+$('#tile-bg').on('change', (e) => {
+  const file = e.target.files[0];
+  const url = URL.createObjectURL(new Blob([file]));
+  const canvas = $('#tile-map-container canvas');
+  canvas.style.setProperty('--bg-image', `url("${url}")`);
+  canvas.style.backgroundSize = '100%';
+});
+
 function downloadPal() {
   const filename = prompt('Filename:', palette.filename);
   if (filename) {
