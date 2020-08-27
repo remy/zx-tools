@@ -58,6 +58,12 @@ export default function explodeGde(data, name) {
         }
         const link = match.split(/"(.*)"\sLINK\s(.*$)/).filter(Boolean);
 
+        if (link.length !== 2) {
+          console.warn('Bad link:', link);
+
+          return '';
+        }
+
         const spacer = link[0].match(/(\s+)/g);
         let left = '';
         let right = '';
@@ -127,14 +133,14 @@ export default function explodeGde(data, name) {
       switch (command) {
         case 'node':
           node = {
-            id: param.toLowerCase(),
+            id: param.trim().toLowerCase(),
             content: head(metadata),
           };
           nodes.push(node);
           break;
         case 'prev':
         case 'next':
-          node[command] = param;
+          node[command] = param.toLowerCase();
           break;
         default:
           metadata[command] = param;
@@ -184,17 +190,23 @@ document.body.addEventListener('click', (e) => {
 
   const linkIndex = {};
 
+  console.log(
+    nodes,
+    nodes.find((_) => _.id === 'output')
+  );
+
   nodes.forEach((node) => {
     const html = node.content;
     let index = -1;
     while ((index = html.indexOf('a href="', index + 1)) != -1) {
       const filename = html
         .substring(index + 8, html.indexOf('"', index + 8))
-        .toLowerCase();
+        .toLowerCase()
+        .trim();
       const n = nodes.find((_) => _.id === filename);
 
       if (!n) {
-        console.log('not found: ' + filename);
+        console.log(`not found: "${filename}"`);
       } else {
         linkIndex[filename] = n.url;
       }
@@ -203,7 +215,9 @@ document.body.addEventListener('click', (e) => {
 
   const index = nodes[0];
 
-  const navigate = (key) => linkIndex[key.substr(1).toLowerCase()];
+  const navigate = (key) => {
+    return linkIndex[key.substr(1).toLowerCase()];
+  };
 
   return { url: index.url, navigate };
 }

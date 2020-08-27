@@ -261,3 +261,8 @@ details footer {
   font-weight: bold;
   line-height: 1.2;
 }
+
+small {
+  display: inline-block;
+  line-height: 1.4;
+}
