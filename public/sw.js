@@ -1,6 +1,6 @@
 // we'll version our cache (and learn how to delete caches in
 // some other post)
-const cacheName = 'v3::static';
+const cacheName = 'v4::static';
 
 self.addEventListener('install', (e) => {
   // once the SW is installed, go ahead and fetch the resources
@@ -31,6 +31,8 @@ self.addEventListener('install', (e) => {
           '/tools/gde/index.html',
           '/tools/gde/index.css',
           '/tools/gde/index.js',
+          '/assets/NextGuide.gde',
+          '/assets/gde.css',
         ])
         .then(() => self.skipWaiting());
     })
