@@ -56,7 +56,10 @@ export default function explodeGde(data, name) {
         if (!match.includes('LINK')) {
           return '';
         }
-        const link = match.split(/"(.*)"\sLINK\s(.*$)/).filter(Boolean);
+        const link = match
+          .split(/"(.*)"\sLINK\s(.*$)/)
+          .filter(Boolean)
+          .filter((_) => _ != ' ');
 
         if (link.length !== 2) {
           console.warn('Bad link:', link);
@@ -190,11 +193,6 @@ document.body.addEventListener('click', (e) => {
 
   const linkIndex = {};
 
-  console.log(
-    nodes,
-    nodes.find((_) => _.id === 'output')
-  );
-
   nodes.forEach((node) => {
     const html = node.content;
     let index = -1;
@@ -206,7 +204,7 @@ document.body.addEventListener('click', (e) => {
       const n = nodes.find((_) => _.id === filename);
 
       if (!n) {
-        console.log(`not found: "${filename}"`);
+        console.warn(`Bad link - node not found: "${filename}"`);
       } else {
         linkIndex[filename] = n.url;
       }
