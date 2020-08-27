@@ -1,0 +1,773 @@
+@title Next Guide Manual
+@author Matt Davies
+@version 1.0
+@copyright Copyright (C)2020 Matt Davies, all rights reserved.
+@date 2020/04/19
+
+@index INDEX
+
+@-------------------------------------------------------------------------------
+@node MAIN
+@next COPYRIGHT
+
+@{c}NextGuide Manual
+
+@{c}Version 1.0
+
+@{c}Written by Matt Davies
+
+@{h1}Overview
+
+NextGuide is a node-based documentation system designed for the ZX Spectrum
+Next.  Rather than viewing a linear plain text file, NextGuide can display
+section of documentation in isolation and have hyperlinks to connect the
+various nodes up.
+
+Below are the hyperlinks found on this node (called "MAIN" as you can see
+in the bottom-right corner).  You can click on these links with the mouse or
+navigate them with the keyboard.  @{i}Right Arrow@{ui} cycles forward through the links
+and @{i}Left Arrow@{ui} cycles backwards.  Pressing @{i}ENTER@{ui} will activate that link.  To 
+get back to the previous link, press @{i}B@{ui}.
+
+ @{" Copyright " LINK COPYRIGHT}
+ @{" Using the Guide " LINK GUIDE}
+ @{" Authoring a Guide " LINK AUTHORING}
+ @{" Acknowledgements " LINK THANKS}
+
+Use the @{i}Up@{ui} and @{i}Down@{ui} arrows to scroll, @{i}SPACE@{ui} to page down and @{i}DELETE@{ui} to page up.
+
+@-------------------------------------------------------------------------------
+@node INDEX
+@{r}NextGuide Manual
+@{c}@{h1}Subject Index
+
+ @{" Activation " LINK CONCEPTS}
+ @{" Authoring a guide " LINK AUTHORING}
+ @{" Command line " LINK CMDLINE}
+ @{" Copyright " LINK COPYRIGHT}
+ @{" Document " LINK CONCEPTS}
+ @{" Global commands " LINK GlobalCommands}
+ @{" Help line " LINK UI}
+ @{" Keyboard shortcuts " LINK KEYBOARD}
+ @{" Limits " LINK Limits}
+ @{" Links Actions " LINK Link_Actions}
+ @{" Mouse support " LINK UI}
+ @{" Nodal commands " LINK NodalCommands}
+ @{" Nodes " LINK CONCEPTS}
+ @{" Status bar " LINK UI}
+ @{" Text area " LINK UI}
+ @{" Text attributes " LINK Text_Attrs}
+
+@{c}@{h1}Command Index
+
+ @{" @index " LINK cmd_Index}
+ @{" @node " LINK cmd_Node}
+ @{" @rem " LINK cmd_Remark}
+ @{" @next " LINK cmd_Next}
+ @{" @prev " LINK cmd_Prev}
+ @{" @toc " LINK cmd_TOC}
+
+@-------------------------------------------------------------------------------
+@node COPYRIGHT
+@next GUIDE
+@prev MAIN
+@toc MAIN
+@{r}NextGuide Manual
+@{c}@{h1}Copyright
+
+This NextGuide client and this document is copyright of Matt Davies.
+
+@{c}@{b}@{i}Copyright @(2020 Matt Davies, all rights reserved.@{ui}@{ub}
+
+Permission for distribution of the client and document is hereby given if and
+only if the software and document are unchanged and the copyright message is
+left intact.
+
+You may copy the manual to individual third parties for their personal use,
+but only if you acknowledge this document as the source of the material.
+
+You may @{b}not@{ub}, except with my express written permission, commercially exploit
+the manual or the software.
+
+@-------------------------------------------------------------------------------
+@node GUIDE
+@next CMDLINE
+@prev COPYRIGHT
+@toc MAIN
+@{r}NextGuide Manual
+@{c}@{h1}Using the Guide
+
+Below are the following sections to using the client to read documents.
+
+ @{" Command Line " LINK CMDLINE}
+ @{" Concepts & Terminology " LINK CONCEPTS}
+ @{" User Interface " LINK UI}
+ @{" Keyboard controls " LINK KEYBOARD}
+
+@-------------------------------------------------------------------------------
+@node CMDLINE
+@next CONCEPTS
+@prev GUIDE
+@toc GUIDE
+@{r}NextGuide Manual
+@{c}@{h1}Command line
+
+The command line invocation for this guide is:
+
+    @{b}.guide <filename> [<node name>]@{ub}
+
+If the file is not found, the software will go through these steps before
+giving up:
+
+  1)  Add the .gde file extension if it doesn't exist.
+  2)  Search in the c:/docs/guides folder.
+
+Only if both of these fail will you be greeted by an error message.
+
+The optional node name allows the reader to jump straight to that node rather
+than the initial main node.  If that node does not exist, the main node will
+be selected as usual.
+
+Also, if no parameters are given, an attempt to open the guide at
+C:/DOCS/GUIDES/NEXTGUIDE.GDE is tried.
+
+@-------------------------------------------------------------------------------
+@node CONCEPTS
+@next UI
+@prev CMDLINE
+@toc GUIDE
+@{r}NextGuide Manual
+@{c}@{h1}Concepts & Terminology
+
+@{h2}Document
+
+A document is a single file (usually suffixed with the extension @{i}.gde@{ui}) that
+contains @{b}nodes@{ub}.  While viewing a document, you will only see one node at a time.
+
+@{h2}Nodes
+
+A node is a single section of a document.  How the document is sectioned up is
+quite arbitrary and the author can decide how they wish to do that.  For
+example, the author can have a node per chapter.
+
+Nodes can be linked to each other via 3 different types of links: the next link;
+the previous link; and a table-of-contents (toc) link.  These nodes and links 
+form a graph which represents the document.  These links can be navigated via
+the @{b}next@{ub}, @{b}previous@{ub} and @{b}contents@{ub} controls
+
+Nodes can also contain embedded links within them and they show up within the
+text as highlighted areas such as seen in the first node of this document.
+The user can navigate these links within the current document and jump to any
+random node.
+
+How the author manages these links is up to them.  However, there are some 
+conventions that should be followed.
+
+Firstly, the next and previous links should be set up so that all the nodes
+can be visited as if the reader was reading a book.  The order should be
+appropiate to the structure of the "book".
+
+Secondly, the toc link is usually used to go up a level to a previous node that
+usually contains embedded links to "child" nodes.  An example of this is using
+the toc link to link this node you're reading now to the "Using the Guide"
+main page.
+
+There are two special nodes in the document, one is required, the other 
+optional.  The first type is the @{b}Main Node@{ub}.  This is the initial node that is
+viewed when the document is first opened.  The second type, which is optional,
+is the @{b}Index Node@{ub}.  This usually contains various embedded links arranged in
+alphabetical order to allow the user to jump to nodes quickly.
+
+@{h2}Link Activation
+
+Embedded links contain actions that are carried out whenever they are
+@{i}activated@{ui}.  Currently, there is only one type of action and that is @{i}LINK@{ui}.
+This action moves the user to another node in the document.
+
+There are more actions planned in the future (such as saving code, showing
+images and screenshots, jumping to nodes in external documents, launching
+dot commands).
+
+@-------------------------------------------------------------------------------
+@node UI
+@next KEYBOARD
+@prev CONCEPTS
+@toc GUIDE
+@{r}NextGuide Manual
+@{c}@{h1}User Interface
+
+The NextGuide client that you're using now contains 3 UI areas: the text; the
+status bar; and the help line.
+
+@{h2}Text area
+
+The text area shows the current node that is being viewed.  You will see the
+body of text contained in this node and any embedded links that allow you to
+jump to other nodes.
+
+@{h2}Scroll indicators
+
+In the top and bottom-right corners there will appear arrows that indicate if
+there is more text to see on the screen.  Using the cursor keys will scroll the
+off-screen text on screen.
+
+@{h2}Status bar
+
+This shows the name of the current file being viewed and the internal name
+for the current node you're viewing.  The Spectrum stripes are added for your
+viewing pleasure.
+
+@{h2}Help line
+
+The help line shows the key commands you can use to navigate around the
+document.
+
+@-------------------------------------------------------------------------------
+@node KEYBOARD
+@next AUTHORING
+@prev UI
+@toc GUIDE
+@{r}NextGuide Manual
+@{c}@{h1}Keyboard Shortcuts
+
+Below are a list of all the keyboard shortcuts that can be used in the Guide.
+
+@{i}Keys            Description@{ui}
+
+N               Move to next node connected by the next link.
+P               Move to the previous node connected by the previous link.
+C               Move to the table of contents node associated with this node.
+Right Arrow     Move to the next embedded link in the current node.
+Left Arrow      Move to the previous embedded link in the current node.
+Enter           Activate the currently selected embedded link.
+M               Jump to the main node.
+I               Jump to the document's index node.
+B               Jump back to the previous node visited.
+A               Display information about the NextGuide application.
+Q               Quit the NextGuide application.
+Up              Scroll upwards in the body of text.
+Down            Scroll downwards in the body of text.
+DELETE          Scroll upwards by a page of text.
+SPACE           Scroll downwards by a page of text.
+
+
+@-------------------------------------------------------------------------------
+@node AUTHORING
+@next GlobalCommands
+@prev KEYBOARD
+@toc MAIN
+@{r}NextGuide Manual
+@{c}@{h1}Authoring a Guide
+
+@{c}@{h1}Document form and structure
+
+A guide is merely a text file that has some special syntax to differentiate
+between normal text and meta-data that describes the node-based structure of
+the document (see @{"here" LINK CONCEPTS} for information about nodes).
+
+If a line starts with @{i}@@@{ui} then it is considered a document command and will take
+the form of:
+
+    @{i}@@<command> <parameters>...@{ui}
+
+There are two types of commands: global and nodal.  Global commands affect the
+whole document, whereas nodal commands affect the current node being defined.
+
+ @{" Global Commands " LINK GlobalCommands}
+ @{" Nodal Commands " LINK NodalCommands}
+
+To define a node a global command @{"@node" LINK cmd_Node} is used.  All nodal
+commands will affect this new node until another new node is defined.  If a
+command is unknown it is simply ignored.
+
+Any line that does not start with a @{i}@@@{ui} is considered a normal line of
+text.  Within a line of text links and text attributes can be defined.  See
+the link below for more information.
+
+ @{" Links and Text Attributes " LINK Links&Attrs}
+
+ @{c}@{h1}About this document
+
+ This document serves as a usage example and all NextGuide features supported
+ can be found in this document.  Please open @{i}NextGuide.gde@{ui} in a text
+ editor of your choice to see how it is formed.
+
+ @{c}@{h1}Limits
+
+ There are certain limits applied to a NextGuide document that describe how
+ many nodes it can contain, how many lines etc.  These are hard limits enforced
+ by the NextGuide dot command.  More information about these limits can be
+ found @{"here" LINK Limits}.
+
+@-------------------------------------------------------------------------------
+@node GlobalCommands
+@next cmd_Author
+@prev AUTHORING
+@toc AUTHORING
+@{r}NextGuide Manual
+@{c}@{h1}Global Commands
+
+Global command are commands that affect the entire document.
+
+ @{"@author" LINK cmd_Author}     Add author meta information.
+ @{"@build" LINK cmd_Build}       Add build meta information.
+ @{"@copyright" LINK cmd_Copyright}   Add copyright meta information.
+ @{"@date" LINK cmd_Date}        Add date meta information.
+ @{"@index" LINK cmd_Index}       Declare the index node.
+ @{"@node" LINK cmd_Node}        Start the definition of a new node.
+ @{"@rem" LINK cmd_Remark}         Add a comment within the document.
+ @{"@title" LINK cmd_Title}       Add title meta information.
+ @{"@version" LINK cmd_Version}     Add version meta information.
+
+
+Please activate links for more information on the commands.
+
+@-------------------------------------------------------------------------------
+@node cmd_Author
+@next cmd_Build
+@prev GlobalCommands
+@toc GlobalCommands
+@{r}NextGuide Manual
+@{c}@{h1}Command: @author
+
+This command adds meta information about the name of the author of the guide.
+
+@{h2}Syntax
+
+ @@author <author's name>
+
+@{h2}Description
+
+The text following the command is stored verbatim.  The maximum number of
+characters allowed are 63.
+
+All meta information is shown in the About screen.
+
+@-------------------------------------------------------------------------------
+@node cmd_Build
+@next cmd_Copyright
+@prev cmd_Author
+@toc GlobalCommands
+@{r}NextGuide Manual
+@{c}@{h1}Command: @build
+
+This command adds meta information about the build number of the guide.
+
+@{h2}Syntax
+
+ @@build <build number or description>
+
+@{h2}Description
+
+The text following the command is stored verbatim.  The maximum number of
+characters allowed are 31.  This data should be updated everytime a new version
+of the guide is created.  However, if the @{"@version" LINK cmd_Version} is enough for you,
+this can of course be omitted and it won't be shown in the About screen.
+
+All meta information is shown in the About screen.
+
+@-------------------------------------------------------------------------------
+@node cmd_Copyright
+@next cmd_Date
+@prev cmd_Build
+@toc GlobalCommands
+@{r}NextGuide Manual
+@{c}@{h1}Command: @copyright
+
+This command adds meta information about the copyright message about this
+guide.
+
+@{h2}Syntax
+
+ @@copyright <message>
+
+@{h2}Description
+
+The text following the command is stored verbatim.  The maximum number of
+characters allowed are 63.  The copyright symbol cannot be inserted in the 
+document by using the 2 characters @{i}@@(@{ui} currently as command arguments
+currently do not go through the text formatter.  For now, '(C)' will have to
+suffice.
+
+All meta information is shown in the About screen.
+
+@-------------------------------------------------------------------------------
+@node cmd_Date
+@next cmd_Index
+@prev cmd_Copyright
+@toc GlobalCommands
+@{r}NextGuide Manual
+@{c}@{h1}Command: @date
+
+This command adds meta information about the date this version of the guide was
+created.
+
+@{h2}Syntax
+
+ @@date <year>/<month>/<day>
+
+@{h2}Description
+
+The text following the command is stored verbatim.  The maximum number of
+characters allowed are 31.  Although not mandatory, it his highly recommended
+that the date format used is YYYY/MM/DD to keep consistency and to avoid
+confusion.  Later versions of the Guide might have features that support this
+date format.
+
+All meta information is shown in the About screen.
+
+@-------------------------------------------------------------------------------
+@node cmd_Index
+@next cmd_Node
+@prev GlobalCommands
+@toc GlobalCommands
+@{r}NextGuide Manual
+@{c}@{h1}Command: @index
+
+This command determines the node that is selected when the user presses the
+@{i}index@{ui} command.  If the index node was defined before with this command,
+the previous definition is overriden.
+
+@{h2}Syntax
+
+ @@index <node name>
+
+@{h2}Description
+
+The @{i}<node name>@{ui} is the internal name of the node (as defined by @{"@node" LINK cmd_Node})
+that will be used as the index node. See @{"here" LINK CONCEPTS} for information about what
+an index node is.
+
+@-------------------------------------------------------------------------------
+@node cmd_Node
+@next cmd_Remark
+@prev cmd_Index
+@toc GlobalCommands
+@{r}NextGuide Manual
+@{c}@{h1}Command: @node
+
+This command starts the definition of a new node and ends the definition of a
+previous node.
+
+@{h2}Syntax
+
+ @@node <node name>
+
+@{h2}Description
+
+The @{i}<node name>@{ui} is the internal name for a node and it cannot be
+longer than 15 characters and must contain only letters, numbers or an
+underscore.  This name is used for all other commands or links that refer to 
+this node.  Node names are also case-insensitive.
+
+@-------------------------------------------------------------------------------
+@node cmd_Remark
+@next cmd_Title
+@prev cmd_Node
+@toc GlobalCommands
+@{r}NextGuide Manual
+@{c}@{h1}Command: @rem
+
+This command is simply ignored.  It is used to insert comments into the document
+that are only visible if you view the document in a text editor.
+
+@{h2}Syntax
+
+ @@rem <Any text can follow>...
+
+@-------------------------------------------------------------------------------
+@node cmd_Title
+@next cmd_Version
+@prev cmd_Remark
+@toc GlobalCommands
+@{r}NextGuide Manual
+@{c}@{h1}Command: @title
+
+This command adds meta information about the title of the guide.
+
+@{h2}Syntax
+
+ @@title <guide's title>
+
+@{h2}Description
+
+The text following the command is stored verbatim.  The maximum number of
+characters allowed are 63.
+
+All meta information is shown in the About screen.
+
+@-------------------------------------------------------------------------------
+@node cmd_Version
+@next NodalCommands
+@prev cmd_Title
+@toc GlobalCommands
+@{r}NextGuide Manual
+@{c}@{h1}Command: @version
+
+This command adds meta information about the version of the guide.
+
+@{h2}Syntax
+
+ @@version <version string>
+
+@{h2}Description
+
+The text following the command is stored verbatim.  The maximum number of
+characters allowed are 63.
+
+All meta information is shown in the About screen.
+
+@-------------------------------------------------------------------------------
+@node NodalCommands
+@next cmd_next
+@prev cmd_Remark
+@toc AUTHORING
+@{r}NextGuide Manual
+@{c}@{h1}Nodal Commands
+
+Nodal commands are commands that affect the current node being defined.  If
+a node has not yet been defined, these commands are simply ignored.
+
+ @{"@next" LINK cmd_next}        Declare the node accessed when NEXT is pressed.
+ @{"@prev" LINK cmd_prev}        Declare the node accessed when PREVIOUS is pressed.
+ @{"@toc" LINK cmd_toc}         Declare the node accessed when CONTENTS is pressed.
+
+Please activate links for more information on the commands.
+
+@-------------------------------------------------------------------------------
+@node cmd_next
+@next cmd_prev
+@prev NodalCommands
+@toc NodalCommands
+@{r}NextGuide Manual
+@{c}@{h1}Command: @next
+
+Determines the node navigated to when the user presses the @{i}Next@{ui} command.
+
+@{h2}Syntax
+
+ @@next <node name>
+
+@{h2}Description
+
+The @{i}<node name>@{ui} is the internal name of the node (as defined by @{"@node" LINK cmd_Node})
+that will be used as the next node.
+
+@-------------------------------------------------------------------------------
+@node cmd_prev
+@next cmd_toc
+@prev cmd_next
+@toc NodalCommands
+@{r}NextGuide Manual
+@{c}@{h1}Command: @prev
+
+Determines the node navigated to when the user presses the @{i}Previous@{ui} command.
+
+@{h2}Syntax
+
+ @@prev <node name>
+
+@{h2}Description
+
+The @{i}<node name>@{ui} is the internal name of the node (as defined by @{"@node" LINK cmd_Node})
+that will be used as the previous node.
+
+@-------------------------------------------------------------------------------
+@node cmd_toc
+@next Links&Attrs
+@prev cmd_prev
+@toc NodalCommands
+@{r}NextGuide Manual
+@{c}@{h1}Command: @toc
+
+Determines the node navigated to when the user presses the @{i}Table Of Contents@{ui}
+command.
+
+@{h2}Syntax
+
+ @@toc <node name>
+
+@{h2}Description
+
+The @{i}<node name>@{ui} is the internal name of the node (as defined by @{"@node" LINK cmd_Node})
+that will be used as the node that contains the table of contents node for the 
+current node.
+
+@-------------------------------------------------------------------------------
+@node Links&Attrs
+@next Link_Actions
+@prev cmd_toc
+@toc AUTHORING
+@{r}NextGuide Manual
+@{c}@{h1}Links and Text Attributes
+
+Links and text attributes can be embedded in text and will take the form:
+
+    @{b}@@{...}@{ub}
+
+To actually insert a @{i}@@@{ui} into the document, enter a double @{i}@@@{ui} such as @{i}@@@@@{ui} or make 
+sure that the character following the @{i}@@@{ui} is not an opening brace @{i}{@{ui}.
+
+@{h2}Links
+
+Links are highlighted areas of text that the user can activate to perform some
+action, such as navigating to another node.  Links are declared using this
+form:
+
+    @{b}@@{"Text that is highlighted" <action> <action parameters>...}@{ub}
+
+The @{i}<action>@{ui} part determines what happens when the link is activated.
+You can find the list of possible actions and what their parameters should be
+in the link below:
+
+ @{" Link Actions " LINK Link_Actions}
+
+@{h2}Text Attributes
+
+Text attributes allow sections of text to be displayed in a different way, such
+as appearance or justification.  They take the form of:
+
+    @{b}@@{<attribute>}@{ub}
+
+The complete list of attributes supported can be found in the link below:
+
+ @{ "Text Attributes " LINK Text_Attrs}
+
+@-------------------------------------------------------------------------------
+@node Link_Actions
+@next Text_Attrs
+@prev Links&Attrs
+@toc Links&Attrs
+@{r}NextGuide Manual
+@{c}@{h1}Link Actions
+
+Below is a table of all the possible actions allowed:
+
+@{i}Action      Parameters          Activation description@{ui}
+LINK        <node name>         Jump to the node with the given internal name.
+
+@-------------------------------------------------------------------------------
+@node Text_Attrs
+@next Limits
+@prev Link_Actions
+@toc Links&Attrs
+@{r}NextGuide Manual
+@{c}@{h1}Text Attributes
+
+Below is a table of all the possible text attributes allowed:
+
+@{i}Command     Description@{ui}
+b           Marks the following text to be @{b}bold@{ub}.
+c           Centres the current line.
+h1          Marks the text on this line as header level 1.
+h2          Marks the text on this line as header level 2.
+h3          Marks the text on this line as header level 3.
+h4          Marks the text on this line as header level 4.
+i           Marks the following text to be @{i}italic@{ui}.
+r           Right justifies the current line.
+ub          Removes the bold attribute
+ui          Removes the italic attribute.
+
+@{h2}A note about justification
+
+You cannot have more than 1 justification command on the same line.  This is not
+supported at this time.
+
+@{h2}A note about bold and italic
+
+The NextGuide application cannot currently display italic or bold fonts at this
+time so it uses colour instead.  Italic text will need to be prefixed with an
+italic attribute command and suffixed with the equivalent command to remove it.
+For example:
+
+    @@{i}This will be in italic@@{ui}
+
+The same is true for bold with @{i}@@{b}@{ui} and @{i}@@{ub}@{ui}.
+
+The italic attribute brightens the text and the bold attribute changes its
+colour.  Italic and bold can be combined to produce a brightened version of the
+bold colour.
+
+@{h2}A note about headers
+
+Currently, headers have no structural meaning within the document.  They just
+offer different colours:
+
+ @{h1}Header 1
+ @{h2}Header 2
+ @{h3}Header 3
+ @{h4}Header 4
+
+@-------------------------------------------------------------------------------
+@node Limits
+@next Thanks
+@prev Text_Attrs
+@toc AUTHORING
+@{r}NextGuide Manual
+@{c}@{h1}Limits
+
+NextGuide has some hard limits on the document sizes, mainly due to the 8-bit
+CPU and 16-bit paged addressing.  Below is a table of the limits and a rationale
+on why they were chosen:
+
+@{i}Description                                 Limit@{ui}
+Number of nodes                             255
+Characters read per line                    255
+Viewable characters displayed per line      80
+Number of lines per node                    2048
+Number of characters allowed in node name   15
+Number of links per node                    255
+
+@{c}@{h1}Rationales
+
+@{h2}Number of nodes
+
+The client stores meta information about each node (next and previous links,
+contents node etc.) and fits that in one 8K page when parsing the original
+source document.  Because of that the number of nodes are limited to 255 (0-254)
+with 255 meaning "no-link".
+
+@{h2}Characters read per line
+
+When the source document is parsed, each line is read into a 256-byte buffer.
+This allows a maximum of 255 characters to be read (not including zero byte to 
+mark end of line).  Any text after the 255th character is simply ignored.  This
+should be ample for a 80-character wide screen and formatting/meta information.
+
+@{h2}Viewable characters display per line
+
+The Guide uses the 80x32 tilemap mode to display the text, and so the most
+characters you can view are 80 per line.  No horizontal scrolling is supported
+and that is by design.  Documentation is so much more easier to read when you
+only need to scroll vertically.
+
+@{h2}Number of lines per node
+
+For fast rendering, data about the address of each line of text in the node
+is precalculated and stored in a single 8K page.  As a result, the number of
+lines allowed per node is 2048.
+
+@{h2}Number of characters allowed in a node name
+
+Part of the meta data generated during parsing that is stored in that single
+8K page are all the node names.  To fit, node names are truncated to 15
+characters maximum to fit.  This limitation may be improved with a later
+version.
+
+@{h2}Number of links per node.
+Internally an 8-bit value is used for storing the index of the current link.
+Any links after the first 255 will still be visible in the document, just not
+selectable.
+@-------------------------------------------------------------------------------
+@node Thanks
+@prev Limits
+@toc MAIN
+@{r}NextGuide Manual
+@{c}@{h1}Acknowledgements
+
+@{h2}Thanks to the Beta-Testers:
+
+  HeartWare
+  Konstantin Dzreev
+  Matthew Tillett
+  Robin Verhagen-Guest

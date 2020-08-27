@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>Remy's GUIDE web editor and reader for the ZX Spectrum Next</title>
+    <meta name="description"
+      content="Remy's ZX Spectrum Next tools: txt2bas, bas2txt, sprite editor, tilemaps, palette editor, audio effects and image and font tools">
+    <link rel="stylesheet" type="text/css" href="/bas/codemirror.scss">
+    <link rel="stylesheet" href="/index.css">
+    <link rel="stylesheet" href="./index.css">
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="96x96" href="/images/icons/icon-96x96.png">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="theme-color" content="#000000">
+  </head>
+
+  <body>
+    <nav>
+      <ul>
+        <li><a href="/bas/">Text 2 BASIC</a></li>
+        <li><a href="/sprites/">Sprites</a></li>
+        <li><a href="/audio/">Audio</a></li>
+        <li class="selected"><a href="/tools/">Tools</a></li>
+        <li><a href="/help/">Help</a></li>
+      </ul>
+    </nav>
+
+    <main>
+      <textarea id="editor"></textarea>
+      <div id="preview">
+        <div id="meta">
+          <p>Waiting for content...<button id="load-demo">Load NextGuide.gde</button></p>
+        </div>
+        <iframe src="about:blank"></iframe>
+      </div>
+    </main>
+    <script src="/shared.js"></script>
+    <script src="./index.js"></script>
+  </body>
+
+</html>

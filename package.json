@@ -4,11 +4,11 @@
   "main": "index.js",
   "checkjs": "tsc",
   "scripts": {
-    "dev": "rm -rf dist; parcel watch public/index.html public/**/index.html",
+    "dev": "rm -rf dist; parcel watch public/index.html public/**/index.html public/**/**/index.html",
     "serve": "serve dist -p 8080",
     "deploy": "npm run build; git add dist; git commit -m'new build'; git push origin master",
     "functions": "now --prod",
-    "build": "rm -rf dist; parcel build public/index.html public/**/index.html",
+    "build": "rm -rf dist; parcel build public/index.html public/**/index.html public/**/**/index.html",
     "serve-dist": "serve dist -p 8080",
     "test": "tap  --no-coverage-report --watch __tests__/**/*.test.js"
   },
@@ -25,7 +25,7 @@
   "dependencies": {
     "@remy/unpack": "^2.1.6",
     "axios": "^0.19.2",
-    "codemirror": "^5.52.0",
+    "codemirror": "^5.57.0",
     "esm": "^3.2.25",
     "lodash.debounce": "^4.0.8",
     "multer": "^1.4.2",
