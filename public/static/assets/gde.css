@@ -53,7 +53,7 @@ main {
 input {
   box-sizing: border-box;
   font-family: monospace;
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   line-height: 1.4;
 }
 
@@ -170,7 +170,7 @@ footer nav ul {
 }
 
 footer * {
-  font-size: 0.8rem;
+  font-size: 0.9rem;
 }
 
 footer p {

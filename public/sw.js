@@ -11,6 +11,7 @@ self.addEventListener('install', (e) => {
         .addAll([
           '/index.html',
           '/index.css',
+          '/shared.js',
           '/favicon.ico',
           '/bas/index.html',
           '/bas/codemirror.scss',

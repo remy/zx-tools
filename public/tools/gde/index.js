@@ -2,6 +2,7 @@ import { $ } from '../../lib/$.js';
 import { gde } from '../lib/gde';
 import CodeMirror from '../../lib/cm.js';
 import './syntax';
+import save from '../../lib/save.js';
 
 const preview = $('iframe');
 const meta = $('#meta');
@@ -21,7 +22,7 @@ let widgets = [];
 /**
  * Saves current state to local storage
  */
-function save() {
+function saveLocal() {
   localStorage.setItem('gde', editor.getValue());
 }
 
@@ -114,7 +115,7 @@ function clearErrors() {
 }
 
 editor.on('change', () => {
-  save();
+  saveLocal();
   process(editor.getValue());
 });
 
@@ -159,8 +160,17 @@ $('#meta button').on('click', async () => {
   const res = await fetch('/assets/NextGuide.gde');
   const text = await res.text();
   editor.setValue(text);
-  save();
+  saveLocal();
   process(text);
+});
+
+editor.setOption('extraKeys', {
+  'Cmd-s': function () {
+    const filename = prompt('Filename:', 'untitled.gde');
+    if (filename) {
+      save(editor.getValue(), filename);
+    }
+  },
 });
 
 init();
