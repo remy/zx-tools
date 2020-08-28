@@ -31,7 +31,7 @@ body {
 main {
   flex: 1;
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   /* align-items: center; */
   justify-content: space-between;
 }
@@ -43,7 +43,6 @@ main > * {
 #preview {
   display: flex;
   flex-direction: column;
-  margin-left: 40px;
 }
 
 #meta {
@@ -68,7 +67,6 @@ iframe {
   border: 1px solid var(--c-input-border);
   background: var(--c-input-bg);
   padding: 8px;
-  height: calc(100vh - 117px);
   font-size: 14px;
 }
 
@@ -257,13 +255,53 @@ a {
   margin: 0;
   text-decoration: underline;
   border: 0;
-  float: right;
-  font-size: 90%;
   color: var(--c-cta);
+}
+
+#load-demo {
+  font-size: 90%;
+  float: right;
 }
 
 #meta button:hover {
   border: 0;
   outline: 0;
   text-decoration: none;
+}
+
+.line-node-split {
+  display: block;
+  border-top: 2px solid #0093ff;
+  font-size: 70%;
+  color: #0093ff;
+  border-radius: 1px;
+  padding: 0 2px;
+  margin: 16px 0 2px 0;
+  border-left: 2px solid #0093ff;
+}
+
+#preview,
+.CodeMirror {
+  height: calc(calc(100vh - 128px) / 2);
+  max-height: calc(calc(100vh - 128px) / 2);
+}
+
+iframe {
+  min-width: 100%;
+}
+
+@media screen and (min-width: 1000px) {
+  main {
+    flex-direction: row;
+  }
+
+  #preview,
+  .CodeMirror {
+    height: calc(100vh - 117px);
+    max-height: initial;
+  }
+
+  #preview {
+    margin-left: 40px;
+  }
 }

@@ -8,6 +8,10 @@ CodeMirror.defineSimpleMode('gde', {
   start: [
     // The regex matches the token, the token property contains the type
     {
+      regex: /(@node)(\s+)(\S+)/,
+      token: ['keyword node', null, 'param block-link-content'],
+    },
+    {
       regex: new RegExp(`(@(?:${keywords.join('|')}))(\\s)(\\S+)`, 'i'),
       token: ['keyword', null, 'param block-link-content'],
     },

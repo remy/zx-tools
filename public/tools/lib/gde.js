@@ -59,10 +59,10 @@ export function gde(contents, name) {
 
   const blockTags = ['h1', 'h2', 'h3', 'h4', 'c', 'r'];
 
-  const toMarkdown = (line, lineNumber) => {
+  const toMarkdown = (line, lineNumber, node) => {
     const blocks = [];
     line = line
-      .replace(/[<>]/, (m) => {
+      .replace(/[<>]/g, (m) => {
         return { '<': '&lt;', '>': '&gt;' }[m];
       })
       .replace(/@{(.*?)}|@@/g, (all, match) => {
@@ -95,6 +95,8 @@ export function gde(contents, name) {
           left = ' '.repeat(spacer[0].length);
           if (spacer.length > 1) right = ' '.repeat(spacer.pop().length);
         }
+
+        node.links.push({ id: link[1].toLowerCase(), lineNumber });
 
         return `<a href="${link[1].toLowerCase()}">${left}${link[0].trim()}${right}</a>`;
       });
@@ -135,7 +137,9 @@ export function gde(contents, name) {
     'toc',
   ];
 
-  let node = null;
+  let node = {
+    links: [],
+  };
 
   const head = (metadata) => `
 <html>
@@ -159,6 +163,7 @@ export function gde(contents, name) {
           node = {
             id: param.trim().toLowerCase(),
             content: head(metadata),
+            links: [],
           };
           nodes.push(node);
           break;
@@ -171,7 +176,7 @@ export function gde(contents, name) {
       }
     } else if (node) {
       // convert to markdown
-      node.content += toMarkdown(line, i) + '\n';
+      node.content += toMarkdown(line, i, node) + '\n';
     }
   });
 
@@ -212,6 +217,22 @@ document.body.addEventListener('click', (e) => {
 `;
 
   nodes.forEach((node) => {
+    node.links.forEach((link) => {
+      const n = nodes.find((_) => _.id === link.id);
+      if (!n) {
+        errors.push({
+          type: 'missing_node',
+          data: {
+            node,
+            id: link.id,
+            lineNumber: link.lineNumber,
+          },
+        });
+      }
+    });
+  });
+
+  nodes.forEach((node) => {
     node.content += footer(node);
     node.url = URL.createObjectURL(
       new Blob([node.content], { type: 'text/html' })
@@ -230,10 +251,7 @@ document.body.addEventListener('click', (e) => {
         .trim();
       const n = nodes.find((_) => _.id === filename);
 
-      if (!n) {
-        console.warn(`Bad link - node not found: "${filename}"`);
-        errors.push({ type: 'missing_node', data: { node, filename } });
-      } else {
+      if (n) {
         linkIndex[filename] = n.url;
       }
     }
