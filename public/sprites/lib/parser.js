@@ -146,10 +146,16 @@ const fn8 = (i) => {
   return (((i % 16) + 256 * ((i / 16) | 0)) % 4096) + 16 * ((i / 256) | 0);
 };
 
+/**
+ *
+ * @param {Uint8Array} data
+ * @param {File} file
+ * @returns {Uint8Array}
+ */
 export function parseNoTransformFile(data, file) {
   const known = importable(data);
 
-  if (known) {
+  if (known || file.type.includes('image/')) {
     return pixelsFromFile(file);
   }
 
