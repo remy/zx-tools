@@ -72,7 +72,7 @@ export function gde(contents, name) {
           return '';
         }
         if (tags[match]) return tags[match];
-        if (!match.includes('LINK')) {
+        if (!match.toLowerCase().includes('link')) {
           errors.push({ type: 'unknown_tag', data: match, line, lineNumber });
           return '';
         }
