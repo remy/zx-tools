@@ -3,6 +3,9 @@ import { colourTable, emptyCanvas, getCoords } from './sprite-tools.js';
 import trackDown from '../lib/track-down.js';
 import { toRGB332 } from './lib/colour.js';
 
+/**
+ * @class
+ */
 export default class ImageWindow {
   zoomFactor = 0;
   x = 0;
@@ -15,6 +18,8 @@ export default class ImageWindow {
     this.__ctx.canvas.height = height;
     this.parent = ctx.canvas.parentNode;
     this.status = $('#png-status');
+
+    this.dimensions = 16;
 
     trackDown(ctx.canvas, {
       start: (e) => this.start(e),
@@ -51,6 +56,18 @@ export default class ImageWindow {
     this.y += delta;
 
     this.paint();
+  }
+
+  /**
+   * @param {number} size
+   */
+  set dimensions(size) {
+    this._dimensions = size;
+    this.parent.dataset.dimensions = size;
+  }
+
+  get dimensions() {
+    return this._dimensions;
   }
 
   get pxScale() {
@@ -119,33 +136,48 @@ export default class ImageWindow {
    * @param {boolean|Uint8Array} [over=false]
    */
   copy(as8x8 = false, over = false) {
-    const data = over || new Uint8Array(16 * 16);
+    const dim = this.dimensions;
     const ctx = this.__ctx;
 
-    const { x, y } = this.coords();
+    const ittr = (dim / 16) ** 2;
+    const a = dim / 16;
 
-    const imageData = ctx.getImageData(x, y, 16, 16);
+    let { x, y } = this.coords();
 
-    for (let i = 0; i < data.length; i++) {
-      let j = i;
-      if (as8x8) {
-        j =
-          112 * Math.floor(i / 128) +
-          16 * Math.floor((i % 64) / 8) +
-          8 * Math.floor(i / 64) +
-          (i % 8);
+    const adjust = (dim - 16) / 2;
+    x -= adjust;
+    y -= adjust;
+
+    for (let j = 0; j < ittr; j++) {
+      const data = over || new Uint8Array(16 * 16);
+      const xa = (j % a) * 16;
+      const ya = ((j / a) | 0) * 16;
+
+      console.log({ x, y, xa, ya });
+
+      const imageData = ctx.getImageData(x + xa, y + ya, 16, 16);
+
+      for (let i = 0; i < data.length; i++) {
+        let j = i;
+        if (as8x8) {
+          j =
+            112 * Math.floor(i / 128) +
+            16 * Math.floor((i % 64) / 8) +
+            8 * Math.floor(i / 64) +
+            (i % 8);
+        }
+        const [r, g, b, a] = imageData.data.slice(j * 4, j * 4 + 4);
+        const index = toRGB332({ r, g, b });
+
+        if (index === 0xe3 || a === 0) {
+          if (!over) data[i] = 0xe3;
+        } else {
+          data[i] = index;
+        }
       }
-      const [r, g, b, a] = imageData.data.slice(j * 4, j * 4 + 4);
-      const index = toRGB332({ r, g, b });
 
-      if (index === 0xe3 || a === 0) {
-        if (!over) data[i] = 0xe3;
-      } else {
-        data[i] = index;
-      }
+      if (this.oncopy) this.oncopy(data, j);
     }
-
-    if (this.oncopy) this.oncopy(data);
   }
 
   paint(x = this.x, y = this.y) {

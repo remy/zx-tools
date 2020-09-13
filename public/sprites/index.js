@@ -31,6 +31,7 @@ const currentSpriteId = document.querySelector('#current-sprite');
 const pickerColour = document.querySelector('.pickerColour');
 const userToolPalette = document.querySelector('#palette .colour-picker');
 const hasPriority = document.querySelector('#has-priority');
+const importDimensions = document.querySelector('#import-dims');
 const buttons = $('[data-action]');
 const ONE_WEEK = 1000 * 60 * 60 * 24 * 7;
 
@@ -214,9 +215,16 @@ async function fileToImageWindow(data, file) {
   const res = await parseNoTransformFile(data, file);
   const ctx = document.querySelector('#importer canvas.png').getContext('2d');
   imageWindow = new ImageWindow(res.data, ctx, res.width, res.height);
-  imageWindow.oncopy = (data) => {
+  imageWindow.oncopy = (data, offset) => {
+    if (offset) {
+      sprites.current = sprites.current + offset;
+    }
     sprites.set(data);
     sprites.renderSubSprites();
+
+    if (offset) {
+      sprites.current = sprites.current - offset;
+    }
   };
   window.imageWindow = imageWindow;
   imageWindow.paint();
@@ -690,6 +698,13 @@ upload.addEventListener('change', (e) => {
   reader.readAsArrayBuffer(droppedFile);
 });
 
+importDimensions.addEventListener('change', () => {
+  if (imageWindow)
+    imageWindow.dimensions = parseInt(importDimensions.value, 10);
+});
+
+importDimensions.value = 16;
+
 mapUpload.addEventListener('change', (e) => {
   const droppedFile = e.target.files[0];
   const reader = new FileReader();
@@ -785,3 +800,10 @@ document.onpaste = async (event) => {
 generateNewSpriteSheet({ check: false });
 
 buildStyleSheet();
+
+// fetch('/assets/numbers2x.png')
+//   .then((res) => res.blob())
+//   .then((res) => {
+//     const file = new Blob([res], { type: 'image/png' });
+//     fileToImageWindow(res, file);
+//   });

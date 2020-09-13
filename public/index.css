@@ -152,6 +152,11 @@ button svg {
 
 select {
   vertical-align: middle;
+  color: black;
+}
+
+label > span + select {
+  margin-left: 10px;
 }
 
 p,

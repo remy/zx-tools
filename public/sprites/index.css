@@ -515,26 +515,57 @@ details {
   pointer-events: none;
   width: 512px;
   height: 512px;
+  --i-base: 248px;
+  --i-dim: 2;
+  --i-scale: 8;
+
+  --i-factor: calc(var(--i-dim) / var(--i-scale) - 1px);
+
+  border-width: calc(var(--i-base) - 8 * var(--i-factor));
+}
+
+#png-container[data-dimensions='8'] .focus {
+  --i-dim: 8px;
+}
+
+#png-container[data-dimensions='16'] .focus {
+  --i-dim: 16px;
+}
+
+#png-container[data-dimensions='32'] .focus {
+  --i-dim: 32px;
+}
+
+#png-container[data-dimensions='64'] .focus {
+  --i-dim: 64px;
+}
+
+#png-container[data-dimensions='128'] .focus {
+  --i-dim: 128px;
+}
+
+#png-container[data-dimensions='256'] .focus {
+  --i-dim: 256px;
 }
 
 #png-container[data-zoom='4'] .focus {
-  border-width: 128px;
+  --i-scale: 1;
 }
 
 #png-container[data-zoom='3'] .focus {
-  border-width: 192px;
+  --i-scale: 2;
 }
 
 #png-container[data-zoom='2'] .focus {
-  border-width: 224px;
+  --i-scale: 4;
 }
 
 #png-container[data-zoom='1'] .focus {
-  border-width: 240px;
+  --i-scale: 8;
 }
 
 #png-container[data-zoom='0'] .focus {
-  border-width: 248px;
+  --i-scale: 16;
 }
 
 .range label {
