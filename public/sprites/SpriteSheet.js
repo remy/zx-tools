@@ -77,6 +77,7 @@ export default class SpriteSheet extends Hooks {
 
   paste(over = false) {
     if (this.clipboard.pixels) {
+      const subSprite = this.sprite.subSprite;
       let pixels = this.clipboard.pixels;
       let offset = this._current * pixelLength;
       if (this.defaultScale === 8) {
@@ -98,6 +99,7 @@ export default class SpriteSheet extends Hooks {
 
       this.set(pixels, offset);
       if (this.defaultScale === 8) {
+        this.sprite.subSprite = subSprite;
         // this.renderSubSprites();
       }
     }
