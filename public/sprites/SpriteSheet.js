@@ -100,7 +100,7 @@ export default class SpriteSheet extends Hooks {
       this.set(pixels, offset);
       if (this.defaultScale === 8) {
         this.sprite.subSprite = subSprite;
-        // this.renderSubSprites();
+        this.paint();
       }
     }
   }
@@ -138,6 +138,8 @@ export default class SpriteSheet extends Hooks {
     const data = this.history[this._undoPtr];
 
     if (!data) {
+      console.log('undo: no data');
+
       return;
     }
     this._undoPtr--;
@@ -149,10 +151,10 @@ export default class SpriteSheet extends Hooks {
     for (let i = 0; i < this.length; i++) {
       this.rebuild(i);
     }
-    this.sprite.subSprite = subSprite;
     if (toggle) this.sprite.toggleScale();
 
     this.trigger();
+    this.sprite.subSprite = subSprite;
     this.paint();
   }
 
