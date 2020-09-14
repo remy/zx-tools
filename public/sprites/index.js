@@ -89,7 +89,11 @@ function generateNewSpriteSheet({
   if (!data) {
     const restored = restoreState();
 
-    if (!check && restored.lastSaved > Date.now() - ONE_WEEK) {
+    if (
+      !check &&
+      restored.lastSaved > Date.now() - ONE_WEEK &&
+      restored.spriteSheet
+    ) {
       spriteData = Uint8Array.from(restored.spriteSheet.data);
       sprites = newSpriteSheet(spriteData);
 
@@ -432,8 +436,8 @@ const drawHandler = (e) => {
 
 trackDown(container, {
   handler: drawHandler,
-  start() {
-    tool.start(event);
+  start(event) {
+    tool.start(event, sprites);
   },
   end() {
     tool.end();

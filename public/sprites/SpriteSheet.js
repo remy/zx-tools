@@ -12,7 +12,6 @@ export default class SpriteSheet extends Hooks {
   previewCtx = [];
   history = [];
   ctx = null;
-  _undoPtr = 0;
   _current = 0;
   length = 0;
   clipboard = null;
@@ -106,18 +105,11 @@ export default class SpriteSheet extends Hooks {
   }
 
   set(data, offset = this._current * pixelLength) {
-    // FIXME support partial paste
+    // note: does not support partial paste
     this.snapshot();
     this.data.set(data, offset);
     this.rebuild(this._current);
     this.paint();
-  }
-
-  snapshot() {
-    this.history.splice(this._undoPtr + 1);
-    this.history.push(new Uint8Array(this.data));
-    this._undoPtr = this.history.length - 1;
-    this.trigger();
   }
 
   async rotate() {
@@ -134,28 +126,35 @@ export default class SpriteSheet extends Hooks {
     this.paint();
   }
 
+  snapshot() {
+    // this.history.splice(this._undoPtr + 1);
+    // this._undoPtr = this.history.length - 1;
+    this.history.push(new Uint8Array(this.data));
+    this.trigger();
+  }
+
   undo() {
-    const data = this.history[this._undoPtr];
+    const data = this.history.pop();
 
     if (!data) {
       console.log('undo: no data');
 
       return;
     }
-    this._undoPtr--;
+    // this._undoPtr--;
+    // if (this._undoPtr < 0) this._undoPtr = -1;
 
     this.data = data;
     const subSprite = this.sprite.subSprite;
-    const toggle = this.sprite.scale === 8;
 
     for (let i = 0; i < this.length; i++) {
       this.rebuild(i);
     }
-    if (toggle) this.sprite.toggleScale();
 
-    this.trigger();
     this.sprite.subSprite = subSprite;
-    this.paint();
+    this.trigger();
+    this.paint(this._current, true);
+    this.sprite.subSprite = subSprite;
   }
 
   rebuild(i) {

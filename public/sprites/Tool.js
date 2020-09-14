@@ -2,6 +2,10 @@ import { $ } from '../lib/$.js';
 import { getCoords } from './sprite-tools.js';
 import palette from './Palette.js';
 
+/**
+ * @typedef { import("./SpriteSheet").default } SpriteSheet
+ */
+
 export default class Tool {
   types = ['brush', 'fill', 'erase', 'pan'];
   _selected = 'brush';
@@ -127,13 +131,18 @@ export default class Tool {
     return sprites.pset(coords, target);
   }
 
-  start(event) {
+  start(event, sprites) {
     const coords = getCoords(event, 64); // FIXME
     this._coords = coords;
+    sprites.snapshot();
   }
 
   end() {}
 
+  /**
+   * @param {Event} event
+   * @param {SpriteSheet} sprites
+   */
   apply(event, sprites) {
     const coords = getCoords(
       event,
@@ -163,7 +172,7 @@ export default class Tool {
       if (event.type === 'click' && this._coords.index !== coords.index) {
         // this is a release
         // read from the canvas and put into pixels
-        sprites.snapshot();
+        // sprites.snapshot();
         sprites.canvasToPixels();
         sprites.rebuild(sprites.current);
         sprites.paint();
@@ -186,8 +195,6 @@ export default class Tool {
       this.paint(sprites, coords, target);
     }
 
-    // update canvas
-    if (event.type === 'click') sprites.snapshot();
     sprites.paint();
   }
 }
