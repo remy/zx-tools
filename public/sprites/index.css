@@ -388,6 +388,10 @@ button svg {
   border: 0;
 }
 
+.tile-controls .button > input[type='file'] {
+  width: 100%;
+}
+
 .tile-controls input[type='number'] {
   width: 50px;
 }
