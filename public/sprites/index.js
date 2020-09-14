@@ -613,7 +613,6 @@ function renderCurrentSprite() {
 function renderSpritePreviews() {
   spritesContainer.innerHTML = '';
   sprites.getPreviewElements().map((_, i) => {
-    _.title = 'Index: ' + i;
     spritesContainer.appendChild(_);
   });
 }
