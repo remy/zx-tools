@@ -574,6 +574,7 @@ details {
 
 .range label {
   display: flex;
+  align-items: center;
 }
 
 .range input[type='range'] {

@@ -389,15 +389,23 @@ function loadImage(file) {
 
 async function renderImageForBmp(file) {
   const canvas = document.createElement('canvas');
-  const width = 256;
-  const height = 192;
+  /** @type HTMLImageElement */
+  let img = await loadImage(file);
+
+  let width = 256;
+  let height = 192;
+
+  if (img.width < 256) {
+    width = img.width;
+    height = img.height;
+  }
+
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext('2d');
   const div = document.createElement('div');
   div.className = 'container';
 
-  let img = await loadImage(file);
   ctx.drawImage(img, 0, 0);
   const imageData = ctx.getImageData(0, 0, width, height);
   const bmp = new BmpEncoder({
@@ -406,6 +414,11 @@ async function renderImageForBmp(file) {
     height,
   });
   const bmpData = bmp.encode();
+
+  const ext = {
+    default: ['SL2', 'sl2'],
+    128: ['SLR', 'slr'],
+  };
 
   let renderedImage = new Image();
   const blob = new Blob([bmpData], { type: 'image/bmp' });
@@ -423,10 +436,13 @@ async function renderImageForBmp(file) {
   button.onclick = () => save(bmpData, basename(filename) + '.bmp');
 
   const buttonNXI = document.createElement('button');
-  buttonNXI.innerText = 'Download as SL2';
+  buttonNXI.innerText = 'Download as ' + (ext[width] || ext.default)[0];
   div.appendChild(buttonNXI);
   buttonNXI.onclick = () =>
-    save(Uint8Array.from(bmp.pixels), basename(filename) + '.sl2');
+    save(
+      Uint8Array.from(bmp.pixels),
+      basename(filename) + '.' + (ext[width] || ext.default)[1]
+    );
 
   const buttonNXIp = document.createElement('button');
   buttonNXIp.innerText = 'NXI with palette';

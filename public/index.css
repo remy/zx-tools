@@ -271,3 +271,7 @@ small {
   display: inline-block;
   line-height: 1.4;
 }
+
+input[type='number'] {
+  border: 1px solid;
+}
