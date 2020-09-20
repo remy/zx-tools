@@ -48,6 +48,11 @@ input {
   color: #fff;
 }
 
+select,
+option {
+  color: black;
+}
+
 #sprite-editor > div {
   width: 100%;
   display: flex;
@@ -1042,4 +1047,32 @@ input[type='color'] {
 ::-webkit-color-swatch,
 ::-moz-color-swatch {
   border-color: transparent;
+}
+
+#bit-size {
+  order: 4;
+  justify-content: center;
+  margin: 0 10px;
+}
+
+.button-radio {
+  display: block;
+  font-size: 12px;
+}
+
+.button-radio-group .button {
+  padding: 4px 8px;
+  margin: 8px;
+  width: auto;
+}
+
+.button-radio-group input {
+  opacity: 0;
+  position: absolute;
+}
+
+input:checked + .button-radio {
+  background: white;
+  color: black;
+  outline: 2px solid black;
 }
