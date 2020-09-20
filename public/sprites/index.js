@@ -15,6 +15,7 @@ import { saveState, restoreState } from './state.js';
 import debounce from 'lodash.debounce';
 import trackDown from '../lib/track-down.js';
 import palette from './Palette.js';
+import Animate from './Animate.js';
 
 /**
  * @typedef { import("../lib/dnd").DropCallback } DropCallback
@@ -33,6 +34,7 @@ const userToolPalette = document.querySelector('#palette .colour-picker');
 const hasPriority = document.querySelector('#has-priority');
 const importDimensions = document.querySelector('#import-dims');
 const buttons = $('[data-action]');
+const animateContainer = document.querySelector('#animate');
 const ONE_WEEK = 1000 * 60 * 60 * 24 * 7;
 
 const subSprites = $('#preview-8x8 canvas').map((canvas) => {
@@ -52,12 +54,13 @@ function newSpriteSheet(file) {
   sprites = new SpriteSheet(file, { ctx, subSprites });
   if (tmp) sprites.setScale(tmp);
   tileMap.sprites = sprites; // just in case
+  animate.sprites = sprites;
   return sprites;
 }
 
 const saveLocal = debounce(() => {
   console.log('saving state locally');
-  saveState({ spriteSheet: sprites, tileMap, palette });
+  saveState({ spriteSheet: sprites, tileMap, palette, animate });
 }, 500);
 
 /**
@@ -101,6 +104,10 @@ function generateNewSpriteSheet({
       file.name = sprites.filename;
       palette.restoreFromData(Uint8Array.from(restored.palette.data));
       palette.filename = restored.palette.filename;
+
+      if (restored.animate) {
+        animate.restore(restored.animate);
+      }
 
       if (restored.tileMap) {
         const tileMapData = restored.tileMap;
@@ -204,10 +211,14 @@ palette.moveTo(tabs.selected === 'sprite-editor' ? 'sprite-editor' : 'palette');
 palette.render();
 tileMap.hook(debounce(saveLocal, 2000));
 
+const animate = new Animate(sprites);
+animate.hook(debounce(saveLocal, 200));
+
 let imageWindow = null;
 window.tileMap = tileMap;
 window.palette = palette;
 window.picker = colour;
+window.animate = animate;
 if (!document.body.prepend) {
   document.querySelector('#tile-map-container').appendChild(tileMap.ctx.canvas);
 } else {
@@ -338,6 +349,11 @@ buttons.on('click', async (e) => {
   if (action === 'toggle-scale') {
     sprites.toggleScale();
     saveLocal();
+  }
+
+  if (action === 'toggle-animate') {
+    animateContainer.hidden = !animateContainer.hidden;
+    document.body.dataset.animate = !animateContainer.hidden;
   }
 
   if (action === 'download-map') {

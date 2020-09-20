@@ -97,6 +97,10 @@ button,
   color: white;
 }
 
+.tools input[type='number'] {
+  font-size: 12px;
+}
+
 h2 {
   /* display: none; */
   margin: 0;
@@ -276,6 +280,10 @@ button,
   margin-right: 8px;
 }
 
+.button-spacer {
+  margin-top: 24px;
+}
+
 .button-group button:last-child {
   margin-right: 0;
 }
@@ -302,6 +310,11 @@ button svg {
 .tools h2 {
   width: 100%;
   margin-top: 0;
+}
+
+.tools h3 {
+  width: 100%;
+  margin-bottom: 0;
 }
 
 .tools > div {
@@ -572,6 +585,16 @@ details {
   --i-scale: 16;
 }
 
+.fixed-label {
+  display: flex;
+  align-items: center;
+}
+
+.fixed-label label {
+  width: 60px;
+  min-width: min-content;
+}
+
 .range label {
   display: flex;
   align-items: center;
@@ -757,6 +780,16 @@ main:fullscreen > :last-child {
   background: white;
   color: black;
   outline: 2px solid black;
+}
+
+[data-animate='true'] button[data-action='toggle-animate'] {
+  background: white;
+  color: black;
+  outline: 2px solid black;
+}
+
+[data-animate='true'] button[data-action='toggle-animate'] path {
+  fill: black;
 }
 
 #index-map {
@@ -981,4 +1014,32 @@ label[for='has-priority'] {
   background: black;
   transform: rotate(45deg) translateX(50%) translateY(50%);
   transform-origin: 100% 125%;
+}
+
+#animate {
+  margin-top: 20px;
+}
+
+#animate .tools {
+  margin-left: 0;
+}
+
+#animate-container canvas {
+  display: block;
+  margin: 0 auto;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  width: var(--block-size);
+  height: var(--block-size);
+}
+
+input[type='color'] {
+  border: 0;
+}
+
+::-webkit-color-swatch,
+::-moz-color-swatch {
+  border-color: transparent;
 }

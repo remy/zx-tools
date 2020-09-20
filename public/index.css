@@ -275,3 +275,7 @@ small {
 input[type='number'] {
   border: 1px solid;
 }
+
+input[type='color'] {
+  cursor: pointer;
+}

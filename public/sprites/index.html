@@ -104,13 +104,59 @@
                   <button data-action="rol">&lt;&lt;</button>
                   <button data-action="ror">&gt;&gt;</button>
                 </div>
-                <button data-action="toggle-scale">Toggle 8x8 sprite mode</button>
+                <div class="button-group"><button style="flex: 6" data-action="toggle-scale">Toggle 8x8</button>
+                  <button data-action="toggle-animate" title="Show animation options"><svg
+                      style="width:24px;height:24px" viewBox="0 0 24 24">
+                      <path fill="currentColor"
+                        d="M4,2H14V4H4V14H2V4C2,2.89 2.89,2 4,2M8,6H18V8H8V18H6V8C6,6.89 6.89,6 8,6M12,10H20C21.11,10 22,10.89 22,12V20C22,21.11 21.11,22 20,22H12C10.89,22 10,21.11 10,20V12C10,10.89 10.89,10 12,10M14,12V20L20,16L14,12Z" />
+                    </svg></button></div>
                 <span class="button input-button" id="upload"><input type="file">Upload .png / .spr</span>
                 <button data-action="new">New sprite sheet</button>
               </div>
               <div class="palette"></div>
               <div class="pickerColour">
                 <div></div>
+              </div>
+            </div>
+            <div id="animate">
+              <div id="animate-container">
+                <canvas width="16" class="sprite" height="16"></canvas>
+              </div>
+              <div class="tools">
+                <div>
+                  <div>
+                    <h3>Frames</h3>
+                  </div>
+                  <div class="fixed-label"><label for="animate-from">From</label>
+                    <input autocomplete="off" name="from" id="animate-from" type="number" value="0" size="8" min="0">
+                  </div>
+                  <div class="fixed-label"><label for="animate-to">To</label>
+                    <input autocomplete="off" name="to" id="animate-to" type="number" value="0" size="8" min="0">
+                  </div>
+
+                  <div>
+                    <h3>Options</h3>
+                  </div>
+                  <div><label for="animate-scale">Scale</label>
+                    <select id="animate-scale">
+                      <option>16</option>
+                      <option>32</option>
+                      <option>64</option>
+                      <option>128</option>
+                    </select></div>
+                  <div class="fixed-label"><label for="animate-speed">FPS </label>
+                    <input min="1" max="255" value="1" size="8" id="animate-speed" name="speed" autocomplete="off"
+                      type="number"></div>
+                  <div>
+                    <span>Effect </span>
+                    <label><input checked name="effect" value="loop" id="animate-effect-loop" type="radio">Loop</label>
+                    <label><input name="effect" value="bounce" id="animate-effect" type="radio">Bounce</label>
+                  </div>
+                  <div class="fixed-label">
+                    <label for="animate-bg">Background</label>
+                    <input name="bg" type="color" id="animate-bg">
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -275,9 +321,11 @@
             </div>
             <div>
               <strong>Dimensions</strong>
-              <label><input type="number" min="1" value="32" name="width"> x<span class="current-scale"></span> tiles
+              <label><input type="number" autocomplete="off" min="1" value="32" name="width"> x<span
+                  class="current-scale"></span> tiles
                 wide</label>
-              <label><input type="number" min="1" value="24" name="height"> x<span class="current-scale"></span> tiles
+              <label><input type="number" autocomplete="off" min="1" value="24" name="height"> x<span
+                  class="current-scale"></span> tiles
                 tall</label>
             </div>
             <div>
