@@ -113,10 +113,17 @@ h2 {
 
 #sprite-editor .palette {
   --scale: 12px;
-  width: calc(16 * var(--scale));
+  width: calc(17 * var(--scale));
   height: calc(16 * var(--scale));
   position: relative;
   order: 3;
+  display: flex;
+  align-items: center;
+}
+
+[data-bit='8'] #sprite-editor .palette {
+  --scale: 12px;
+  width: calc(16 * var(--scale));
 }
 
 .pickerColour {
@@ -1077,33 +1084,82 @@ input:checked + .button-radio {
   outline: 2px solid black;
 }
 
-#sprite-editor .picker.sprite div {
-  /* position: relative; */
+#sprite-editor [data-pal='0'] button:nth-child(1) {
+  opacity: 1;
 }
-#sprite-editor .picker.sprite div:nth-child(16n + 1):before {
-  position: absolute;
-  left: -10px;
-  /* top: 0; */
-  height: 12px;
-  width: 12px;
-  font-size: 8px;
+#sprite-editor [data-pal='1'] button:nth-child(2) {
+  opacity: 1;
+}
+#sprite-editor [data-pal='2'] button:nth-child(3) {
+  opacity: 1;
+}
+#sprite-editor [data-pal='3'] button:nth-child(4) {
+  opacity: 1;
+}
+#sprite-editor [data-pal='4'] button:nth-child(5) {
+  opacity: 1;
+}
+#sprite-editor [data-pal='5'] button:nth-child(6) {
+  opacity: 1;
+}
+#sprite-editor [data-pal='6'] button:nth-child(7) {
+  opacity: 1;
+}
+#sprite-editor [data-pal='7'] button:nth-child(8) {
+  opacity: 1;
+}
+#sprite-editor [data-pal='8'] button:nth-child(9) {
+  opacity: 1;
+}
+#sprite-editor [data-pal='9'] button:nth-child(10) {
+  opacity: 1;
+}
+#sprite-editor [data-pal='10'] button:nth-child(11) {
+  opacity: 1;
+}
+#sprite-editor [data-pal='11'] button:nth-child(12) {
+  opacity: 1;
+}
+#sprite-editor [data-pal='12'] button:nth-child(13) {
+  opacity: 1;
+}
+#sprite-editor [data-pal='13'] button:nth-child(14) {
+  opacity: 1;
+}
+#sprite-editor [data-pal='14'] button:nth-child(15) {
+  opacity: 1;
+}
+#sprite-editor [data-pal='15'] button:nth-child(16) {
+  opacity: 1;
 }
 
-#sprite-editor .picker.sprite[data-pal='0'] div:nth-child(1):before,
-#sprite-editor .picker.sprite[data-pal='1'] div:nth-child(17):before,
-#sprite-editor .picker.sprite[data-pal='2'] div:nth-child(33):before,
-#sprite-editor .picker.sprite[data-pal='3'] div:nth-child(49):before,
-#sprite-editor .picker.sprite[data-pal='4'] div:nth-child(65):before,
-#sprite-editor .picker.sprite[data-pal='5'] div:nth-child(81):before,
-#sprite-editor .picker.sprite[data-pal='6'] div:nth-child(97):before,
-#sprite-editor .picker.sprite[data-pal='7'] div:nth-child(113):before,
-#sprite-editor .picker.sprite[data-pal='8'] div:nth-child(129):before,
-#sprite-editor .picker.sprite[data-pal='9'] div:nth-child(145):before,
-#sprite-editor .picker.sprite[data-pal='10'] div:nth-child(161):before,
-#sprite-editor .picker.sprite[data-pal='11'] div:nth-child(177):before,
-#sprite-editor .picker.sprite[data-pal='12'] div:nth-child(193):before,
-#sprite-editor .picker.sprite[data-pal='13'] div:nth-child(209):before,
-#sprite-editor .picker.sprite[data-pal='14'] div:nth-child(225):before,
-#sprite-editor .picker.sprite[data-pal='15'] div:nth-child(241):before {
-  content: '❯';
+.four-bit-pal {
+  font-size: 14px;
+  padding-top: 8px;
+  order: 4;
+}
+
+#four-bit-pal-picker:hover button {
+  opacity: 1;
+}
+
+#four-bit-pal-picker button {
+  width: 12px;
+  height: 12px;
+  padding: 0;
+  margin: 0;
+  text-align: center;
+  background: none;
+  font-size: 8px;
+  opacity: 0;
+}
+
+#four-bit-pal-picker button:hover {
+  background: black;
+  outline: 0;
+}
+
+[data-bit='8'] #four-bit-pal-picker,
+[data-bit='8'] .four-bit-pal {
+  display: none;
 }

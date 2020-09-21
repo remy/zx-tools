@@ -35,6 +35,9 @@ const hasPriority = document.querySelector('#has-priority');
 const importDimensions = document.querySelector('#import-dims');
 const buttons = $('[data-action]');
 const animateContainer = document.querySelector('#animate');
+const fourBitPalSelected = document.querySelector('#four-bit-pal-selection');
+const fourBitPalPicker = document.querySelector('#four-bit-pal-picker');
+const bitSize = $('#bit-size');
 const ONE_WEEK = 1000 * 60 * 60 * 24 * 7;
 
 const subSprites = $('#preview-8x8 canvas').map((canvas) => {
@@ -67,6 +70,9 @@ function newSpriteSheet(data, file = { name: 'untitled.spr' }) {
   if (tmp) sprites.setScale(tmp);
   tileMap.sprites = sprites; // just in case
   animate.sprites = sprites;
+
+  bitSize.emit('change');
+
   return sprites;
 }
 
@@ -155,13 +161,13 @@ function generateNewSpriteSheet({
   sprites.hook((event) => {
     if (event === 'select') {
       if (sprites.fourBit) {
-        console.log('select pal');
         let max = null;
         sprites.sprite.pixels.forEach((i) => {
           if (i > max) max = i;
         });
 
-        palette.node.dataset.pal = (max / 16) | 0;
+        fourBitPalSelected.value = (max / 16) | 0;
+        palette.node.parentNode.dataset.pal = (max / 16) | 0;
       }
     }
     currentSpriteId.textContent = `sprite #${pad3(sprites.spriteIndex())}`;
@@ -775,8 +781,9 @@ $('input[name="transparency"]').on('change', (e) => {
   document.documentElement.dataset.transparency = e.target.value;
 });
 
-$('#bit-size').on('change', () => {
+bitSize.on('change', () => {
   sprites.fourBit = $('#size-4-bit').checked;
+  document.documentElement.dataset.bit = sprites.fourBit ? 4 : 8;
   saveLocal();
 });
 
@@ -786,6 +793,29 @@ $('#tile-bg').on('change', (e) => {
   const canvas = $('#tile-map-container canvas');
   canvas.style.setProperty('--bg-image', `url("${url}")`);
   canvas.style.backgroundSize = '100%';
+});
+
+fourBitPalPicker.addEventListener('click', (e) => {
+  const base = parseInt(e.target.textContent, 16);
+  fourBitPalSelected.value = base;
+  palette.node.parentNode.dataset.pal = base;
+  const pixels = sprites.sprite.pixels;
+  pixels.forEach((value, i) => {
+    const root = value & 15; // effectively mod 16
+    pixels[i] = root + 16 * base;
+  });
+  sprites.paintAll();
+});
+fourBitPalSelected.addEventListener('change', () => {
+  // change all the sprite preview values to X
+  const base = parseInt(fourBitPalSelected.value, 10);
+  palette.node.parentNode.dataset.pal = base;
+  const pixels = sprites.sprite.pixels;
+  pixels.forEach((value, i) => {
+    const root = value & 15; // effectively mod 16
+    pixels[i] = root + 16 * base;
+  });
+  sprites.paintAll();
 });
 
 function downloadPal() {
