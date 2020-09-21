@@ -489,6 +489,31 @@ export class Palette extends Hooks {
   }
 
   /**
+   * Returns the palette index for a given RGB
+   *
+   * @param {RGBA} rgba object
+   * @returns {number} index
+   */
+  getFromRGB({ r, g, b, a }) {
+    if (a === 0) {
+      let index = this.table.indexOf(this.transparency[0]);
+      if (index === -1) {
+        index = this.table.indexOf(this.transparency[1]);
+      }
+      if (index != -1) {
+        return index;
+      }
+      // return this.transparent;
+    }
+
+    const index = next512FromRGB({ r, g, b });
+
+    // console.log({ index });
+
+    return this.table.indexOf(index);
+  }
+
+  /**
    * Returns an RGB object for the given palette index
    *
    * @param {number} index

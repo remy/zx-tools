@@ -346,6 +346,10 @@ $('#png-import-tools button').on('click', (e) => {
       sprites.fourBit
     );
   }
+
+  if (action === 'import-palette') {
+    if (imageWindow) imageWindow.importPalette(sprites.fourBit);
+  }
 });
 
 exampleBasicLink.addEventListener('mousedown', () => {
@@ -859,9 +863,9 @@ generateNewSpriteSheet({ check: false });
 
 buildStyleSheet();
 
-fetch('/assets/sprite.png')
-  .then((res) => res.blob())
-  .then((res) => {
-    const file = new Blob([res], { type: 'image/png' });
-    fileToImageWindow(res, file);
-  });
+// fetch('/assets/sprite.png')
+//   .then((res) => res.blob())
+//   .then((res) => {
+//     const file = new Blob([res], { type: 'image/png' });
+//     fileToImageWindow(res, file);
+//   });

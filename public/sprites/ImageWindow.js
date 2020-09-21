@@ -135,6 +135,100 @@ export default class ImageWindow {
   }
 
   /**
+   * Prompts for entire image or selection and updates the palette selection
+   * with values from the imported image
+   *
+   * @param {boolean} fourBit
+   */
+  importPalette(fourBit = false) {
+    const fromSelection = !confirm(
+      'Import from entire image (or selection)?\n\nOK = entire image\nCancel = selection'
+    );
+
+    const dim = this.dimensions;
+    const ctx = this.__ctx;
+
+    let { x, y } = this.coords();
+
+    let paletteIndex = null;
+    let imageData;
+    let length;
+
+    // read all the pixels and load into a palette
+    const pal = new Set();
+    if (fromSelection) {
+      imageData = ctx.getImageData(x, y, dim, dim);
+      length = dim * dim;
+    } else {
+      imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
+      length = ctx.canvas.width * ctx.canvas.height;
+    }
+
+    for (let i = 0; i < length; i++) {
+      let j = i;
+      const [r, g, b, a] = imageData.data.slice(j * 4, j * 4 + 4);
+      const index = next512FromRGB({ r, g, b });
+      if (index === 0xe3 || a === 0) {
+        pal.add(transparent);
+      } else {
+        pal.add(index);
+      }
+    }
+
+    let palArray = Array.from(pal);
+
+    if (fourBit) {
+      if (palArray.length < 16) {
+        palArray.push(...Array.from({ length: 16 - palArray.length }, () => 0));
+      }
+
+      palArray.sort(sorter);
+
+      paletteIndex = palette.find4BitIndex(palArray);
+
+      if (paletteIndex === null) {
+        if (pal.size > 16) {
+          alert(
+            `The selected region has ${pal.size} colours (of a max 16 colours) - exiting`
+          );
+          return;
+        }
+
+        // now add the index
+        while (
+          paletteIndex === null ||
+          !(paletteIndex >= 0 && paletteIndex <= 15)
+        ) {
+          paletteIndex = prompt(
+            'Matching palette could not be found, where would you\nlike to insert the new 16 colour palette?\n\n0-15'
+          );
+
+          if (paletteIndex === null) return;
+          paletteIndex = parseInt(paletteIndex, 10);
+
+          palArray.forEach((value, index) => {
+            palette.set(paletteIndex * 16 + index, value);
+          });
+          palette.updateTable();
+        }
+      }
+    } else {
+      if (palArray.length < 255) {
+        palArray.push(
+          ...Array.from({ length: 255 - palArray.length }, () => 0)
+        );
+      }
+
+      palArray.sort(sorter);
+
+      palArray.forEach((value, index) => {
+        palette.set(paletteIndex * 16 + index, value);
+      });
+      palette.updateTable();
+    }
+  }
+
+  /**
    * @param {boolean} [as8x8=false]
    * @param {boolean|Uint8Array} [over=false]
    * @param {boolean} [fourBit=false]
@@ -227,12 +321,20 @@ export default class ImageWindow {
         }
         const [r, g, b, a] = imageData.data.slice(j * 4, j * 4 + 4);
         // const index = fourBit ? nearest({ r, g, b }) : toRGB332({ r, g, b });
+
+        // if the sprite is in 4bit mode, we'll find the best spectrum colour and
+        // create a palette on the fly.
+        // if the sprite is 8bit, then we need to find the colour based on their
+        // existing palette
         const index = fourBit
           ? next512FromRGB({ r, g, b })
-          : toRGB332({ r, g, b });
+          : palette.getFromRGB({ r, g, b, a });
+        // : toRGB332({ r, g, b });
+
+        console.log({ index, a });
 
         // FIXME support defined transparency
-        if (index === 0xe3 || a === 0) {
+        if (fourBit && (index === 0xe3 || a === 0)) {
           pal.add(transparent);
           if (!over) {
             if (fourBit) {
