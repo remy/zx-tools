@@ -118,7 +118,6 @@ h2 {
   position: relative;
   order: 3;
   display: flex;
-  align-items: center;
 }
 
 [data-bit='8'] #sprite-editor .palette {
