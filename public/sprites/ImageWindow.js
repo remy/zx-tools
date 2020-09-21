@@ -1,7 +1,10 @@
 import { $ } from '../lib/$.js';
 import { colourTable, emptyCanvas, getCoords } from './sprite-tools.js';
 import trackDown from '../lib/track-down.js';
-import { toRGB332 } from './lib/colour.js';
+import { next512FromRGB, toRGB332 } from './lib/colour.js';
+import palette, { sorter } from './Palette.js';
+
+const transparent = palette.transparency[1];
 
 /**
  * @class
@@ -134,8 +137,9 @@ export default class ImageWindow {
   /**
    * @param {boolean} [as8x8=false]
    * @param {boolean|Uint8Array} [over=false]
+   * @param {boolean} [fourBit=false]
    */
-  copy(as8x8 = false, over = false) {
+  copy(as8x8 = false, over = false, fourBit = false) {
     const dim = this.dimensions;
     const ctx = this.__ctx;
 
@@ -148,12 +152,67 @@ export default class ImageWindow {
     x -= adjust;
     y -= adjust;
 
+    let paletteIndex = null;
+
+    if (fourBit) {
+      // read all the pixels and load into a palette
+      const pal = new Set();
+      const imageData = ctx.getImageData(x, y, dim, dim);
+      const length = dim * dim;
+      for (let i = 0; i < length; i++) {
+        let j = i;
+        const [r, g, b, a] = imageData.data.slice(j * 4, j * 4 + 4);
+        const index = next512FromRGB({ r, g, b });
+        if (index === 0xe3 || a === 0) {
+          pal.add(transparent);
+        } else {
+          pal.add(index);
+        }
+      }
+
+      let palArray = Array.from(pal);
+      if (palArray.length < 16) {
+        palArray.push(...Array.from({ length: 16 - palArray.length }, () => 0));
+      }
+
+      palArray.sort(sorter);
+
+      paletteIndex = palette.find4BitIndex(palArray);
+
+      if (paletteIndex === null) {
+        if (pal.size > 16) {
+          alert(
+            `The selected region has ${pal.size} colours (of a max 16 colours) - exiting`
+          );
+          return;
+        }
+
+        // now add the index
+        while (
+          paletteIndex === null ||
+          !(paletteIndex >= 0 && paletteIndex <= 15)
+        ) {
+          paletteIndex = prompt(
+            'Matching palette could not be found, where would you\nlike to insert the new 16 colour palette?\n\n0-15'
+          );
+
+          if (paletteIndex === null) return;
+          paletteIndex = parseInt(paletteIndex, 10);
+
+          palArray.forEach((value, index) => {
+            palette.set(paletteIndex * 16 + index, value);
+          });
+          palette.updateTable();
+        }
+      }
+    }
+
     for (let j = 0; j < ittr; j++) {
-      const data = over || new Uint8Array(16 * 16);
+      const pal = new Set();
+      let data =
+        over || fourBit ? new Uint16Array(16 * 16) : new Uint8Array(16 * 16);
       const xa = (j % a) * 16;
       const ya = ((j / a) | 0) * 16;
-
-      console.log({ x, y, xa, ya });
 
       const imageData = ctx.getImageData(x + xa, y + ya, 16, 16);
 
@@ -167,16 +226,42 @@ export default class ImageWindow {
             (i % 8);
         }
         const [r, g, b, a] = imageData.data.slice(j * 4, j * 4 + 4);
-        const index = toRGB332({ r, g, b });
+        // const index = fourBit ? nearest({ r, g, b }) : toRGB332({ r, g, b });
+        const index = fourBit
+          ? next512FromRGB({ r, g, b })
+          : toRGB332({ r, g, b });
 
+        // FIXME support defined transparency
         if (index === 0xe3 || a === 0) {
-          if (!over) data[i] = 0xe3;
+          pal.add(transparent);
+          if (!over) {
+            if (fourBit) {
+              data[i] = transparent;
+            } else {
+              data[i] = 0xe3;
+            }
+          }
         } else {
+          pal.add(index);
           data[i] = index;
         }
       }
 
+      if (fourBit) {
+        const modified = new Uint8Array(16 * 16);
+        const pal = palette.get4Bit(paletteIndex);
+        data.forEach((_, i) => {
+          modified[i] = pal.indexOf(_);
+        });
+        data = modified;
+      }
       if (this.oncopy) this.oncopy(data, j);
+    }
+
+    if (fourBit) {
+      palette.render();
+      palette.trigger('change');
+      palette.updateCounts();
     }
   }
 

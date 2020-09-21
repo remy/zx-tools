@@ -26,11 +26,21 @@ export default class SpriteSheet extends Hooks {
   /** @type {string} */
   filename = 'untitled.spr';
 
-  constructor(data, { ctx, scale = 2, subSprites } = {}) {
+  constructor(data, { ctx, scale = 2, subSprites, fourBit = false } = {}) {
     super();
 
     this.data = new Uint8Array(pixelLength * 4 * 16);
-    this.data.set(data.slice(0, pixelLength * 4 * 16), 0);
+
+    this.fourBit = fourBit;
+
+    if (fourBit) {
+      data.forEach((byte, ptr) => {
+        this.data[ptr * 2] = byte >> 4;
+        this.data[ptr * 2 + 1] = byte & 0x0f;
+      });
+    } else {
+      this.data.set(data.slice(0, pixelLength * 4 * 16), 0);
+    }
 
     for (let i = 0; i < this.data.length; i += pixelLength) {
       const spriteData = this.data.subarray(i, i + pixelLength);
@@ -45,7 +55,7 @@ export default class SpriteSheet extends Hooks {
 
     this.snapshot();
     this.scale = scale;
-    this.length = data.length / pixelLength;
+    this.length = this.data.length / pixelLength;
     this._current = 0;
     this.ctx = ctx;
     this.ctx.canvas.dataset.scale = this.scale;
@@ -60,8 +70,28 @@ export default class SpriteSheet extends Hooks {
   serialize() {
     return {
       filename: this.filename,
-      data: Array.from(this.data),
+      fourBit: this.fourBit,
+      data: Array.from(this.getData()),
     };
+  }
+
+  getData() {
+    if (!this.fourBit) {
+      return this.data;
+    }
+
+    const data = new Uint8Array(pixelLength * 4 * 16);
+    this.data.forEach((byte, ptr) => {
+      const delta = ptr % 2;
+      const i = (ptr / 2) | 0;
+      if (delta === 0) {
+        data[i] = byte << 4;
+      } else {
+        data[i] += byte & 0x0f;
+      }
+    });
+
+    return data;
   }
 
   getCoords(e) {
@@ -227,14 +257,14 @@ export default class SpriteSheet extends Hooks {
       this.sprites[value].scale = 16;
     }
 
-    this.trigger();
+    this.trigger('select');
     this.paint(value, true);
   }
 
   setSubSprite(index) {
     this.sprite.subSprite = index;
     this.sprite.render();
-    this.trigger();
+    this.trigger('select');
     this.paint();
   }
 

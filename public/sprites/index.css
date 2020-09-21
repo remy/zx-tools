@@ -1076,3 +1076,34 @@ input:checked + .button-radio {
   color: black;
   outline: 2px solid black;
 }
+
+#sprite-editor .picker.sprite div {
+  /* position: relative; */
+}
+#sprite-editor .picker.sprite div:nth-child(16n + 1):before {
+  position: absolute;
+  left: -10px;
+  /* top: 0; */
+  height: 12px;
+  width: 12px;
+  font-size: 8px;
+}
+
+#sprite-editor .picker.sprite[data-pal='0'] div:nth-child(1):before,
+#sprite-editor .picker.sprite[data-pal='1'] div:nth-child(17):before,
+#sprite-editor .picker.sprite[data-pal='2'] div:nth-child(33):before,
+#sprite-editor .picker.sprite[data-pal='3'] div:nth-child(49):before,
+#sprite-editor .picker.sprite[data-pal='4'] div:nth-child(65):before,
+#sprite-editor .picker.sprite[data-pal='5'] div:nth-child(81):before,
+#sprite-editor .picker.sprite[data-pal='6'] div:nth-child(97):before,
+#sprite-editor .picker.sprite[data-pal='7'] div:nth-child(113):before,
+#sprite-editor .picker.sprite[data-pal='8'] div:nth-child(129):before,
+#sprite-editor .picker.sprite[data-pal='9'] div:nth-child(145):before,
+#sprite-editor .picker.sprite[data-pal='10'] div:nth-child(161):before,
+#sprite-editor .picker.sprite[data-pal='11'] div:nth-child(177):before,
+#sprite-editor .picker.sprite[data-pal='12'] div:nth-child(193):before,
+#sprite-editor .picker.sprite[data-pal='13'] div:nth-child(209):before,
+#sprite-editor .picker.sprite[data-pal='14'] div:nth-child(225):before,
+#sprite-editor .picker.sprite[data-pal='15'] div:nth-child(241):before {
+  content: '❯';
+}

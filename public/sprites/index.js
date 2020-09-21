@@ -42,16 +42,28 @@ const subSprites = $('#preview-8x8 canvas').map((canvas) => {
   return canvas.getContext('2d');
 });
 
+/** @type {SpriteSheet} */
 let sprites = null;
 
 function pad3(n) {
   return n.toString().padStart(3, '0');
 }
 
-function newSpriteSheet(file) {
+/**
+ *
+ * @param {Uint8Array} data
+ * @param {File} [file]
+ *
+ * @returns {SpriteSheet}
+ */
+function newSpriteSheet(data, file = { name: 'untitled.spr' }) {
   let tmp;
   if (sprites) tmp = sprites.defaultScale;
-  sprites = new SpriteSheet(file, { ctx, subSprites });
+  sprites = new SpriteSheet(data, {
+    ctx,
+    subSprites,
+    fourBit: $('#size-4-bit').checked || file.name.includes('.nx'),
+  });
   if (tmp) sprites.setScale(tmp);
   tileMap.sprites = sprites; // just in case
   animate.sprites = sprites;
@@ -77,12 +89,14 @@ function generateNewSpriteSheet({
   file = { name: 'untitled.spr' },
 } = {}) {
   if (!data && check) {
+    const fourBit = $('#size-4-bit').checked;
     if (!confirm('Are you sure you want to create a blank new sprite sheet?')) {
       return;
     }
     localStorage.removeItem('spriteSheet');
     data = Uint8Array.from({ length: 256 * 16 * 4 }, (_, i) => {
-      if (check == false && i < 256) return i;
+      // if (check == false && i < 256) return i;
+      if (fourBit) return 0;
       return transparent;
     });
   }
@@ -99,6 +113,11 @@ function generateNewSpriteSheet({
     ) {
       spriteData = Uint8Array.from(restored.spriteSheet.data);
       sprites = newSpriteSheet(spriteData);
+
+      if (restored.spriteSheet.fourBit) {
+        sprites.fourBit = true;
+        $('#size-4-bit').checked = true;
+      }
 
       sprites.filename = restored.spriteSheet.filename;
       file.name = sprites.filename;
@@ -130,10 +149,21 @@ function generateNewSpriteSheet({
       sprites = newSpriteSheet(data);
     }
   } else {
-    sprites = newSpriteSheet(data);
+    sprites = newSpriteSheet(data, file);
   }
 
-  sprites.hook(() => {
+  sprites.hook((event) => {
+    if (event === 'select') {
+      if (sprites.fourBit) {
+        console.log('select pal');
+        let max = null;
+        sprites.sprite.pixels.forEach((i) => {
+          if (i > max) max = i;
+        });
+
+        palette.node.dataset.pal = (max / 16) | 0;
+      }
+    }
     currentSpriteId.textContent = `sprite #${pad3(sprites.spriteIndex())}`;
 
     document.body.dataset.scale = sprites.defaultScale;
@@ -160,7 +190,7 @@ function generateNewSpriteSheet({
 function download() {
   const filename = prompt('Filename:', sprites.filename);
   if (filename) {
-    save(sprites.data, filename);
+    save(sprites.getData(), filename);
   }
 }
 
@@ -306,11 +336,15 @@ $('#png-import-tools button').on('click', (e) => {
   }
 
   if (action === 'copy') {
-    imageWindow.copy($('#copy-as-8x8').checked);
+    imageWindow.copy($('#copy-as-8x8').checked, false, sprites.fourBit);
   }
 
   if (action === 'copy-over') {
-    imageWindow.copy($('#copy-as-8x8').checked, sprites.sprite.pixels);
+    imageWindow.copy(
+      $('#copy-as-8x8').checked,
+      sprites.sprite.pixels,
+      sprites.fourBit
+    );
   }
 });
 
@@ -737,6 +771,11 @@ $('input[name="transparency"]').on('change', (e) => {
   document.documentElement.dataset.transparency = e.target.value;
 });
 
+$('#bit-size').on('change', () => {
+  sprites.fourBit = $('#size-4-bit').checked;
+  saveLocal();
+});
+
 $('#tile-bg').on('change', (e) => {
   const file = e.target.files[0];
   const url = URL.createObjectURL(new Blob([file]));
@@ -820,9 +859,9 @@ generateNewSpriteSheet({ check: false });
 
 buildStyleSheet();
 
-// fetch('/assets/numbers2x.png')
-//   .then((res) => res.blob())
-//   .then((res) => {
-//     const file = new Blob([res], { type: 'image/png' });
-//     fileToImageWindow(res, file);
-//   });
+fetch('/assets/sprite.png')
+  .then((res) => res.blob())
+  .then((res) => {
+    const file = new Blob([res], { type: 'image/png' });
+    fileToImageWindow(res, file);
+  });

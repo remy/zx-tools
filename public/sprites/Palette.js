@@ -31,6 +31,21 @@ function byteArray(length = 256) {
 }
 
 /**
+ * Sorting function for palettes putting transparent at the front and zeros at the end
+ *
+ * @param {number} a
+ * @param {number} b
+ * @returns {number}
+ */
+export function sorter(a, b) {
+  if (palette.transparency.includes(a)) return -1;
+  if (palette.transparency.includes(b)) return 1;
+  if (a === 0) return 1;
+  if (b === 0) return -1;
+  return a < b ? -1 : 1;
+}
+
+/**
  *
  * @param {number} length
  * @returns {Uint16Array}
@@ -183,6 +198,8 @@ export class Palette extends Hooks {
    * @returns {string}
    */
   info(index, value = this.get(index)) {
+    if (value === undefined) return ``;
+
     let hex = this.getHex(index, '#');
     if (this.transparency.includes(value)) {
       hex = 'transparent';
@@ -192,6 +209,40 @@ export class Palette extends Hooks {
       extra = ' Priority';
     }
     return `i:${index} c:${value.toString(16).toUpperCase()} ${hex + extra}`;
+  }
+
+  /**
+   * Gets an array of colours from a row of the full palette
+   *
+   * @param {number} [index=0] 0-16 the 16 byte index from the palette
+   * @returns {string[]}
+   */
+  get4Bit(index = 0) {
+    index *= 16;
+    const p = Array.from({ length: 16 }, (_, i) => {
+      return this.get(index + i);
+    });
+    return p;
+  }
+
+  /**
+   *
+   * @param {number[]} needle Array of palette values (from the 512 set)
+   * @returns {boolean|null} The 16 byte index from the current palette
+   */
+  find4BitIndex(needle) {
+    needle = needle.join(',');
+    let found = null;
+    for (let i = 0; i < 16; i++) {
+      const row = palette.get4Bit(i).sort(sorter).join(',');
+
+      if (row === needle) {
+        found = i;
+        break;
+      }
+    }
+
+    return found;
   }
 
   /**
@@ -430,7 +481,11 @@ export class Palette extends Hooks {
    * @returns {number} 9bit spectrum colour value
    */
   get(index) {
-    return this.table[index];
+    const res = this.table[index];
+    if (res === undefined) {
+      return this.table[0];
+    }
+    return res;
   }
 
   /**
@@ -443,7 +498,11 @@ export class Palette extends Hooks {
     if (this.transparency.includes(this.table[index])) {
       return { r: 0, g: 0, b: 0, a: 0 };
     }
-    return this.rgb[index];
+    if (this.rgb[index]) {
+      return this.rgb[index];
+    }
+
+    return this.rgb[0];
   }
 
   /**
