@@ -159,10 +159,6 @@ export default class Animate extends Hooks {
     this.visible = props.visible;
   }
 
-  add(sprite) {
-    this.sprites.push(sprite);
-  }
-
   draw() {
     const { from, to, frame, bounce } = this;
     let current;
@@ -176,7 +172,8 @@ export default class Animate extends Hooks {
     this.ctx.clearRect(0, 0, 16, 16);
     const sprite = this.sprites.sprites[current];
     if (sprite) {
-      this.ctx.drawImage(sprite.canvas, 0, 0, 16, 16);
+      // this.ctx.drawImage(sprite.canvas, 0, 0, 16, 16);
+      sprite.paint(this.ctx);
     }
   }
 
