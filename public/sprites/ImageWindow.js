@@ -331,17 +331,11 @@ export default class ImageWindow {
           : palette.getFromRGB({ r, g, b, a });
         // : toRGB332({ r, g, b });
 
-        console.log({ index, a });
-
         // FIXME support defined transparency
         if (fourBit && (index === 0xe3 || a === 0)) {
           pal.add(transparent);
           if (!over) {
-            if (fourBit) {
-              data[i] = transparent;
-            } else {
-              data[i] = 0xe3;
-            }
+            data[i] = transparent;
           }
         } else {
           pal.add(index);
@@ -353,7 +347,7 @@ export default class ImageWindow {
         const modified = new Uint8Array(16 * 16);
         const pal = palette.get4Bit(paletteIndex);
         data.forEach((_, i) => {
-          modified[i] = pal.indexOf(_);
+          modified[i] = paletteIndex * 16 + pal.indexOf(_);
         });
         data = modified;
       }
