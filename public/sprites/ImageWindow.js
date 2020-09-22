@@ -247,59 +247,6 @@ export default class ImageWindow {
 
     let paletteIndex = null;
 
-    if (fourBit) {
-      // read all the pixels and load into a palette
-      const pal = new Set();
-      const imageData = ctx.getImageData(x, y, dim, dim);
-      const length = dim * dim;
-      for (let i = 0; i < length; i++) {
-        let j = i;
-        const [r, g, b, a] = imageData.data.slice(j * 4, j * 4 + 4);
-        const index = next512FromRGB({ r, g, b });
-        if (index === 0xe3 || a === 0) {
-          pal.add(transparent);
-        } else {
-          pal.add(index);
-        }
-      }
-
-      let palArray = Array.from(pal);
-      if (palArray.length < 16) {
-        palArray.push(...Array.from({ length: 16 - palArray.length }, () => 0));
-      }
-
-      palArray.sort(sorter);
-
-      paletteIndex = palette.find4BitIndex(palArray);
-
-      if (paletteIndex === null) {
-        if (pal.size > 16) {
-          alert(
-            `The selected region has ${pal.size} colours (of a max 16 colours) - exiting`
-          );
-          return;
-        }
-
-        // now add the index
-        while (
-          paletteIndex === null ||
-          !(paletteIndex >= 0 && paletteIndex <= 15)
-        ) {
-          paletteIndex = prompt(
-            'Matching palette could not be found, where would you\nlike to insert the new 16 colour palette?\n\n0-15'
-          );
-
-          if (paletteIndex === null) return;
-          paletteIndex = parseInt(paletteIndex, 10);
-
-          palArray.forEach((value, index) => {
-            palette.set(paletteIndex * 16 + index, value);
-          });
-          palette.updateTable();
-        }
-      }
-    }
-
     const width = parseInt(this.controls.w.value, 10);
     const height = parseInt(this.controls.h.value, 10);
     const auto = width * height;
@@ -309,6 +256,61 @@ export default class ImageWindow {
 
       x = x + (k % width) * dim;
       y = y + ((k / width) | 0) * dim;
+
+      if (fourBit) {
+        // read all the pixels and load into a palette
+        const pal = new Set();
+        const imageData = ctx.getImageData(x, y, dim, dim);
+        const length = dim * dim;
+        for (let i = 0; i < length; i++) {
+          let j = i;
+          const [r, g, b, a] = imageData.data.slice(j * 4, j * 4 + 4);
+          const index = next512FromRGB({ r, g, b });
+          if (index === 0xe3 || a === 0) {
+            pal.add(transparent);
+          } else {
+            pal.add(index);
+          }
+        }
+
+        let palArray = Array.from(pal);
+        if (palArray.length < 16) {
+          palArray.push(
+            ...Array.from({ length: 16 - palArray.length }, () => 0)
+          );
+        }
+
+        palArray.sort(sorter);
+
+        paletteIndex = palette.find4BitIndex(palArray);
+
+        if (paletteIndex === null) {
+          if (pal.size > 16) {
+            alert(
+              `The selected region has ${pal.size} colours (of a max 16 colours) - exiting`
+            );
+            return;
+          }
+
+          // now add the index
+          while (
+            paletteIndex === null ||
+            !(paletteIndex >= 0 && paletteIndex <= 15)
+          ) {
+            paletteIndex = prompt(
+              'Matching palette could not be found, where would you\nlike to insert the new 16 colour palette?\n\n0-15'
+            );
+
+            if (paletteIndex === null) return;
+            paletteIndex = parseInt(paletteIndex, 10);
+
+            palArray.forEach((value, index) => {
+              palette.set(paletteIndex * 16 + index, value);
+            });
+            palette.updateTable();
+          }
+        }
+      }
 
       const adjust = (dim - 16) / 2;
       x -= adjust;
