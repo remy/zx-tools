@@ -234,7 +234,7 @@ export default class Animate extends Hooks {
       if (this.visible && delta - this.lastDraw > 1000 / this.speed) {
         this.draw();
         this.lastDraw = delta;
-        this.frame++;
+        this.frame += this.size;
       }
       this.tick();
     });
