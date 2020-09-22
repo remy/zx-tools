@@ -21,6 +21,8 @@ export default class Animate extends Hooks {
   bg = transparent;
   from = 0;
   to = 0;
+  _w = 1;
+  _h = 1;
   _scale = 16;
   frame = 0;
 
@@ -40,13 +42,23 @@ export default class Animate extends Hooks {
     controls = new Bind(
       {
         scale: this.scale,
-        from: null,
+        from: null, // null means read from html
         to: null,
         speed: null,
         effect: null,
         bg: null,
+        w: null,
+        h: null,
       },
       {
+        w: {
+          dom: '#comp-width',
+          callback: (value) => (this.w = value),
+        },
+        h: {
+          dom: '#comp-height',
+          callback: (value) => (this.h = value),
+        },
         scale: {
           dom: '#animate-scale',
           callback: (value) => {
@@ -109,6 +121,38 @@ export default class Animate extends Hooks {
     this.tick();
   }
 
+  set h(value) {
+    value = parseInt(value, 10);
+    this._h = value;
+    this.ctx.canvas.height = value * this.scale;
+    this.canvas.style.setProperty(
+      '--block-size-h',
+      value * this.scale * 2 + 'px'
+    );
+  }
+
+  get h() {
+    return this._h;
+  }
+
+  set w(value) {
+    value = parseInt(value, 10);
+    this._w = value;
+    this.ctx.canvas.width = value * this.scale;
+    this.canvas.style.setProperty(
+      '--block-size-w',
+      value * this.scale * 2 + 'px'
+    );
+  }
+
+  get size() {
+    return this._w * this._h;
+  }
+
+  get w() {
+    return this._w;
+  }
+
   set effect(value) {
     this.bounce = value === 'bounce';
     this.loop = value === 'loop';
@@ -120,7 +164,10 @@ export default class Animate extends Hooks {
 
   set scale(value) {
     this._scale = value;
-    this.canvas.style.setProperty('--block-size', value * 2 + 'px');
+    const { w, h } = this;
+    // this.canvas.style.setProperty('--block-size', value * 2 + 'px');
+    this.h = h;
+    this.w = w;
   }
 
   get scale() {
@@ -160,7 +207,7 @@ export default class Animate extends Hooks {
   }
 
   draw() {
-    const { from, to, frame, bounce } = this;
+    const { from, to, frame, bounce, w } = this;
     let current;
     let scale = to - from;
     if (bounce && scale !== 0) {
@@ -169,22 +216,27 @@ export default class Animate extends Hooks {
       scale++;
       current = from + (frame % scale);
     }
-    this.ctx.clearRect(0, 0, 16, 16);
-    const sprite = this.sprites.sprites[current];
-    if (sprite) {
-      // this.ctx.drawImage(sprite.canvas, 0, 0, 16, 16);
-      sprite.paint(this.ctx);
+    this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.width);
+    for (let i = 0; i < this.size; i++) {
+      const sprite = this.sprites.sprites[current + i];
+      if (sprite) {
+        // this.ctx.drawImage(sprite.canvas, 0, 0, 16, 16);
+        const x = (i % w) * this.scale;
+        const y = ((i / w) | 0) * this.scale;
+
+        sprite.paint(this.ctx, { x, y, w: this.scale });
+      }
     }
   }
 
   tick() {
     requestAnimationFrame((delta) => {
-      this.tick();
       if (this.visible && delta - this.lastDraw > 1000 / this.speed) {
         this.draw();
         this.lastDraw = delta;
         this.frame++;
       }
+      this.tick();
     });
   }
 

@@ -601,7 +601,8 @@ details {
   align-items: center;
 }
 
-.fixed-label label {
+.fixed-label > label:first-child,
+.fixed-label > span:first-child {
   width: 60px;
   min-width: min-content;
 }
@@ -1035,6 +1036,11 @@ label[for='has-priority'] {
   margin-left: 0;
 }
 
+#animate .tools label,
+#animate .tools span {
+  font-size: 80%;
+}
+
 #animate-container canvas {
   display: block;
   margin: 0 auto;
@@ -1042,8 +1048,8 @@ label[for='has-priority'] {
   image-rendering: -webkit-crisp-edges;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
-  width: var(--block-size);
-  height: var(--block-size);
+  width: var(--block-size-w);
+  height: var(--block-size-h);
 }
 
 input[type='color'] {

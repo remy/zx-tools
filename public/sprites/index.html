@@ -170,7 +170,7 @@
               <div class="tools">
                 <div>
                   <div>
-                    <h3>Frames</h3>
+                    <h3>Patterns</h3>
                   </div>
                   <div class="fixed-label"><label for="animate-from">From</label>
                     <input autocomplete="off" name="from" id="animate-from" type="number" value="0" size="8" min="0">
@@ -180,9 +180,23 @@
                   </div>
 
                   <div>
+                    <h3>Composite</h3>
+                  </div>
+                  <div class="fixed-label">
+                    <label for="comp-width">Width</label>
+                    <input size="4" name="comp-width" value="1" min="1" max="128" id="comp-width" type="number">
+                  </div>
+                  <div class="fixed-label">
+                    <label for="comp-height">Height</label>
+                    <input size="4" name="comp-height" value="1" min="1" max="128" id="comp-height" type="number">
+                    </label>
+                  </div>
+
+
+                  <div>
                     <h3>Options</h3>
                   </div>
-                  <div><label for="animate-scale">Scale</label>
+                  <div class="fixed-label"><label for="animate-scale">Scale</label>
                     <select id="animate-scale">
                       <option>16</option>
                       <option>32</option>
