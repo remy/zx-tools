@@ -120,11 +120,6 @@ function generateNewSpriteSheet({
       spriteData = Uint8Array.from(restored.spriteSheet.data);
       sprites = newSpriteSheet(spriteData);
 
-      if (restored.spriteSheet.fourBit) {
-        sprites.fourBit = true;
-        $('#size-4-bit').checked = true;
-      }
-
       sprites.filename = restored.spriteSheet.filename;
       file.name = sprites.filename;
       palette.restoreFromData(Uint8Array.from(restored.palette.data));
@@ -132,6 +127,12 @@ function generateNewSpriteSheet({
 
       if (restored.animate) {
         animate.restore(restored.animate);
+      }
+
+      // happens _after_ palette reset
+      if (restored.spriteSheet.fourBit) {
+        sprites.fourBit = true;
+        $('#size-4-bit').checked = true;
       }
 
       if (restored.tileMap) {
@@ -185,6 +186,7 @@ function generateNewSpriteSheet({
   tileMap.sprites = sprites;
   tileMap.paint();
 
+  sprites.paintAll();
   renderSpritePreviews();
   renderCurrentSprite();
 

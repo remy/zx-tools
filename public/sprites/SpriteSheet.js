@@ -13,6 +13,7 @@ export default class SpriteSheet extends Hooks {
   history = [];
   ctx = null;
   _current = 0;
+  _fourBit = false;
   length = 0;
   clipboard = null;
   defaultScale = 16; // 8 = 8x8
@@ -30,8 +31,6 @@ export default class SpriteSheet extends Hooks {
     super();
 
     this.data = new Uint8Array(pixelLength * 4 * 16);
-
-    this.fourBit = fourBit;
 
     if (fourBit) {
       data.forEach((byte, ptr) => {
@@ -64,6 +63,8 @@ export default class SpriteSheet extends Hooks {
     window.sprites = this;
     palette.updateCounts();
     this.renderSubSprites(0);
+    this.fourBit = fourBit;
+
     this.trigger();
   }
 
@@ -73,6 +74,15 @@ export default class SpriteSheet extends Hooks {
       fourBit: this.fourBit,
       data: Array.from(this.getData()),
     };
+  }
+
+  get fourBit() {
+    return this._fourBit;
+  }
+
+  set fourBit(value) {
+    this._fourBit = !!value;
+    this.paintAll();
   }
 
   getData() {
