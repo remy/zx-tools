@@ -1,7 +1,7 @@
 import { $ } from '../lib/$.js';
 import { colourTable, emptyCanvas, getCoords } from './sprite-tools.js';
 import trackDown from '../lib/track-down.js';
-import { next512FromRGB, toRGB332 } from './lib/colour.js';
+import { next512FromRGB } from './lib/colour.js';
 import palette, { sorter } from './Palette.js';
 
 const transparent = palette.transparency[1];
@@ -21,6 +21,11 @@ export default class ImageWindow {
     this.__ctx.canvas.height = height;
     this.parent = ctx.canvas.parentNode;
     this.status = $('#png-status');
+
+    this.controls = {
+      w: $('#repeat-width'),
+      h: $('#repeat-height'),
+    };
 
     this.dimensions = 16;
 
@@ -240,12 +245,6 @@ export default class ImageWindow {
     const ittr = (dim / 16) ** 2;
     const a = dim / 16;
 
-    let { x, y } = this.coords();
-
-    const adjust = (dim - 16) / 2;
-    x -= adjust;
-    y -= adjust;
-
     let paletteIndex = null;
 
     if (fourBit) {
@@ -301,57 +300,73 @@ export default class ImageWindow {
       }
     }
 
-    for (let j = 0; j < ittr; j++) {
-      const pal = new Set();
-      let data =
-        over || fourBit ? new Uint16Array(16 * 16) : new Uint8Array(16 * 16);
-      const xa = (j % a) * 16;
-      const ya = ((j / a) | 0) * 16;
+    const width = parseInt(this.controls.w.value, 10);
+    const height = parseInt(this.controls.h.value, 10);
+    const auto = width * height;
 
-      const imageData = ctx.getImageData(x + xa, y + ya, 16, 16);
+    for (let k = 0; k < auto; k++) {
+      let { x, y } = this.coords();
 
-      for (let i = 0; i < data.length; i++) {
-        let j = i;
-        if (as8x8) {
-          j =
-            112 * Math.floor(i / 128) +
-            16 * Math.floor((i % 64) / 8) +
-            8 * Math.floor(i / 64) +
-            (i % 8);
-        }
-        const [r, g, b, a] = imageData.data.slice(j * 4, j * 4 + 4);
-        // const index = fourBit ? nearest({ r, g, b }) : toRGB332({ r, g, b });
+      x = x + (k % width) * dim;
+      y = y + ((k / width) | 0) * dim;
 
-        // if the sprite is in 4bit mode, we'll find the best spectrum colour and
-        // create a palette on the fly.
-        // if the sprite is 8bit, then we need to find the colour based on their
-        // existing palette
-        const index = fourBit
-          ? next512FromRGB({ r, g, b })
-          : palette.getFromRGB({ r, g, b, a });
-        // : toRGB332({ r, g, b });
+      const adjust = (dim - 16) / 2;
+      x -= adjust;
+      y -= adjust;
 
-        // FIXME support defined transparency
-        if (fourBit && (index === 0xe3 || a === 0)) {
-          pal.add(transparent);
-          if (!over) {
-            data[i] = transparent;
+      for (let j = 0; j < ittr; j++) {
+        const pal = new Set();
+        let data =
+          over || fourBit ? new Uint16Array(16 * 16) : new Uint8Array(16 * 16);
+        const xa = (j % a) * 16;
+        const ya = ((j / a) | 0) * 16;
+
+        const imageData = ctx.getImageData(x + xa, y + ya, 16, 16);
+
+        for (let i = 0; i < data.length; i++) {
+          let j = i;
+          if (as8x8) {
+            j =
+              112 * Math.floor(i / 128) +
+              16 * Math.floor((i % 64) / 8) +
+              8 * Math.floor(i / 64) +
+              (i % 8);
           }
-        } else {
-          pal.add(index);
-          data[i] = index;
-        }
-      }
+          const [r, g, b, a] = imageData.data.slice(j * 4, j * 4 + 4);
+          // const index = fourBit ? nearest({ r, g, b }) : toRGB332({ r, g, b });
 
-      if (fourBit) {
-        const modified = new Uint8Array(16 * 16);
-        const pal = palette.get4Bit(paletteIndex);
-        data.forEach((_, i) => {
-          modified[i] = paletteIndex * 16 + pal.indexOf(_);
-        });
-        data = modified;
+          // if the sprite is in 4bit mode, we'll find the best spectrum colour and
+          // create a palette on the fly.
+          // if the sprite is 8bit, then we need to find the colour based on their
+          // existing palette
+          const index = fourBit
+            ? next512FromRGB({ r, g, b })
+            : palette.getFromRGB({ r, g, b, a });
+          // : toRGB332({ r, g, b });
+
+          // FIXME support defined transparency
+          if (fourBit && (index === 0xe3 || a === 0)) {
+            pal.add(transparent);
+            if (!over) {
+              data[i] = transparent;
+            }
+          } else {
+            pal.add(index);
+            data[i] = index;
+          }
+        }
+
+        if (fourBit) {
+          const modified = new Uint8Array(16 * 16);
+          const pal = palette.get4Bit(paletteIndex);
+          data.forEach((_, i) => {
+            modified[i] = paletteIndex * 16 + pal.indexOf(_);
+          });
+          data = modified;
+        }
+
+        if (this.oncopy) this.oncopy(data, k * ittr + j);
       }
-      if (this.oncopy) this.oncopy(data, j);
     }
 
     if (fourBit) {

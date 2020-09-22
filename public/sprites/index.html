@@ -418,9 +418,6 @@
             </div>
             <div id="png-import-tools" class="tools">
               <div>
-                <div class="">
-                  <label><input id="copy-as-8x8" type="checkbox"> Copy as 8x8 sprite set</label><br>
-                </div>
                 <div class="button-spacer button-group">
                   <button title="Replace the sprite entirely" data-action="copy">Copy&nbsp;in</button>
                   <button title="Copy pixels into existing sprite" data-action="copy-over">Copy&nbsp;over</button>
@@ -450,30 +447,49 @@
                       <path d="M10 17l5-5-5-5v10z" />
                       <path d="M0 24V0h24v24H0z" fill="none" /></svg></button> -->
                 </div>
-                <div class="range">
-                  <label>Mask %
-                    <input type="range" min="0" max="100"></label>
-                </div>
-                <div class="range">
-                  <label><span>Dimensions</span> <select id="import-dims">
-                      <!-- <option>8</option> -->
-                      <option selected>16</option>
-                      <option>32</option>
-                      <option>64</option>
-                      <!-- <option>128</option> -->
-                      <!-- <option>256</option> -->
-                    </select>
-                </div>
-                <div id="png-status">
+                <div>
+                  <h4>Settings</h4>
+                  <div>
+                    <label><input id="copy-as-8x8" type="checkbox"> Copy as 8x8 sprite set</label><br>
+                  </div>
 
+                  <div class="range">
+                    <label>Mask %
+                      <input type="range" min="0" max="100"></label>
+                  </div>
+                  <div class="range">
+                    <label><span>Dimensions</span> <select id="import-dims">
+                        <!-- <option>8</option> -->
+                        <option selected>16</option>
+                        <option>32</option>
+                        <option>64</option>
+                        <!-- <option>128</option> -->
+                        <!-- <option>256</option> -->
+                      </select>
+                  </div>
+                  <div id="png-status"></div>
                 </div>
-                <p>Directions: </p>
+                <div>
+                  <h4>Auto repeat import</h4>
+                  <div class="smaller fixed-label">
+                    <label for="repeat-width">Width</label>
+                    <input size="4" name="repeat-width" value="1" min="1" max="128" id="repeat-width" type="number">
+                  </div>
+                  <div class="smaller fixed-label">
+                    <label for="repeat-height">Height</label>
+                    <input size="4" name="repeat-height" value="1" min="1" max="128" id="repeat-height" type="number">
+                    </label>
+                  </div>
+                </div>
+
+                <!-- <p>Directions: </p>
                 <p>Drag a image (PNG, BMP, JPEG, etc) onto this area, then pan around with the clip area over the 16x16
                   sprite you want to
                   import into your
                   spritesheet. Make sure to select the correct position in the spritesheet before copying.
-                </p>
-                <p><strong>Keyboard shifting</strong><br>1px: shift+cursor keys<br>8px: ctrl+shift+cursor keys</p>
+                </p> -->
+                <h4>Keyboard shifting</h4>
+                <p>1px: shift+cursor keys<br>8px: ctrl+shift+cursor keys</p>
               </div>
             </div>
           </div>
