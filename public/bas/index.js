@@ -192,7 +192,11 @@ function download(action) {
     const file = file2bas(cm.getValue(), { bank: true });
     save(file, filename + '.bank');
   } else {
-    let file = file2bas(cm.getValue(), action, filename);
+    let file = file2bas(cm.getValue(), {
+      format: action,
+      filename,
+      defines: true,
+    });
     save(file, filename + (action === '3dos' ? '.bas' : '.tap'));
     // cm.setValue(file2txt(file));
   }
