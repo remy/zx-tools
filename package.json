@@ -30,7 +30,7 @@
     "lodash.debounce": "^4.0.8",
     "multer": "^1.4.2",
     "parcel-plugin-simple-sw": "^1.0.1",
-    "txt2bas": "^1.12.2"
+    "txt2bas": "^1.14.8"
   },
   "devDependencies": {
     "@babel/core": "^7.0.0-0",
