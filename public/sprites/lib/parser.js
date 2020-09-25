@@ -70,6 +70,7 @@ export function pixelsFromFile(file) {
 
       resolve({
         data: new Uint8Array(res),
+        original: imageData,
         width: ctx.canvas.width,
         height: ctx.canvas.height,
       });

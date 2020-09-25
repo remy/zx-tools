@@ -1,5 +1,5 @@
 import { $ } from '../lib/$.js';
-import { colourTable, emptyCanvas, getCoords } from './sprite-tools.js';
+import { emptyCanvas, getCoords } from './sprite-tools.js';
 import trackDown from '../lib/track-down.js';
 import { next512FromRGB } from './lib/colour.js';
 import palette, { sorter } from './Palette.js';
@@ -14,11 +14,14 @@ export default class ImageWindow {
   x = 0;
   y = 0;
 
-  constructor(data, ctx, width, height) {
+  constructor(data, ctx, { width, height, original }) {
     this.ctx = ctx;
     this.__ctx = document.createElement('canvas').getContext('2d');
     this.__ctx.canvas.width = width;
     this.__ctx.canvas.height = height;
+
+    this.pixels = original; // original imageData
+
     this.parent = ctx.canvas.parentNode;
     this.status = $('#png-status');
 
@@ -266,10 +269,15 @@ export default class ImageWindow {
           let j = i;
           const [r, g, b, a] = imageData.data.slice(j * 4, j * 4 + 4);
           const index = next512FromRGB({ r, g, b });
-          if (index === 0xe3 || a === 0) {
+          if (a === 0) {
             pal.add(transparent);
           } else {
-            pal.add(index);
+            if (palette.transparency.includes(index)) {
+              // we've got magenta and we need to manually shift it along
+              pal.add(463); // this feels super janky…
+            } else {
+              pal.add(index);
+            }
           }
         }
 
@@ -318,8 +326,7 @@ export default class ImageWindow {
 
       for (let j = 0; j < ittr; j++) {
         const pal = new Set();
-        let data =
-          over || fourBit ? new Uint16Array(16 * 16) : new Uint8Array(16 * 16);
+        let data = new Uint16Array(16 * 16); // : new Uint8Array(16 * 16);
         const xa = (j % a) * 16;
         const ya = ((j / a) | 0) * 16;
 
@@ -341,18 +348,23 @@ export default class ImageWindow {
           // create a palette on the fly.
           // if the sprite is 8bit, then we need to find the colour based on their
           // existing palette
-          const index = fourBit
-            ? next512FromRGB({ r, g, b })
-            : palette.getFromRGB({ r, g, b, a });
-          // : toRGB332({ r, g, b });
+          let index = next512FromRGB({ r, g, b });
 
           // FIXME support defined transparency
-          if (fourBit && (index === 0xe3 || a === 0)) {
+          if (a === 0) {
+            //  index === 0xe3 ||
             pal.add(transparent);
             if (!over) {
               data[i] = transparent;
             }
           } else {
+            // this is a special edge case where the user image has magenta and
+            // because of this we'll shift it across to the magenta that the
+            // Next uses (#ff24ff). Feels a bit iffy, but it works.
+            if (palette.transparency.includes(index)) {
+              index = 463;
+              // index = transparent;
+            }
             pal.add(index);
             data[i] = index;
           }
@@ -363,6 +375,12 @@ export default class ImageWindow {
           const pal = palette.get4Bit(paletteIndex);
           data.forEach((_, i) => {
             modified[i] = paletteIndex * 16 + pal.indexOf(_);
+          });
+          data = modified;
+        } else {
+          const modified = new Uint8Array(16 * 16);
+          data.forEach((_, i) => {
+            modified[i] = palette.table.indexOf(_);
           });
           data = modified;
         }
@@ -406,7 +424,7 @@ export default class ImageWindow {
 
     for (let i = 0; i < imageData.data.length / 4; i++) {
       let index = pixels[i];
-      const { r, g, b, a } = colourTable[index];
+      const { r, g, b, a } = palette.getRGB(index);
 
       imageData.data[i * 4 + 0] = r;
       imageData.data[i * 4 + 1] = g;
@@ -414,6 +432,6 @@ export default class ImageWindow {
       imageData.data[i * 4 + 3] = a * 255;
     }
 
-    ctx.putImageData(imageData, 0, 0);
+    ctx.putImageData(this.pixels, 0, 0);
   }
 }
