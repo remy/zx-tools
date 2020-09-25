@@ -148,7 +148,7 @@ export function rgbFromNext(value) {
  * ninth bit (blue LSB)
  *
  * @param {number} value 8bit value
- * @returns {number} 8bit value
+ * @returns {number} 9bit value
  * @example
  * 10110011 (179) becomes 101100111 (359)
  * convertTo9Bit(0b10110011)

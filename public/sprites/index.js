@@ -79,7 +79,7 @@ function newSpriteSheet(data, file = { name: 'untitled.spr' }) {
 const saveLocal = debounce(() => {
   console.log('saving state locally');
   saveState({ spriteSheet: sprites, tileMap, palette, animate });
-}, 500);
+}, 200);
 
 /**
  *
@@ -237,8 +237,8 @@ palette.hook((type, node) => {
   if (type !== 'change') return;
 
   sprites.paintAll();
-
   tileMap.paint();
+  saveLocal();
 });
 
 hasPriority.onchange = (e) => {
@@ -267,7 +267,7 @@ if (!document.body.prepend) {
 async function fileToImageWindow(data, file) {
   const res = await parseNoTransformFile(data, file);
   const ctx = document.querySelector('#importer canvas.png').getContext('2d');
-  imageWindow = new ImageWindow(res.data, ctx, res.width, res.height);
+  imageWindow = new ImageWindow(res.data, ctx, res);
   imageWindow.oncopy = (data, offset) => {
     if (offset) {
       sprites.current = sprites.current + offset;
@@ -895,9 +895,9 @@ generateNewSpriteSheet({ check: false });
 
 buildStyleSheet();
 
-// fetch('/assets/sprite.png')
-//   .then((res) => res.blob())
-//   .then((res) => {
-//     const file = new Blob([res], { type: 'image/png' });
-//     fileToImageWindow(res, file);
-//   });
+fetch('/assets/jetpac.png')
+  .then((res) => res.blob())
+  .then((res) => {
+    const file = new Blob([res], { type: 'image/png' });
+    fileToImageWindow(res, file);
+  });

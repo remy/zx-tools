@@ -457,6 +457,8 @@ export class Palette extends Hooks {
       this.lock = px;
     }
     this.node.childNodes[index].replaceWith(px);
+
+    this.trigger('change');
   }
 
   /**
