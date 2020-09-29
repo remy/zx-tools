@@ -37,8 +37,12 @@ export default class BmpEncoder {
     /******************header***********************/
     this.flag = 'BM';
     this.reserved = 0;
-    this.offset = 16 + this.headerInfoSize + (1 << 8) * 4;
+    // 14 = header size
+    // headerinfo should be 40
+    // palette is 256 * 4
+    this.offset = 14 + this.headerInfoSize + (1 << 8) * 4;
     this.fileSize = this.rgbSize + this.offset;
+
     this.planes = 1;
     this.bitPP = 8; // NOTE - this is expected to be an 8bit image
     this.compress = 0;
@@ -56,10 +60,17 @@ export default class BmpEncoder {
       const r = this.data[i];
       const g = this.data[i + 1];
       const b = this.data[i + 2];
+      const a = this.data[i + 3];
 
       let value = toRGB332({ r, g, b });
-      p.add(value);
-      pixels.push(value);
+
+      if (a === 0) {
+        p.add(227);
+        pixels.push(227);
+      } else {
+        p.add(value);
+        pixels.push(value);
+      }
     }
 
     const pData = Uint8Array.from(p);
@@ -117,6 +128,8 @@ export default class BmpEncoder {
     this.write('Uint32', this.importantColors);
 
     const data = new Uint8Array(this.view.buffer);
+
+    console.log('writing data @ ' + this.pos);
 
     for (let i = 0; i < this.bytes.length; i++) {
       data[this.pos + i] = this.bytes[i];

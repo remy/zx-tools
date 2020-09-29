@@ -32,7 +32,12 @@ export function decode(file) {
   return file;
 }
 
+/**
+ * @param {File} file
+ * @returns {Promise<{{ data : Uin8Array, original: ImageData, height: number, width: number }}>}
+ */
 export function pixelsFromFile(file) {
+  const isBMP = file.type === 'image/bmp';
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
     const img = new Image();
@@ -60,11 +65,18 @@ export function pixelsFromFile(file) {
           pixels[i + 3],
         ];
 
+        const value = toRGB332({ r, g, b });
+
+        // if we're a bmp and the value is magenta, we'll turn this transparent
+        if (isBMP && value === 0xe3) {
+          pixels[i + 3] = 0;
+        }
+
         if (a === 0 || r === undefined) {
           // transparent
           res.push(0xe3);
         } else {
-          res.push(toRGB332({ r, g, b }));
+          res.push(value);
         }
       }
 
