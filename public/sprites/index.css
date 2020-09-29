@@ -1336,11 +1336,11 @@ button[disabled] {
   pointer-events: none;
 }
 
-label:not(:first-of-type) > input {
+#export label:not(:first-of-type) > input {
   margin-left: 8px;
 }
 
-label > input {
+#export label > input {
   margin-right: 4px;
 }
 
