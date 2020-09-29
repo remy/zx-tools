@@ -16,6 +16,7 @@ import debounce from 'lodash.debounce';
 import trackDown from '../lib/track-down.js';
 import palette from './Palette.js';
 import Animate from './Animate.js';
+import Exporter from './Exporter.js';
 
 /**
  * @typedef { import("../lib/dnd").DropCallback } DropCallback
@@ -71,6 +72,9 @@ function newSpriteSheet(data, file = { name: 'untitled.spr' }) {
   tileMap.sprites = sprites; // just in case
   animate.sprites = sprites;
 
+  exporter.sprites = sprites;
+  exporter.update();
+
   bitSize.emit('change');
 
   return sprites;
@@ -78,7 +82,7 @@ function newSpriteSheet(data, file = { name: 'untitled.spr' }) {
 
 const saveLocal = debounce(() => {
   console.log('saving state locally');
-  saveState({ spriteSheet: sprites, tileMap, palette, animate });
+  saveState({ spriteSheet: sprites, tileMap, palette, animate, exporter });
 }, 200);
 
 /**
@@ -145,6 +149,11 @@ function generateNewSpriteSheet({
         tileMap.filename = tileMapData.filename;
         tileMap.paint();
       }
+
+      if (restored.exporter) {
+        exporter.restore(restored.exporter);
+      }
+
       console.log(
         'State restored from ' + new Date(restored.lastSaved).toLocaleString()
       );
@@ -211,6 +220,10 @@ tabs.hook((tab) => {
     palette.moveTo('sprite-editor');
   }
 
+  if (tab === 'export') {
+    exporter.update();
+  }
+
   if (tab === 'palette') {
     palette.moveTo('palette');
     userToolPalette.innerHTML = '';
@@ -252,7 +265,11 @@ tileMap.hook(debounce(saveLocal, 2000));
 const animate = new Animate(sprites);
 animate.hook(debounce(saveLocal, 200));
 
+const exporter = new Exporter();
+exporter.tiles = tileMap;
+
 let imageWindow = null;
+window.exporter = exporter;
 window.tileMap = tileMap;
 window.palette = palette;
 window.picker = colour;
@@ -263,9 +280,12 @@ if (!document.body.prepend) {
   document.querySelector('#tile-map-container').prepend(tileMap.ctx.canvas);
 }
 
+exporter.hook(saveLocal);
+
 /** @type {DropCallback} */
 async function fileToImageWindow(data, file) {
   const res = await parseNoTransformFile(data, file);
+  res.filename = file.name;
   const ctx = document.querySelector('#importer canvas.png').getContext('2d');
   imageWindow = new ImageWindow(res.data, ctx, res);
   imageWindow.oncopy = (data, offset) => {
@@ -481,7 +501,73 @@ buttons.on('click', async (e) => {
   }
 
   if (action === 'download') {
-    download();
+    if (event.shiftKey) {
+      exporter.update(true);
+      navigator.clipboard.writeText(exporter.output.value).then(() => {
+        const btn = $('button[data-action="download"]');
+        btn.classList.add('copied');
+        setTimeout(() => btn.classList.remove('copied'), 1100);
+      });
+    } else {
+      download();
+    }
+  }
+
+  if (action.startsWith('export-')) {
+    if (action === 'export-palette-range-all') {
+      exporter.pRange.min = 0;
+      exporter.pRange.max = 255;
+    }
+
+    if (action === 'export-sprite-range-all') {
+      exporter.sRange.min = 0;
+      exporter.sRange.max = 63;
+    }
+
+    exporter.update(true);
+    const asm = exporter.settings.dist === 'asm';
+
+    if (action === 'export-copy') {
+      navigator.clipboard.writeText(exporter.output.value);
+    }
+
+    if (action === 'export-download-source') {
+      const filename = prompt('Filename?', 'untitled.' + (asm ? 's' : 'bas'));
+      if (filename) {
+        const file = new TextEncoder().encode(exporter.output.value);
+        save(file, filename);
+      }
+    }
+
+    if (action === 'export-as-bmp') {
+      const filename = prompt('8bit BMP Filename?', 'untitled.bmp');
+      if (filename) {
+        save(exporter.bmp(), filename);
+      }
+    }
+
+    if (action === 'export-as-png') {
+      const filename = prompt('PNG Filename?', 'untitled.png');
+      if (filename) {
+        save(await exporter.png(), filename);
+      }
+    }
+
+    if (action === 'export-pal-as-gpl') {
+      const filename = prompt('Filename?', 'untitled.gpl');
+      if (filename) {
+        const file = new TextEncoder().encode(palette.exportGPL());
+        save(file, filename);
+      }
+    }
+
+    if (action === 'export-as-piskel') {
+      const filename = prompt('Filename?', 'untitled.piskel');
+      if (filename) {
+        const file = new TextEncoder().encode(exporter.piskel());
+        save(file, filename);
+      }
+    }
   }
 });
 
@@ -561,16 +647,16 @@ document.documentElement.addEventListener('keydown', (e) => {
 
   if (focusTool) {
     if (e.shiftKey && e.key === 'ArrowLeft') {
-      focusTool.shiftX(true, e.ctrlKey ? 8 : 1, sprites);
+      focusTool.shiftX(true, e.ctrlKey ? 1 : 8, sprites);
     }
     if (e.shiftKey && e.key === 'ArrowRight') {
-      focusTool.shiftX(false, e.ctrlKey ? 8 : 1, sprites);
+      focusTool.shiftX(false, e.ctrlKey ? 1 : 8, sprites);
     }
     if (e.shiftKey && e.key === 'ArrowUp') {
-      focusTool.shiftY(true, e.ctrlKey ? 8 : 1, sprites);
+      focusTool.shiftY(true, e.ctrlKey ? 1 : 8, sprites);
     }
     if (e.shiftKey && e.key === 'ArrowDown') {
-      focusTool.shiftY(false, e.ctrlKey ? 8 : 1, sprites);
+      focusTool.shiftY(false, e.ctrlKey ? 1 : 8, sprites);
     }
   }
 
@@ -616,6 +702,15 @@ document.documentElement.addEventListener('keydown', (e) => {
   }
 
   if (e.key === 'D') {
+    if (event.shiftKey) {
+      exporter.update(true);
+      navigator.clipboard.writeText(exporter.output.value).then(() => {
+        const btn = $('button[data-action="download"]');
+        btn.classList.add('copied');
+        setTimeout(() => btn.classList.remove('copied'), 1100);
+      });
+      return;
+    }
     download();
     return;
   }
@@ -762,13 +857,6 @@ upload.addEventListener('change', (e) => {
   };
   reader.readAsArrayBuffer(droppedFile);
 });
-
-importDimensions.addEventListener('change', () => {
-  if (imageWindow)
-    imageWindow.dimensions = parseInt(importDimensions.value, 10);
-});
-
-importDimensions.value = 16;
 
 mapUpload.addEventListener('change', (e) => {
   const droppedFile = e.target.files[0];

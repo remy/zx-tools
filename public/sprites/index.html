@@ -28,7 +28,8 @@
     </nav>
     <main>
       <div id="sprites">
-        <button title="[D]ownload" class="button--download" data-action="download">Download<br>spritesheet</button>
+        <button title="[D]ownload" class="button--download has-copy"
+          data-action="download">Download<br>spritesheet</button>
         <div class="button-group" id="preview-8x8">
           <canvas data-action="select-sub-sprite" class="button" data-index="0"></canvas>
           <canvas data-action="select-sub-sprite" class="button" data-index="1"></canvas>
@@ -489,9 +490,138 @@
                   spritesheet. Make sure to select the correct position in the spritesheet before copying.
                 </p> -->
                 <h4>Keyboard shifting</h4>
-                <p>1px: shift+cursor keys<br>8px: ctrl+shift+cursor keys</p>
+                <p>8px: shift+cursor keys<br>1px: ctrl+shift+cursor keys</p>
               </div>
             </div>
+          </div>
+        </section>
+
+        <section id="export" data-title="Export">
+          <div class="container">
+            <h3>Advanced export options</h3>
+
+            <div class="flex-row">
+              <div id="export-format">
+                <h4>Format</h4>
+                <!-- <div>
+                  <label for="export-sprite-asm-labels">Labels?</label>
+                  <input type="checkbox" id="export-sprite-asm-labels" checked>
+                </div> -->
+                <div>
+                  <span>Destination</span>
+                  <label><input type="radio" name="export-destination" value="asm">Assembly</label>
+                  <label><input type="radio" name="export-destination" value="basic">BASIC</label>
+                </div>
+                <div>
+                  <span>Size</span>
+                  <label><input type="radio" name="export-byte-size" value="byte">Byte</label>
+                  <label><input type="radio" name="export-byte-size" value="word">Word</label>
+                </div>
+                <div>
+                  <label for="export-sprite-asm-bytes"><span class="export-value-size">byte</span>s per line</label>
+                  <input type="number" id="export-sprite-asm-bytes" min="1" max="128" value="16" size="4">
+                </div>
+                <div>
+                  <span>Space around <span class="export-value-size">byte</span>s?</span>
+                  <label><input type="radio" name="export-spaces" value="yes">Y</label>
+                  <label><input type="radio" name="export-spaces" value="no">N</label>
+                </div>
+                <div>
+                  <span>Pad <span class="export-value-size">byte</span>s?</span>
+                  <label><input type="radio" name="export-pad" value="yes">Y</label>
+                  <label><input type="radio" name="export-pad" value="no">N</label>
+                </div>
+                <div>
+                  <label for="export-sprite-asm-prefix">Line prefix</label>
+                  <input type="text" value="db" id="export-sprite-asm-prefix" size="6">
+                </div>
+                <div>
+                  <label for="export-sprite-asm-byte-type"><span class="export-value-size">byte</span> format</label>
+                  <select id="export-sprite-asm-byte-type">
+                    <option value="dec">decimal</option>
+                    <option value="$">hex $</option>
+                    <option value="0x">hex 0x</option>
+                    <option value="h">hex h</option>
+                  </select>
+                </div>
+
+              </div>
+              <div>
+                <h4><label><input type="checkbox" name="export-section" value="sprites"
+                      id="export-sprites">Sprites</label>
+                </h4>
+                <div class="export-options export-sprites">
+
+                  <div class="multi-input">
+                    <label>Range: </label>
+                    <input id="export-sprite-range-start" size="4" type="number" min="0" value="0" max="63"> to <input
+                      id="export-sprite-range-end" size="4" type="number" min="0" value="63" max="63">
+                    <button data-action="export-sprite-range-all" class="inline">all</button>
+                  </div>
+
+
+
+                </div>
+                <h4><label><input type="checkbox" name="export-section" value="palette"
+                      id="export-palette">Palette</label>
+                </h4>
+                <div class="export-options export-palette">
+
+                  <div class="multi-input">
+                    <label>Range: </label>
+                    <input id="export-palette-range-start" size="4" type="number" min="0" value="0" max="255"> to <input
+                      id="export-palette-range-end" size="4" type="number" min="0" value="255" max="255">
+                    <button data-action="export-palette-range-all" class="inline">all</button>
+                  </div>
+
+                  <div>
+                    <span>Format</span>
+                    <label><input type="radio" name="export-palette-format" value="9">9bit</label>
+                    <label><input type="radio" name="export-palette-format" value="8">8bit</label>
+                  </div>
+                </div>
+                <h4><label><input type="checkbox" name="export-section" value="tiles" id="export-tiles">Tiles</label>
+                </h4>
+                <div class="export-options export-tiles">
+                </div>
+
+              </div>
+
+
+            </div>
+            <div>
+              <textarea rows="8" readonly id="export-output"></textarea>
+              <div>
+                <strong>Pro tip:</strong>
+                <em>holding shift and clicking "Download spritesheet" (top of
+                  screen)
+                  will copy
+                  the source format to your clipboard.</em>
+
+              </div>
+            </div>
+
+            <div class="button-group">
+              <button data-action="export-copy">Copy to clipboard</button>
+              <button data-action="export-download-source">Download source</button>
+              <button data-action="export-download" disabled>Download binary</button>
+            </div>
+
+            <h3>Additional formats</h3>
+
+            <div style="width: 300px">
+              <div class="flex-row align-center button-group"><span style="font-size: 12px; margin-right: 8px;">Sprites
+                  as
+                </span>
+                <button data-action="export-as-bmp">BMP</button>
+                <button data-action="export-as-png">PNG</button>
+              </div>
+              <button data-action="export-as-piskel">Export sprite as .piskel</button>
+              <button data-action="export-pal-as-gpl">Download GIMP Palette .gpl</button>
+            </div>
+            <!-- <div>
+              <button>Download zip</button>
+            </div> -->
           </div>
         </section>
 

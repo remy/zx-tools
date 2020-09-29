@@ -16,6 +16,15 @@ const dummySpriteSheet = {
   paint() {},
 };
 
+/**
+ *
+ * @param {Event} e event
+ * @param {number} w width
+ * @param {number} size size is 16 or 8
+ * @param {number} [h=w]
+ *
+ * @returns {{ x: number, y: number, index: number }}
+ */
 export function getCoords(e, w, size, h = w) {
   const rect = e.target.getBoundingClientRect();
   const x = ((e.clientX - rect.left) / size) | 0; //x position within the element.
@@ -104,6 +113,7 @@ export default class TileMap extends Hooks {
       });
       this.showIndexOverlay = this.elements.showIndex.checked;
       this.showIndex(!this.showIndexOverlay);
+      this.trigger();
     });
 
     this.hook(() => {
@@ -180,6 +190,7 @@ export default class TileMap extends Hooks {
     el.height = height * size * scale;
 
     $(`.tile-controls input[name="size"][value="${this.size}"]`).checked = true;
+    this.trigger();
   }
 
   showIndex(remove) {

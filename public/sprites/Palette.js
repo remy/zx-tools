@@ -425,6 +425,22 @@ export class Palette extends Hooks {
     };
   }
 
+  exportGPL() {
+    let res = `GIMP Palette
+#Palette Name: Spectrum Next 256 pal
+#Description: Palette created by <a href="https://zx.remysharp.com" target="_blank">zx.remysharp.com</a>.
+#Colors: 256
+`;
+    res += Array.from(this.data)
+      .map((_, i) => {
+        const { r, g, b } = rgbFromNext(_);
+        return `${r}	${g}	${b}	${this.getHex(i, '')}`;
+      })
+      .join('\n');
+
+    return res;
+  }
+
   /**
    * Exports data for local file save to .pal file
    *

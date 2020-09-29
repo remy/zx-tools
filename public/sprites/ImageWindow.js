@@ -3,6 +3,7 @@ import { emptyCanvas, getCoords } from './sprite-tools.js';
 import trackDown from '../lib/track-down.js';
 import { next512FromRGB } from './lib/colour.js';
 import palette, { sorter } from './Palette.js';
+import Bind from '../lib/bind.js';
 
 const transparent = palette.transparency[1];
 
@@ -32,6 +33,16 @@ export default class ImageWindow {
 
     this.dimensions = 16;
 
+    new Bind(
+      { dimensions: 16 },
+      {
+        dimensions: {
+          dom: '#import-dims',
+          callback: (value) => (this.dimensions = value),
+        },
+      }
+    );
+
     trackDown(ctx.canvas, {
       start: (e) => this.start(e),
       handler: (e) => this.pan(e),
@@ -41,7 +52,8 @@ export default class ImageWindow {
     this.render(this.__ctx, data);
     // this.zoom = 0;
     this.zoom = 2;
-    this.y = this.x = 0;
+    this.y = this.x = 56;
+
     this.paint();
   }
 
@@ -414,24 +426,7 @@ export default class ImageWindow {
     ctx.drawImage(this.__ctx.canvas, -x, -y, zoom, zoom, 0, 0, w, w);
   }
 
-  render(ctx = this.ctx, pixels) {
-    const imageData = ctx.getImageData(
-      0,
-      0,
-      ctx.canvas.width,
-      ctx.canvas.height
-    );
-
-    for (let i = 0; i < imageData.data.length / 4; i++) {
-      let index = pixels[i];
-      const { r, g, b, a } = palette.getRGB(index);
-
-      imageData.data[i * 4 + 0] = r;
-      imageData.data[i * 4 + 1] = g;
-      imageData.data[i * 4 + 2] = b;
-      imageData.data[i * 4 + 3] = a * 255;
-    }
-
+  render(ctx = this.ctx) {
     ctx.putImageData(this.pixels, 0, 0);
   }
 }

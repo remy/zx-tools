@@ -63,7 +63,7 @@ option {
   justify-content: flex-start;
 }
 
-main :not(input) {
+main :not(input, textarea) {
   user-select: none !important;
 }
 
@@ -78,11 +78,6 @@ section {
 *:after {
   color: var(--c-fg);
   font-family: 'source code pro', 'ubuntu Mono', monospace;
-}
-
-button,
-.button {
-  background: black;
 }
 
 .sprite {
@@ -275,7 +270,27 @@ button,
   display: block;
   width: 100%;
   margin-bottom: 8px;
-  /*! margin-left: 8px; */
+  background: #111;
+  border: 2px solid #111;
+  border-radius: 3px;
+}
+
+button:hover,
+.button:hover {
+  background: #212121;
+  outline: none;
+  border-color: #000;
+}
+
+.button:focus,
+button:focus {
+  background: #212121;
+  border-color: #000;
+}
+
+button:active,
+.button:active {
+  background: #333;
 }
 
 .button-group {
@@ -403,7 +418,7 @@ button svg {
 
 .tile-controls input {
   font-size: inherit;
-  border: 1px solid #fff;
+  /* border: 1px solid #fff; */
 }
 
 .tile-controls input[type='file'] {
@@ -791,13 +806,14 @@ main:fullscreen > :last-child {
 [data-scale='8'] button[data-action='toggle-scale'] {
   background: white;
   color: black;
-  outline: 2px solid black;
+  outline: none;
+  border: 2px solid black;
 }
 
 [data-animate='true'] button[data-action='toggle-animate'] {
   background: white;
-  color: black;
-  outline: 2px solid black;
+  outline: none;
+  border: 2px solid black;
 }
 
 [data-animate='true'] button[data-action='toggle-animate'] path {
@@ -1087,7 +1103,12 @@ input[type='color'] {
 input:checked + .button-radio {
   background: white;
   color: black;
-  outline: 2px solid black;
+  border: 2px solid black;
+  outline: none;
+}
+
+#sprite-editor [data-pal] button {
+  border: none;
 }
 
 #sprite-editor [data-pal='0'] button:nth-child(1) {
@@ -1158,6 +1179,7 @@ input:checked + .button-radio {
   background: none;
   font-size: 8px;
   opacity: 0;
+  border: none;
 }
 
 #four-bit-pal-picker button:hover {
@@ -1176,4 +1198,153 @@ h4 {
 
 h4 + p {
   margin-top: 0;
+}
+
+h4 > label {
+  display: flex;
+  align-items: center;
+}
+
+h4 > label > :first-child {
+  margin-right: 8px;
+}
+
+#export {
+  font-size: 90%;
+}
+
+#export h3 {
+  margin-top: 32px;
+}
+
+#export h3:first-of-type {
+  margin-top: 0;
+}
+
+#export input,
+#export label {
+  font-size: inherit;
+}
+
+.multi-input input {
+  border: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.export-options {
+  margin-left: 20px;
+}
+
+#export button {
+  font-size: 80%;
+}
+
+#export-output {
+  max-width: 100%;
+  min-width: 100%;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  border: 0;
+  font-size: 90%;
+  margin: 20px 0;
+}
+
+#export .flex-row > div {
+  width: 45%;
+}
+
+#export > div {
+  max-width: 800px;
+}
+
+#export h4 {
+  margin-top: 8px;
+}
+
+#export h4:first-of-type {
+  margin-top: 0;
+}
+
+#export-format div > label:first-child,
+#export-format div > span:first-child {
+  min-width: 100px;
+  display: inline-block;
+}
+
+#export-format div {
+  margin: 4px 0;
+}
+
+#export-output {
+  margin-bottom: 0;
+}
+
+#export-output + div {
+  margin-bottom: 16px;
+  font-size: 11px;
+  max-width: 600px;
+}
+
+button[data-action='download'].has-copy {
+  position: relative;
+  z-index: 10;
+}
+
+button[data-action='download'].has-copy:after {
+  content: ' ';
+  transition: transform 100ms ease-out;
+  background-repeat: no-repeat;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24'><path fill='white' d='M10 17l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9m-6-6a1 1 0 011 1 1 1 0 01-1 1 1 1 0 01-1-1 1 1 0 011-1m7 0h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2z'/></svg>");
+  display: block;
+  position: absolute;
+  right: 0;
+  width: 24px;
+  height: 24px;
+  top: 50%;
+  z-index: -1;
+  opacity: 0;
+}
+
+button[data-action='download'].copied:after {
+  animation: bounce 1s 1 ease-in-out;
+}
+
+@keyframes bounce {
+  10% {
+    opacity: 1;
+    transform: translateX(25px);
+  }
+  80% {
+    opacity: 1;
+    transform: translateX(25px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+}
+
+h4 label {
+  display: inline-block;
+}
+
+button[disabled] {
+  background: #222;
+  color: #444;
+  border: #222;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+label:not(:first-of-type) > input {
+  margin-left: 8px;
+}
+
+label > input {
+  margin-right: 4px;
+}
+
+label[for='export-sprite-asm-bytes'] .export-value-size,
+label[for='export-sprite-asm-byte-type'] .export-value-size {
+  text-transform: capitalize;
 }

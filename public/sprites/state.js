@@ -5,18 +5,15 @@
  */
 
 /**
+ * Saves object to localStorage so long as it implements the serialize method
  *
- * @param {object} options
- * @param {SpriteSheet} options.spriteSheet
- * @param {TileMap} options.tileMap
- * @param {Palette} options.palette
- * @param {Animate} options.animate
+ * @param {object} settings
  */
-export function saveState({ spriteSheet, tileMap, palette, animate }) {
-  localStorage.setItem('tileMap', JSON.stringify(tileMap.serialize()));
-  localStorage.setItem('spriteSheet', JSON.stringify(spriteSheet.serialize()));
-  localStorage.setItem('palette', JSON.stringify(palette.serialize()));
-  localStorage.setItem('animate', JSON.stringify(animate.serialize()));
+export function saveState(settings) {
+  Object.keys(settings).forEach((key) => {
+    localStorage.setItem(key, JSON.stringify(settings[key].serialize()));
+  });
+
   localStorage.setItem('lastSaved', Date.now());
 }
 
@@ -30,5 +27,6 @@ export function restoreState() {
     spriteSheet: JSON.parse(localStorage.getItem('spriteSheet')),
     palette: JSON.parse(localStorage.getItem('palette')),
     animate: JSON.parse(localStorage.getItem('animate')),
+    exporter: JSON.parse(localStorage.getItem('exporter')),
   };
 }
