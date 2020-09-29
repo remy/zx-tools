@@ -983,9 +983,9 @@ generateNewSpriteSheet({ check: false });
 
 buildStyleSheet();
 
-fetch('/assets/jetpac.png')
-  .then((res) => res.blob())
-  .then((res) => {
-    const file = new Blob([res], { type: 'image/png' });
-    fileToImageWindow(res, file);
-  });
+// fetch('/assets/jetpac.png')
+//   .then((res) => res.blob())
+//   .then((res) => {
+//     const file = new Blob([res], { type: 'image/png' });
+//     fileToImageWindow(res, file);
+//   });
