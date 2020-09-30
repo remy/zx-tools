@@ -417,7 +417,9 @@ export default class ImageWindow {
     const localCords = this.coords(x, y);
     this.status.innerHTML = `Zoom: ${5 - this.zoomFactor}:1<br>X/Y: ${
       localCords.x
-    }/${localCords.y}`;
+    }/${localCords.y}<br>W/H: ${this.__ctx.canvas.width}/${
+      this.__ctx.canvas.height
+    }px`;
     const ctx = this.ctx;
     emptyCanvas(ctx);
     const w = ctx.canvas.width;

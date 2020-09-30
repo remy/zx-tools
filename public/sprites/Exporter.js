@@ -372,7 +372,6 @@ export default class Exporter extends Hooks {
 
       if (size === 'word') {
         bytes = new Uint16Array(new DataView(bytes.buffer).buffer);
-        console.log(bytes);
       }
 
       lines.push(...bytesToLines(bytes, { ...this.settings }));
