@@ -270,8 +270,6 @@ export default class Exporter extends Hooks {
   }
 
   update(force = false) {
-    console.clear();
-
     this.trigger('update');
 
     // bit of a hack, but worthwhile

@@ -8,7 +8,7 @@
     "serve": "serve dist -p 8080",
     "deploy": "npm run build; git add dist; git commit -m'new build'; git push origin master",
     "functions": "now --prod",
-    "build": "rm -rf dist; parcel build public/index.html public/**/index.html public/**/**/index.html",
+    "build": "sh ./hashit.sh; rm -rf dist; parcel build public/index.html public/**/index.html public/**/**/index.html",
     "serve-dist": "serve dist -p 8080",
     "test": "tap  --no-coverage-report --watch __tests__/**/*.test.js"
   },

@@ -58,7 +58,6 @@ function init() {
 function process(source) {
   clearErrors();
   const res = gde(source, 'untitled.gde');
-  console.log(res);
 
   if (!currentNode) {
     currentNode = res.nodes[0].id;

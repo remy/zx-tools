@@ -1,5 +1,4 @@
 import Lexer from '../public/bas/txt2bas.js';
-import { bas2txtLines } from '../public/bas/bas2txt.js';
 import tap from 'tap';
 const lexer = new Lexer();
 

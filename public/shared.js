@@ -1,3 +1,9 @@
+import hash from './hash';
+
+console.info(
+  `Release https://github.com/remy/zx-tools/compare/${hash.prev}...${hash.curr}`
+);
+
 if (!location.origin.includes('localhost')) {
   navigator.serviceWorker.register('/sw.js').then(() => {
     try {

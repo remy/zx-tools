@@ -9,3 +9,4 @@ web_modules/
 .netlify
 scratch/
 .now
+/public/hash.js

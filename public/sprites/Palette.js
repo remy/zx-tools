@@ -231,12 +231,14 @@ export class Palette extends Hooks {
    * @returns {boolean|null} The 16 byte index from the current palette
    */
   find4BitIndex(needle) {
-    needle = needle.join(',');
     let found = null;
     for (let i = 0; i < 16; i++) {
-      const row = palette.get4Bit(i).sort(sorter).join(',');
+      const row = palette.get4Bit(i).sort(sorter);
 
-      if (row === needle) {
+      const count = needle.filter((p) => row.includes(p)).length;
+      // const onBoard = row.filter((p) => needle.includes(p)).length;
+
+      if (count === needle.length) {
         found = i;
         break;
       }
