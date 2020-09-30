@@ -10,9 +10,12 @@ import {
   isPriority,
 } from './lib/colour';
 import Hooks from '../lib/Hooks';
+import { $ } from '../lib/$';
+import debounce from 'lodash.debounce';
 
 const colourTest = document.createElement('div');
 document.body.appendChild(colourTest);
+const editor = $('#palette-editor');
 
 /**
  * @typedef RGBA
@@ -53,6 +56,34 @@ export function sorter(a, b) {
 function defaultPalette(length = 256) {
   const bytes = byteArray(length).map((_) => convertTo9Bit(_));
   return bytes;
+}
+
+/**
+ * Binds the editor to the live palette
+ */
+function initEditor() {
+  editor.on(
+    'input',
+    debounce(() => {
+      const text = editor.value;
+      const values = text
+        .trim()
+        .split(/\s+/)
+        .map((_) => {
+          _ = _.trim();
+          if (_ === '') return null;
+          if (_.startsWith('$')) return parseInt('0x' + _.slice(1), 16);
+          const n = parseInt(_, 10);
+          if (isNaN(n)) return 0;
+          return n;
+        })
+        .filter((_) => _ !== null);
+
+      palette.restoreFromData(
+        Uint16Array.from(values.map((v) => indexToNextLEShort(v)))
+      );
+    }, 100)
+  );
 }
 
 /**
@@ -398,6 +429,21 @@ export class Palette extends Hooks {
       let value = sorted[i];
       into.appendChild(this.makePixel(value, i, 'c2', this.transparency));
     }
+
+    if (document.activeElement === editor[0]) {
+      return;
+    }
+    editor.value = sorted
+      .map((index) => ('$' + index.toString(16)).padStart(6, ' '))
+      .reduce((acc, curr, i) => {
+        acc += curr;
+        if ((i + 1) % 16 === 0) {
+          acc += '\n';
+        }
+        return acc;
+      }, '')
+      .toUpperCase()
+      .trimEnd();
   }
 
   updateTable() {
@@ -607,3 +653,4 @@ export class Palette extends Hooks {
 const palette = new Palette(document.querySelector('#palette .picker'));
 export default palette;
 palette.attach();
+initEditor();

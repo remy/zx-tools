@@ -1348,3 +1348,53 @@ label[for='export-sprite-asm-bytes'] .export-value-size,
 label[for='export-sprite-asm-byte-type'] .export-value-size {
   text-transform: capitalize;
 }
+
+#palette-editor {
+  max-width: 100%;
+  min-width: 100%;
+  width: 100%;
+  border: 0;
+  font-size: 90%;
+  margin: 0;
+  padding: 8px;
+  background: none;
+  z-index: 10;
+  position: relative;
+  line-height: 1.4;
+  padding-left: 20px;
+  height: 100%;
+  min-height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+#palette-editor-shadow {
+  min-height: 310px;
+  position: relative;
+}
+
+#editor-shadow {
+  border-radius: 2px;
+  line-height: 1.4;
+  z-index: 1;
+  display: block;
+  max-width: 100%;
+  min-width: 100%;
+  width: 100%;
+  border: 0;
+  font-size: 90%;
+  margin: 0;
+  margin-bottom: 20px;
+  padding: 8px;
+  position: absolute;
+  background: rgba(0, 0, 0, 0.5);
+  color: rgba(255, 255, 255, 0.3);
+  top: 0;
+  left: 0;
+  height: 100%;
+  pointer-events: none;
+  white-space: pre-line;
+}

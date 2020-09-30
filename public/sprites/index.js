@@ -390,6 +390,14 @@ buttons.on('click', async (e) => {
     downloadPal();
   }
 
+  if (action === 'reset-pal-16') {
+    const data = await fetch('/assets/l01.pal').then((res) =>
+      res.arrayBuffer()
+    );
+    palette.restoreFromData(new Uint8Array(data));
+    palette.filename = 'l01.pal';
+  }
+
   if (action === 'reset-pal') {
     palette.reset();
   }
