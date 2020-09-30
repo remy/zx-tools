@@ -1361,7 +1361,6 @@ label[for='export-sprite-asm-byte-type'] .export-value-size {
   z-index: 10;
   position: relative;
   line-height: 1.4;
-  padding-left: 20px;
   height: 100%;
   min-height: 100%;
   position: absolute;
@@ -1369,6 +1368,9 @@ label[for='export-sprite-asm-byte-type'] .export-value-size {
   left: 0;
   right: 0;
   bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+
+  /* padding-left: 20px; */
 }
 
 #palette-editor-shadow {
