@@ -315,7 +315,6 @@ export default class Exporter extends Hooks {
           const pixels = new Uint8Array(sprites[i].pixels);
           data = new Uint16Array(new DataView(pixels.buffer).buffer);
         }
-        console.log(data.length);
 
         lines.push(...bytesToLines(data, { ...this.settings }));
         lines.push('');

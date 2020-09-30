@@ -1,3 +1,5 @@
+import debounce from 'lodash.debounce';
+
 /**
  * @class
  */
@@ -11,15 +13,16 @@ export default class Hooks {
    * @param {Function} callback
    */
   hook(callback) {
+    const debounced = debounce(callback, 50);
     const exists = this.hooks.findIndex(
-      (_) => _.toString() === callback.toString()
+      (_) => _.toString() === debounced.toString()
     );
 
     if (exists !== -1) {
       this.hooks.splice(exists, 1);
     }
 
-    this.hooks.push(callback);
+    this.hooks.push(debounced);
   }
 
   /**

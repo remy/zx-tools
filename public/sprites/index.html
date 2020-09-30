@@ -321,7 +321,10 @@
               </label>
               <div class="colour-picker"></div>
               <button class="download-pal" data-action="download-pal">Download .pal</button>
-              <button class="reset-pal" data-action="reset-pal">Reset palette</button>
+
+              <button class="button-spacer reset-pal" data-action="reset-pal">Reset: L2 256</button>
+              <button class="reset-pal" data-action="reset-pal-16">Reset: ULA 16</button>
+
               <label hidden id="has-priority-wrapper" for="has-priority">Has priority? <input type="checkbox"
                   id="has-priority"> </label>
             </div>
@@ -350,21 +353,6 @@
               </ul>
               <p>Please note: the palette editor is new (as of 9-July), so if you spot anything
                 untoward please <a href="https://github.com/remy/zx-tools/issues/new">raise an issue</a>.</p>
-            </details>
-          </div>
-          <div>
-            <details>
-              <summary>Todo</summary>
-              <ul>
-                <li>Configure global transparency</li>
-                <li>Configure priority on individual palette values</li>
-                <li>Support .npl file format</li>
-                <li>Find and replace palette value</li>
-                <li>Sticky zoom</li>
-                <li>Generate palette based on image</li>
-                <li>Undo</li>
-                <li>Local state save/restore</li>
-              </ul>
             </details>
           </div>
         </section>
@@ -402,7 +390,6 @@
             <span class="button input-button" id="upload-map"><input type="file">Upload map</span>
             <button class="download-btn" data-action="download-map">Download map</button>
             <button data-action="clear-map">Clear map</button>
-            <button class="debug-sprite-btn" data-action="debug-sprites">Load debug sprites</button>
             <a id="basic-example-link" href="/bas/?id=0a51ba71408dbeff08baad3acaf1d533" target="_blank">Example BASIC
               code</a>
           </details>

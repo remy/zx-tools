@@ -33,7 +33,6 @@ const currentSpriteId = document.querySelector('#current-sprite');
 const pickerColour = document.querySelector('.pickerColour');
 const userToolPalette = document.querySelector('#palette .colour-picker');
 const hasPriority = document.querySelector('#has-priority');
-const importDimensions = document.querySelector('#import-dims');
 const buttons = $('[data-action]');
 const animateContainer = document.querySelector('#animate');
 const fourBitPalSelected = document.querySelector('#four-bit-pal-selection');
@@ -104,7 +103,7 @@ function generateNewSpriteSheet({
       return;
     }
     localStorage.removeItem('spriteSheet');
-    data = Uint8Array.from({ length: 256 * 16 * 4 }, (_, i) => {
+    data = Uint8Array.from({ length: 256 * 16 * 4 }, () => {
       // if (check == false && i < 256) return i;
       if (fourBit) return 0;
       return transparent;
@@ -773,7 +772,7 @@ function renderCurrentSprite() {
 
 function renderSpritePreviews() {
   spritesContainer.innerHTML = '';
-  sprites.getPreviewElements().map((_, i) => {
+  sprites.getPreviewElements().map((_) => {
     spritesContainer.appendChild(_);
   });
 }
@@ -983,7 +982,7 @@ generateNewSpriteSheet({ check: false });
 
 buildStyleSheet();
 
-// fetch('/assets/jetpac.png')
+// fetch('/assets/tiles.png')
 //   .then((res) => res.blob())
 //   .then((res) => {
 //     const file = new Blob([res], { type: 'image/png' });
