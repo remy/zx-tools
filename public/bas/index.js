@@ -157,8 +157,8 @@ cm.on('keydown', (cm, event) => {
 });
 
 $('button').on('click', (e) => {
-  const { action } = e.target.dataset;
-  download(action);
+  const { action, type } = e.target.dataset;
+  if (action === 'download') download(type);
 });
 
 function download(action) {

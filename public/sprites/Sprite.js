@@ -93,6 +93,30 @@ export default class Sprite {
     this.render();
   }
 
+  /**
+   *
+   * @param {boolean} fourBit
+   * @returns {Uint8Array}
+   */
+  getData(fourBit = false) {
+    if (!fourBit) {
+      return this.pixels;
+    }
+
+    const data = new Uint8Array(16 * 8);
+    this.pixels.forEach((byte, ptr) => {
+      const delta = ptr % 2;
+      const i = (ptr / 2) | 0;
+      if (delta === 0) {
+        data[i] = byte << 4;
+      } else {
+        data[i] += byte & 0x0f;
+      }
+    });
+
+    return data;
+  }
+
   mirror(horizontal = true) {
     return new Promise((resolve) => {
       const i = new Image();

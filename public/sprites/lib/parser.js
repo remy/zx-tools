@@ -38,6 +38,7 @@ export function decode(file) {
  */
 export function pixelsFromFile(file) {
   const isBMP = file.type === 'image/bmp';
+
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
     const img = new Image();
@@ -56,9 +57,11 @@ export function pixelsFromFile(file) {
         ctx.canvas.height
       );
       const pixels = imageData.data;
+
       const res = [];
+
       for (let i = 0; i < pixels.length; i += 4) {
-        const [r, g, b, a] = [
+        let [r, g, b, a] = [
           pixels[i + 0],
           pixels[i + 1],
           pixels[i + 2],

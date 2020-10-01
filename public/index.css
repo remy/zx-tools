@@ -2,6 +2,7 @@
 
 html {
   --c-bg: #f9f9f9;
+  --c-focus: #fff;
   --c-fg: #000;
   background: var(--c-bg);
 }
@@ -190,7 +191,6 @@ details footer {
 
 .toast {
   position: fixed;
-  background: #fefefe;
   bottom: 16px;
   right: 16px;
   width: 300px;
@@ -200,6 +200,7 @@ details footer {
   overflow: hidden;
   font-size: 0.75rem;
   background-color: var(--c-bg);
+  background-color: var(--c-focus);
   background-clip: padding-box;
   border: 1px solid rgba(0, 0, 0, 0.1);
   box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.1);
@@ -207,9 +208,11 @@ details footer {
 
 .show-toast .toast {
   transform: translateY(0);
+  z-index: 100;
 }
 
 .toast .close {
+  border: 0;
   font-size: 1.5rem;
   font-weight: 700;
   line-height: 1;
@@ -238,7 +241,11 @@ details footer {
 
   display: flex;
   align-items: center;
-  border-bottom: 1px solid #ccc;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.5);
+}
+
+.toast svg .filler {
+  fill: var(--c-fg);
 }
 
 .toast-header button {
@@ -280,7 +287,6 @@ input[type='text'],
 input[type='number'] {
   /* border: 1px solid; */
   border: 0;
-  background-color: rgba(0, 0, 0, 0.5);
 }
 
 input[type='color'],

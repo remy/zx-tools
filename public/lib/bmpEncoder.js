@@ -39,7 +39,7 @@ export default class BmpEncoder {
     this.reserved = 0;
     // 14 = header size
     // headerinfo should be 40
-    // palette is 256 * 4
+    // palette is 256 * 4 (starting at byte 54)
     this.offset = 14 + this.headerInfoSize + (1 << 8) * 4;
     this.fileSize = this.rgbSize + this.offset;
 

@@ -655,15 +655,19 @@ document.documentElement.addEventListener('keydown', (e) => {
   if (focusTool) {
     if (e.shiftKey && e.key === 'ArrowLeft') {
       focusTool.shiftX(true, e.ctrlKey ? 1 : 8, sprites);
+      e.preventDefault();
     }
     if (e.shiftKey && e.key === 'ArrowRight') {
       focusTool.shiftX(false, e.ctrlKey ? 1 : 8, sprites);
+      e.preventDefault();
     }
     if (e.shiftKey && e.key === 'ArrowUp') {
       focusTool.shiftY(true, e.ctrlKey ? 1 : 8, sprites);
+      e.preventDefault();
     }
     if (e.shiftKey && e.key === 'ArrowDown') {
       focusTool.shiftY(false, e.ctrlKey ? 1 : 8, sprites);
+      e.preventDefault();
     }
   }
 
@@ -990,9 +994,9 @@ generateNewSpriteSheet({ check: false });
 
 buildStyleSheet();
 
-// fetch('/assets/tiles.png')
+// fetch('/assets/sprite.bmp')
 //   .then((res) => res.blob())
 //   .then((res) => {
-//     const file = new Blob([res], { type: 'image/png' });
+//     const file = new Blob([res], { type: 'image/bmp' });
 //     fileToImageWindow(res, file);
 //   });

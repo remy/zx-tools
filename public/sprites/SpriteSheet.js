@@ -76,6 +76,9 @@ export default class SpriteSheet extends Hooks {
     };
   }
 
+  /**
+   * @returns {boolean}
+   */
   get fourBit() {
     return this._fourBit;
   }

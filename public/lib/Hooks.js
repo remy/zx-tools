@@ -7,6 +7,9 @@ export default class Hooks {
   /** @type {Function[]}*/
   hooks = [];
 
+  /** @type {Function[]}*/
+  originals = [];
+
   /**
    * Bind a new listen
    *
@@ -14,15 +17,17 @@ export default class Hooks {
    */
   hook(callback) {
     const debounced = debounce(callback, 50);
-    const exists = this.hooks.findIndex(
-      (_) => _.toString() === debounced.toString()
-    );
+    const key = callback.toString();
+
+    const exists = this.originals.findIndex((_) => _.toString() === key);
 
     if (exists !== -1) {
       this.hooks.splice(exists, 1);
+      this.originals.splice(exists, 1);
     }
 
     this.hooks.push(debounced);
+    this.originals.push(callback);
   }
 
   /**

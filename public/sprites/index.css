@@ -8,6 +8,7 @@ html {
   --size: calc(16 * var(--scale) * 2);
   --c-fg: #fff;
   --c-bg: #373737;
+  --c-focus: #262626;
 }
 
 body {
@@ -46,6 +47,13 @@ main {
 input {
   background: #373737;
   color: #fff;
+}
+
+input[type='text'],
+input[type='number'] {
+  /* border: 1px solid; */
+  border: 0;
+  background-color: rgba(0, 0, 0, 0.5);
 }
 
 select,

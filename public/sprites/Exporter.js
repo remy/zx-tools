@@ -197,6 +197,13 @@ export default class Exporter extends Hooks {
   }
 
   /**
+   * @returns {boolean}
+   */
+  get fourBit() {
+    return this._sprites.fourBit;
+  }
+
+  /**
    * @returns {TileMap}
    */
   get tiles() {
@@ -292,6 +299,7 @@ export default class Exporter extends Hooks {
       }
       let { min, max } = this.sRange;
       max = max + 1;
+      /** @type {Sprite[]} */
       const sprites = this.sprites;
 
       if (asm) {
@@ -310,9 +318,9 @@ export default class Exporter extends Hooks {
 
         let data;
         if (size === 'byte') {
-          data = sprites[i].pixels;
+          data = sprites[i].getData(this.fourBit);
         } else {
-          const pixels = new Uint8Array(sprites[i].pixels);
+          const pixels = new Uint8Array(sprites[i].getData(this.fourBit));
           data = new Uint16Array(new DataView(pixels.buffer).buffer);
         }
 
