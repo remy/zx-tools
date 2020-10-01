@@ -431,8 +431,16 @@ export class Palette extends Hooks {
     }
 
     if (document.activeElement === editor[0]) {
+      console.log('early exit');
+
       return;
     }
+
+    this.updateEditor();
+  }
+
+  updateEditor() {
+    let sorted = Array.from(this.table);
     editor.value = sorted
       .map((index) => ('$' + index.toString(16)).padStart(6, ' '))
       .reduce((acc, curr, i) => {

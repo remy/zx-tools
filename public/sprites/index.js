@@ -229,6 +229,7 @@ tabs.hook((tab) => {
     userToolPalette.appendChild(
       document.querySelector('.pickerColour').cloneNode(true)
     );
+    palette.updateEditor();
   }
 });
 
