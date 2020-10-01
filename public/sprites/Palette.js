@@ -417,7 +417,11 @@ export class Palette extends Hooks {
     if (index >= 512) return;
 
     this.zoom.className = `c2-${index} zoom`;
-    this.complete.childNodes[index].classList.add('lock');
+    try {
+      this.complete.childNodes[index].classList.add('lock');
+    } catch (e) {
+      // do nothing
+    }
   }
 
   render(sort = false) {

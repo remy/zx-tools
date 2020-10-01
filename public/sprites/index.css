@@ -1408,3 +1408,7 @@ label[for='export-sprite-asm-byte-type'] .export-value-size {
   pointer-events: none;
   white-space: pre-line;
 }
+
+.button-spacer.reset-pal {
+  margin-top: 12px;
+}

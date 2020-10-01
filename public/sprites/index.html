@@ -452,36 +452,34 @@
                   </button>
                   <button style="flex-grow: 3.5" title="Import palette from image"
                     data-action="import-palette">+&nbsp;Palette</button>
-                  <!-- <button action="shift-left"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#fff"
-                      width="24" height="24">
-                      <path d="M14 7l-5 5 5 5V7z" />
-                      <path d="M24 0v24H0V0h24z" fill="none" /></svg></button>
-                  <button action="shift-right"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#fff"
-                      width="24" height="24">
-                      <path d="M10 17l5-5-5-5v10z" />
-                      <path d="M0 24V0h24v24H0z" fill="none" /></svg></button> -->
                 </div>
                 <div>
                   <h4>Settings</h4>
-                  <div>
-                    <label><input id="copy-as-8x8" type="checkbox"> Copy as 8x8 sprite set</label><br>
-                  </div>
+                  <div class="smaller">
+                    <div>
+                      <label><input id="copy-as-8x8" type="checkbox"> Copy as 8x8 sprite set</label><br>
+                    </div>
 
-                  <div class="range">
-                    <label>Mask %
-                      <input type="range" min="0" max="100"></label>
+                    <div>
+                      <label><input id="transparent-magenta" type="checkbox"> Use magenta as transparent</label><br>
+                    </div>
+
+                    <div class="range">
+                      <label>Mask %
+                        <input type="range" min="0" max="100"></label>
+                    </div>
+                    <div class="range">
+                      <label><span>Dimensions</span> <select id="import-dims">
+                          <!-- <option>8</option> -->
+                          <option selected>16</option>
+                          <option>32</option>
+                          <option>64</option>
+                          <!-- <option>128</option> -->
+                          <!-- <option>256</option> -->
+                        </select>
+                    </div>
+                    <div id="png-status"></div>
                   </div>
-                  <div class="range">
-                    <label><span>Dimensions</span> <select id="import-dims">
-                        <!-- <option>8</option> -->
-                        <option selected>16</option>
-                        <option>32</option>
-                        <option>64</option>
-                        <!-- <option>128</option> -->
-                        <!-- <option>256</option> -->
-                      </select>
-                  </div>
-                  <div id="png-status"></div>
                 </div>
                 <div>
                   <h4>Auto repeat import</h4>

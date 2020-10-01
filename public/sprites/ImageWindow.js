@@ -32,10 +32,15 @@ export default class ImageWindow {
     };
 
     this.dimensions = 16;
+    this.useMagenta = false;
 
     new Bind(
-      { dimensions: 16 },
+      { dimensions: 16, magenta: false },
       {
+        magenta: {
+          dom: '#transparent-magenta',
+          callback: (v) => (this.useMagenta = v),
+        },
         dimensions: {
           dom: '#import-dims',
           callback: (value) => (this.dimensions = value),
@@ -188,14 +193,22 @@ export default class ImageWindow {
       let j = i;
       const [r, g, b, a] = imageData.data.slice(j * 4, j * 4 + 4);
       const index = next512FromRGB({ r, g, b });
-      if (index === 0xe3 || a === 0) {
+      if (a === 0) {
         pal.add(transparent);
+      } else if (index === 0x1c6 || index === 0x1c7) {
+        if (this.useMagenta) {
+          pal.add(transparent);
+        } else {
+          pal.add(463);
+        }
       } else {
         pal.add(index);
       }
     }
 
     let palArray = Array.from(pal);
+
+    console.log(palArray);
 
     if (fourBit) {
       if (palArray.length < 16) {
@@ -233,9 +246,9 @@ export default class ImageWindow {
         }
       }
     } else {
-      if (palArray.length < 255) {
+      if (palArray.length < 256) {
         palArray.push(
-          ...Array.from({ length: 255 - palArray.length }, () => 0)
+          ...Array.from({ length: 256 - palArray.length }, () => 0)
         );
       }
 
@@ -285,8 +298,12 @@ export default class ImageWindow {
             pal.add(transparent);
           } else {
             if (palette.transparency.includes(index)) {
-              // we've got magenta and we need to manually shift it along
-              pal.add(463); // this feels super janky…
+              if (this.useMagenta) {
+                pal.add(transparent);
+              } else {
+                // we've got magenta and we need to manually shift it along
+                pal.add(463);
+              }
             } else {
               pal.add(index);
             }
@@ -364,7 +381,6 @@ export default class ImageWindow {
 
           // FIXME support defined transparency
           if (a === 0) {
-            //  index === 0xe3 ||
             pal.add(transparent);
             if (!over) {
               data[i] = transparent;
@@ -374,8 +390,11 @@ export default class ImageWindow {
             // because of this we'll shift it across to the magenta that the
             // Next uses (#ff24ff). Feels a bit iffy, but it works.
             if (palette.transparency.includes(index)) {
-              index = 463;
-              // index = transparent;
+              if (this.useMagenta) {
+                index = transparent;
+              } else {
+                index = 463;
+              }
             }
             pal.add(index);
             data[i] = index;
