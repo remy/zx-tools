@@ -307,7 +307,8 @@ button:active,
   margin-bottom: 8px;
 }
 
-.button-group button {
+.button-group button,
+.button-group .button {
   width: auto;
   flex: 1;
   margin: 0;
@@ -318,7 +319,7 @@ button:active,
   margin-top: 24px;
 }
 
-.button-group button:last-child {
+.button-group > :last-child {
   margin-right: 0;
 }
 
