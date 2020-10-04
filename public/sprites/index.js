@@ -861,6 +861,17 @@ document.documentElement.ondrop = async (e) => {
   }
 };
 
+document.querySelector('#upload-pal').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    const data = new Uint8Array(event.target.result);
+    palette.restoreFromData(data);
+    palette.filename = file.name;
+  };
+  reader.readAsArrayBuffer(file);
+});
+
 upload.addEventListener('change', (e) => {
   const droppedFile = e.target.files[0];
   const reader = new FileReader();
