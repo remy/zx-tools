@@ -208,8 +208,6 @@ export default class ImageWindow {
 
     let palArray = Array.from(pal);
 
-    console.log(palArray);
-
     if (fourBit) {
       if (palArray.length < 16) {
         palArray.push(...Array.from({ length: 16 - palArray.length }, () => 0));
@@ -246,6 +244,12 @@ export default class ImageWindow {
         }
       }
     } else {
+      const ti = palArray.indexOf(transparent);
+
+      if (ti > -1) {
+        palArray.splice(ti, 1);
+      }
+
       if (palArray.length < 256) {
         palArray.push(
           ...Array.from({ length: 256 - palArray.length }, () => 0)
@@ -253,6 +257,7 @@ export default class ImageWindow {
       }
 
       palArray.sort(sorter);
+      palArray[227] = transparent;
 
       palArray.forEach((value, index) => {
         palette.set(paletteIndex * 16 + index, value);
