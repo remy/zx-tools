@@ -1008,9 +1008,9 @@ generateNewSpriteSheet({ check: false });
 
 buildStyleSheet();
 
-fetch('/assets/eye.png')
-  .then((res) => res.blob())
-  .then((res) => {
-    const file = new Blob([res], { type: 'image/png' });
-    fileToImageWindow(res, file);
-  });
+// fetch('/assets/eye.png')
+//   .then((res) => res.blob())
+//   .then((res) => {
+//     const file = new Blob([res], { type: 'image/png' });
+//     fileToImageWindow(res, file);
+//   });
