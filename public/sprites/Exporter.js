@@ -210,26 +210,34 @@ export default class Exporter extends Hooks {
     return this._tiles;
   }
 
-  spritesToCanvas() {
+  spritesToCanvas(spriteWidth = 64) {
     let { min, max } = this.sRange;
     max = max + 1;
     const size = max - min;
     const sprites = this.sprites;
     const ctx = document.createElement('canvas').getContext('2d');
-    const width = 16 * size;
-    const height = 16;
+    let width = 16 * size;
+    let height = 16;
+
+    if (size > spriteWidth) {
+      width = 16 * spriteWidth;
+      height = 16 * ((size / spriteWidth) | 0);
+    }
+
     ctx.canvas.width = width;
     ctx.canvas.height = height;
 
     sprites.forEach((sprite, i) => {
-      ctx.drawImage(sprite.ctx.canvas, i * 16, 0);
+      const x = i % spriteWidth;
+      const y = (i / spriteWidth) | 0;
+      ctx.drawImage(sprite.ctx.canvas, x * 16, y * 16);
     });
 
     return ctx;
   }
 
-  bmp() {
-    const ctx = this.spritesToCanvas();
+  bmp(spriteWidth) {
+    const ctx = this.spritesToCanvas(spriteWidth);
     const { width, height } = ctx.canvas;
 
     const imageData = ctx.getImageData(0, 0, width, height);
@@ -241,8 +249,8 @@ export default class Exporter extends Hooks {
     return bmp.encode();
   }
 
-  png() {
-    const ctx = this.spritesToCanvas();
+  png(spriteWidth) {
+    const ctx = this.spritesToCanvas(spriteWidth);
     return new Promise((resolve) => {
       ctx.canvas.toBlob(resolve);
     });

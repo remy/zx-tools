@@ -549,15 +549,17 @@ buttons.on('click', async (e) => {
 
     if (action === 'export-as-bmp') {
       const filename = prompt('8bit BMP Filename?', 'untitled.bmp');
-      if (filename) {
-        save(exporter.bmp(), filename);
+      const size = prompt('How many sprites wide?', '8');
+      if (filename && size) {
+        save(exporter.bmp(parseInt(size, 10)), filename);
       }
     }
 
     if (action === 'export-as-png') {
       const filename = prompt('PNG Filename?', 'untitled.png');
-      if (filename) {
-        save(await exporter.png(), filename);
+      const size = prompt('How many sprites wide?', '8');
+      if (filename && size) {
+        save(await exporter.png(parseInt(size, 10)), filename);
       }
     }
 
@@ -1006,9 +1008,9 @@ generateNewSpriteSheet({ check: false });
 
 buildStyleSheet();
 
-// fetch('/assets/sprite.bmp')
-//   .then((res) => res.blob())
-//   .then((res) => {
-//     const file = new Blob([res], { type: 'image/bmp' });
-//     fileToImageWindow(res, file);
-//   });
+fetch('/assets/eye.png')
+  .then((res) => res.blob())
+  .then((res) => {
+    const file = new Blob([res], { type: 'image/png' });
+    fileToImageWindow(res, file);
+  });
