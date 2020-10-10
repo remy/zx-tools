@@ -10,6 +10,7 @@ import { Tapper } from './lib/tapper';
 import { toHex } from '../lib/to.js';
 import BmpEncoder from '../lib/bmpEncoder.js';
 import fontMetrics, { computeHeightFromMetrics } from '../lib/fontMetrics';
+import { indexToNextLEShort, next512FromRGB } from '../sprites/lib/colour.js';
 
 let explore = null;
 const buttons = $('[data-action]');
@@ -435,10 +436,12 @@ async function renderImageForBmp(file) {
   div.appendChild(button);
   button.onclick = () => save(bmpData, basename(filename) + '.bmp');
 
-  const buttonNXI = document.createElement('button');
-  buttonNXI.innerText = 'Download as ' + (ext[width] || ext.default)[0];
-  div.appendChild(buttonNXI);
-  buttonNXI.onclick = () =>
+  const buttonSL = document.createElement('button');
+  buttonSL.innerText = 'Download as ' + (ext[width] || ext.default)[0];
+  buttonSL.title =
+    'Note that this image format uses the default L2 256 palette';
+  div.appendChild(buttonSL);
+  buttonSL.onclick = () =>
     save(
       Uint8Array.from(bmp.pixels),
       basename(filename) + '.' + (ext[width] || ext.default)[1]
@@ -447,10 +450,23 @@ async function renderImageForBmp(file) {
   const buttonNXIp = document.createElement('button');
   buttonNXIp.innerText = 'NXI with palette';
   div.appendChild(buttonNXIp);
+
+  // convert the palette to next raw data
+  const bytes = new Uint8Array(512 + bmp.index.length);
+  const p1 = Array.from(bmp.palette);
+  const p2 = new Uint16Array(256);
+  for (let i = 0; i < p1.length; i += 4) {
+    const [b, g, r] = p1.slice(i, i + 3);
+    p2[i / 4] = indexToNextLEShort(next512FromRGB({ r, g, b }));
+  }
+  const p3 = new Uint8Array(p2.buffer);
+
+  // window.p1 = p1;
+  // window.p2 = p2;
+  // window.p3 = p3;
   buttonNXIp.onclick = () => {
-    const bytes = new Uint8Array(bmp.palette.length + bmp.pixels.length);
-    bytes.set(bmp.pixels, 0);
-    bytes.set(bmp.palette, bmp.pixels.length);
+    bytes.set(p3, 0);
+    bytes.set(bmp.index, 512);
 
     save(bytes, basename(filename) + '.nxi');
   };

@@ -91,6 +91,7 @@ export default class BmpEncoder {
     }
 
     this.pixels = pixels;
+    this.index = index;
     this.palette = palette;
 
     const bytes = new Uint8Array(palette.length + index.length);
