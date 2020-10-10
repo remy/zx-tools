@@ -83,9 +83,9 @@ export function toRGB332({ r, g, b } = {}) {
  * @returns {number} 9bit spectrum next colour value
  */
 export function next512FromRGB({ r, g, b }) {
-  r = ((r / 32) | 0) << 6;
-  g = ((g / 32) | 0) << 3;
-  b = (b / 32) | 0;
+  r = ((r / 32) | 0) << 6; // ?
+  g = ((g / 32) | 0) << 3; // ?
+  b = (b / 32) | 0; // ?
 
   return r + g + b;
 }

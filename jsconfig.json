@@ -1,5 +1,7 @@
 {
-  "checkJs": true,
+  "compilerOptions": {
+    "checkJs": true
+  },
   "target": "esnext",
   "exclude": ["node_modules", "dist"]
 }
