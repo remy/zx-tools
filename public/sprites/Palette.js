@@ -8,21 +8,19 @@ import {
   convertTo9Bit,
   indexToNextLEShort,
   isPriority,
+  rgbToHsv,
 } from './lib/colour';
 import Hooks from '../lib/Hooks';
 import { $ } from '../lib/$';
 import debounce from 'lodash.debounce';
+import SpriteSheet from './SpriteSheet';
 
 const colourTest = document.createElement('div');
 document.body.appendChild(colourTest);
 const editor = $('#palette-editor');
 
 /**
- * @typedef RGBA
- * @property {number} r 0-255
- * @property {number} g 0-255
- * @property {number} b 0-255
- * @property {number} a 255 - typically defaulted as our values don't have semi-opaque
+ * @typedef { import("./lib/colour").RGBA } RGBA
  */
 
 /**
@@ -94,6 +92,9 @@ function initEditor() {
 export class Palette extends Hooks {
   _transparency = transparent;
 
+  /** @type {Element} */
+  _lock = null;
+
   /** @type {string} */
   filename = 'untitled.pal';
   priority = new Set();
@@ -112,6 +113,21 @@ export class Palette extends Hooks {
 
     /** @type {Element|null} current selected index node */
     this.lock = null;
+  }
+
+  /** @type {Element|null} current selected index node */
+  get lock() {
+    return this._lock;
+  }
+
+  /** @param {Element|null} value selected index node */
+  set lock(value) {
+    if (value !== null) {
+      this.node.parentElement.classList.add('locked');
+    } else {
+      this.node.parentElement.classList.remove('locked');
+    }
+    this._lock = value;
   }
 
   updateCounts() {
@@ -202,6 +218,13 @@ export class Palette extends Hooks {
         if (!p.lock) zoom.className = `c2-${e.target.dataset.value} zoom`;
       },
       handler(e) {
+        if (e.shiftKey && p.lock) {
+          if (p.lock !== e.target) {
+            const from = parseInt(p.lock.dataset.index, 10);
+            const to = parseInt(e.target.dataset.index, 10);
+            p.swap(from, to);
+          }
+        }
         if (p.lock) {
           p.lock.classList.remove('lock');
         }
@@ -219,6 +242,128 @@ export class Palette extends Hooks {
     document.querySelector('#find-colour').oninput = (e) => {
       this.find(e.target.value.trim());
     };
+  }
+
+  /**
+   * Swaps two palette index values
+   *
+   * @param {number} from
+   * @param {number} to
+   */
+  swap(from, to) {
+    /** @type {SpriteSheet} */
+    const sprites = window.sprites;
+
+    const prev = this.data[from];
+    this.data[from] = this.data[to];
+    this.data[to] = prev;
+
+    this.updateTable();
+    sprites.swapPalette(from, to); // FIXME this moves from into to, not swap
+    this.render();
+    this.trigger('change');
+    this.updateCounts();
+  }
+
+  shift(dir) {
+    /** @type {Element} */
+    const lock = this.lock;
+    if (!lock) {
+      alert('Select a palette value first');
+      return;
+    }
+
+    const i = parseInt(lock.dataset.index, 10);
+    if (dir < 0) {
+      if (i <= 0) {
+        return;
+      }
+    } else {
+      if (i === this.data.length) {
+        return;
+      }
+    }
+
+    lock.classList.remove('lock');
+    this.lock = dir > 0 ? lock.nextElementSibling : lock.previousElementSibling;
+    this.trigger('select', this.lock.dataset);
+    this.lock.classList.add('lock');
+
+    this.swap(i, i + dir);
+  }
+
+  shiftLeft() {
+    this.shift(-1);
+  }
+
+  shiftRight() {
+    this.shift(1);
+  }
+
+  /**
+   * Mutates the palette order
+   *
+   * @param {string} by comma separated list of rgbhsv
+   * @param {number} [offset=0]
+   * @param {number} [limit=256]
+   */
+  sort(by = 'r', offset = null, limit = null) {
+    if (offset === null) {
+      offset = 0;
+      limit = 256;
+    }
+
+    if (limit === null) {
+      limit = offset;
+      offset = 0;
+    }
+
+    const original = Uint16Array.from(this.data);
+    const data = Uint16Array.from(this.data.slice(offset, limit));
+    const sorter = by.split(',');
+    data.sort((a, b) => {
+      const ai = rgbFromNext(a);
+      const ahsv = { ...ai, ...rgbToHsv(ai) };
+      const bi = rgbFromNext(b);
+      const bhsv = { ...bi, ...rgbToHsv(bi) };
+
+      return sorter.reduce((acc, curr) => {
+        let mul = 1;
+        if (curr.startsWith('-')) {
+          curr = curr.substring(1);
+          mul = -1;
+        }
+        if (acc === 0) {
+          if (ahsv[curr] === bhsv[curr]) {
+            return 0;
+          }
+          return ahsv[curr] < bhsv[curr] ? 1 * mul : -1 * mul;
+        }
+        return acc;
+      }, 0);
+    });
+
+    this.data.set(data, offset);
+
+    /** @type {SpriteSheet} */
+    const sprites = window.sprites;
+    sprites.snapshot();
+
+    sprites.data.forEach((from, i) => {
+      const og = original[from];
+      const to = this.data.indexOf(og);
+
+      sprites.data[i] = to;
+    });
+
+    sprites.paintAll();
+    sprites.trigger();
+
+    this.priority = new Set();
+    this.updateTable();
+    this.render();
+    this.trigger('change');
+    this.updateCounts();
   }
 
   /**
@@ -371,8 +516,7 @@ export class Palette extends Hooks {
    * @type {Array<number>}
    */
   get transparency() {
-    const t = this._transparency << 1;
-    return [t, t + 1];
+    return [0x1c6, 0x1c7];
   }
 
   /**
@@ -381,7 +525,31 @@ export class Palette extends Hooks {
    * @type {number}
    */
   get transparent() {
-    return this._transparency;
+    let index = this.data.indexOf(0x1c6);
+    if (index !== -1) {
+      return index;
+    }
+    index = this.data.indexOf(0x1c7);
+    return index;
+  }
+
+  /**
+   * Transparency as an 8bit value
+   *
+   * @type {number}
+   */
+  get transparent9Bit() {
+    return this.data[this.transparent];
+  }
+
+  /**
+   * Helper to understand whether the global transparency needs to be changed
+   * or not in your code.
+   *
+   * @type {boolean}
+   */
+  get transparencyIsDefault() {
+    return this.transparent === 227;
   }
 
   /**
@@ -427,11 +595,17 @@ export class Palette extends Hooks {
   render(sort = false) {
     const into = this.node;
     into.innerHTML = '';
+    const lock = this.lock ? parseInt(this.lock.dataset.index, 10) : null;
     let sorted = Array.from(this.table);
     if (sort) sorted.sort((a, b) => (a < b ? -1 : 1));
     for (let i = 0; i < sorted.length; i++) {
       let value = sorted[i];
       into.appendChild(this.makePixel(value, i, 'c2', this.transparency));
+    }
+
+    if (lock !== null) {
+      this.lock = this.node.childNodes[lock];
+      this.lock.classList.add('lock');
     }
 
     if (document.activeElement === editor[0]) {
@@ -581,12 +755,9 @@ export class Palette extends Hooks {
       if (index != -1) {
         return index;
       }
-      // return this.transparent;
     }
 
     const index = next512FromRGB({ r, g, b });
-
-    // console.log({ index });
 
     return this.table.indexOf(index);
   }
@@ -599,7 +770,7 @@ export class Palette extends Hooks {
    */
   getRGB(index) {
     if (this.transparency.includes(this.table[index])) {
-      return { r: 0, g: 0, b: 0, a: 0 };
+      return { ...this.rgb[index], a: 0 };
     }
     if (this.rgb[index]) {
       return this.rgb[index];

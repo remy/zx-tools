@@ -1,7 +1,8 @@
+import nearestColour from 'nearest-color';
 import { $ } from '../lib/$.js';
 import { emptyCanvas, getCoords } from './sprite-tools.js';
 import trackDown from '../lib/track-down.js';
-import { next512FromRGB } from './lib/colour.js';
+import { next512FromRGB, rgbToHex } from './lib/colour.js';
 import palette, { sorter } from './Palette.js';
 import Bind from '../lib/bind.js';
 
@@ -279,6 +280,12 @@ export default class ImageWindow {
     const a = dim / 16;
 
     let paletteIndex = null;
+    const transparent = palette.transparent9Bit;
+
+    const paletteLookup = Array.from({ length: 256 }, (_, i) =>
+      palette.getHex(i)
+    );
+    const nearest = nearestColour.from(paletteLookup);
 
     const width = parseInt(this.controls.w.value, 10);
     const height = parseInt(this.controls.h.value, 10);
@@ -401,6 +408,15 @@ export default class ImageWindow {
                 index = 463;
               }
             }
+
+            // if the colour isn't already in our palette, do the best job to
+            // match to the nearest colour
+            if (palette.data.indexOf(index) === -1) {
+              const best = nearest(rgbToHex({ r, g, b }));
+              const bestIndex = paletteLookup.indexOf(best);
+              index = palette.data[bestIndex];
+            }
+
             pal.add(index);
             data[i] = index;
           }

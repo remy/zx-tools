@@ -155,6 +155,34 @@ export default class SpriteSheet extends Hooks {
     this.paint();
   }
 
+  movePalette(from, to) {
+    this.snapshot();
+
+    this.data.forEach((value, i) => {
+      if (value === from) {
+        this.data[i] = to;
+      }
+    });
+
+    this.paintAll();
+    this.trigger();
+  }
+
+  swapPalette(from, to) {
+    this.snapshot();
+
+    this.data.forEach((value, i) => {
+      if (value === from) {
+        this.data[i] = to;
+      } else if (value === to) {
+        this.data[i] = from;
+      }
+    });
+
+    this.paintAll();
+    this.trigger();
+  }
+
   async rotate() {
     this.snapshot();
     await this.sprite.rotate();

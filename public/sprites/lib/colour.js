@@ -14,6 +14,37 @@
  */
 
 /**
+ * @typedef HSV
+ * @property {number} h 0-1
+ * @property {number} s 0-1
+ * @property {number} v 0-1
+ */
+
+/**
+ * @typedef HSL
+ * @property {number} h 0-100
+ * @property {number} s 0-100
+ * @property {number} l 0-100
+ */
+
+/**
+ * Converts to 24bit hex value
+ *
+ * @param {RGB} param0
+ * @param {string} [prefix=#]
+ * @returns {string}
+ */
+export function rgbToHex({ r, g, b }, prefix = '#') {
+  return (
+    prefix +
+    [r, g, b]
+      .map((_) => _.toString(16).padStart(2, '0'))
+      .join('')
+      .toUpperCase()
+  );
+}
+
+/**
  * Calculate 8bit RGB332 value as RGB
  *
  * @param {number} index
@@ -162,3 +193,80 @@ export function convertTo9Bit(value) {
  * The default transparency on the zx spectrum next (in 8bit form)
  */
 export const transparent = 0xe3;
+
+/**
+ * {@link https://stackoverflow.com/a/17243070/22617 Source}
+ *
+ * @param {RGB} rgb
+ * @returns {HSV}
+ */
+export function rgbToHsv({ r, g, b }) {
+  var max = Math.max(r, g, b),
+    min = Math.min(r, g, b),
+    d = max - min,
+    h,
+    s = max === 0 ? 0 : d / max,
+    v = max / 255;
+
+  switch (max) {
+    case min:
+      h = 0;
+      break;
+    case r:
+      h = g - b + d * (g < b ? 6 : 0);
+      h /= 6 * d;
+      break;
+    case g:
+      h = b - r + d * 2;
+      h /= 6 * d;
+      break;
+    case b:
+      h = r - g + d * 4;
+      h /= 6 * d;
+      break;
+  }
+
+  return { h: (h * 100) | 0, s: (s * 100) | 0, v: (v * 100) | 0 };
+}
+
+/**
+ * Converts an RGB color value to HSL. Conversion formula
+ * adapted from http://en.wikipedia.org/wiki/HSL_color_space.
+ * Assumes r, g, and b are contained in the set [0, 255] and
+ * returns h, s, and l in the set [0, 1].
+ *
+ * @param {RGB}  rgb
+ * @returns {HSL}
+ */
+export function rgbToHsl({ r, g, b }) {
+  (r /= 255), (g /= 255), (b /= 255);
+
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  let h;
+  let s;
+  let l = (max + min) / 2;
+
+  if (max == min) {
+    h = s = 0; // achromatic
+  } else {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+
+    switch (max) {
+      case r:
+        h = (g - b) / d + (g < b ? 6 : 0);
+        break;
+      case g:
+        h = (b - r) / d + 2;
+        break;
+      case b:
+        h = (r - g) / d + 4;
+        break;
+    }
+
+    h /= 6;
+  }
+
+  return { h: (h * 100) | 0, s: (s * 100) | 0, l: (l * 100) | 0 };
+}

@@ -933,8 +933,27 @@ main:fullscreen > :last-child {
   width: calc(16 * var(--scale));
 }
 
+#palette .pal-tools {
+  margin-top: 32px;
+}
+
+#palette .pal-tools > div {
+  display: flex;
+  align-items: center;
+}
+
+#palette .pal-tools > div > span {
+  margin-right: 8px;
+}
+
+#palette .pal-shift button {
+  flex: 0;
+  padding: 0 8px;
+}
+
 #palette .current-palette {
   display: flex;
+  flex-direction: column;
 }
 
 #palette > div:first-child {

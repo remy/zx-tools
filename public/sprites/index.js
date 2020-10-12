@@ -37,6 +37,10 @@ const buttons = $('[data-action]');
 const animateContainer = document.querySelector('#animate');
 const fourBitPalSelected = document.querySelector('#four-bit-pal-selection');
 const fourBitPalPicker = document.querySelector('#four-bit-pal-picker');
+const globalTransparencyWarning = document.querySelector(
+  '#global-transparency-warning'
+);
+const globalTransparency = document.querySelector('#global-transparency');
 const bitSize = $('#bit-size');
 const ONE_WEEK = 1000 * 60 * 60 * 24 * 7;
 
@@ -260,6 +264,10 @@ hasPriority.onchange = (e) => {
 // const palettePicker = new ColourPicker(8, palettePickerColour.parentNode);
 palette.moveTo(tabs.selected === 'sprite-editor' ? 'sprite-editor' : 'palette');
 palette.render();
+palette.hook(() => {
+  globalTransparencyWarning.hidden = palette.transparencyIsDefault;
+  globalTransparency.textContent = palette.transparent;
+});
 tileMap.hook(debounce(saveLocal, 2000));
 
 const animate = new Animate(sprites);
@@ -391,6 +399,14 @@ buttons.on('click', async (e) => {
     downloadPal();
   }
 
+  if (action === 'pal-shift-l') {
+    return palette.shiftLeft();
+  }
+
+  if (action === 'pal-shift-r') {
+    return palette.shiftRight();
+  }
+
   if (action === 'reset-pal-16') {
     const data = await fetch('/assets/l01.pal').then((res) =>
       res.arrayBuffer()
@@ -444,6 +460,32 @@ buttons.on('click', async (e) => {
 
   if (action === 'undo') {
     sprites.undo();
+  }
+
+  if (action === 'pal-sort') {
+    e.preventDefault();
+    let sorter = document
+      .querySelector('#pal-sort')
+      .value.trim()
+      .toLowerCase()
+      .split(',')
+      .map((_) => _.trim());
+
+    // peek last
+    let offset = 0;
+    let limit = 256;
+    if (!isNaN(parseInt(sorter[sorter.length - 1], 10))) {
+      offset = parseInt(sorter.pop(), 10);
+    }
+    if (!isNaN(parseInt(sorter[sorter.length - 1], 10))) {
+      limit = offset;
+      offset = parseInt(sorter.pop(), 10);
+    }
+
+    sorter = sorter.filter(Boolean);
+    if (sorter.length) {
+      palette.sort(sorter.join(','), offset, limit);
+    }
   }
 
   let currentSprite = sprites.current;

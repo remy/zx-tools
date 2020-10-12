@@ -300,3 +300,46 @@ input[type='checkbox'] {
   width: auto;
   margin: 0;
 }
+
+#palette .pal-sorting-method {
+  width: 600px;
+}
+
+#palette .pal-sorting-method > div {
+  margin: 4px 0 16px 0;
+}
+
+#palette .pal-sorting-method input {
+  margin: 0;
+  font-size: 90%;
+  margin: 0;
+  border-radius: 2px;
+  flex: 1;
+  padding: 8px;
+}
+
+#palette .pal-sorting-method button {
+  flex: 0;
+  margin: 0;
+  margin-left: 16px;
+}
+
+#palette .pal-sorting-method p {
+  margin: 4px 0;
+  font-size: 80%;
+  line-height: 1.4;
+}
+
+#palette .current-palette p {
+  max-width: 384px;
+  font-size: 80%;
+  margin: 0;
+}
+
+#pal-swap-info {
+  display: none;
+}
+
+.locked ~ #pal-swap-info {
+  display: block;
+}

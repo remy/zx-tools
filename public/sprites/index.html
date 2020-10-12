@@ -305,6 +305,15 @@
               <div class="active-palette palette">
                 <div class="picker sprite"></div>
               </div>
+              <div class="pal-tools">
+                <div class="button-group pal-shift"><span>Shift colour</span>
+                  <button data-action="pal-shift-l">&lt;&lt;</button>
+                  <button data-action="pal-shift-r">&gt;&gt;</button>
+                </div>
+              </div>
+              <p id="pal-swap-info">Shift and click to swap selected palette index to a new location</p>
+              <p hidden id="global-transparency-warning">Remember your global transparency is now #<span
+                  id="global-transparency">0</span></p>
             </div>
             <div class="flex-column tools">
               <div class="zoom"></div>
@@ -334,6 +343,22 @@
             <div id="complete" class="sprite picker"></div>
           </div>
           <div class="help">
+            <details open>
+              <summary>Sort</summary>
+              <div class="pal-sorting-method flex-column">
+                <form class="flex-row">
+                  <input id="pal-sort" placeholder="Sort method">
+                  <button data-action="pal-sort">Sort</button>
+                </form>
+                <p>Sort usage: list the properties you want to sort by, and optionally include a range. </p>
+                <p>Available values: r,g,b and h,s,v</p>
+                <p>Use "<strong>-</strong>" to reverse sort.</p>
+                <p>Optionally include an offset and limit.</p>
+                <p>For example: "r,g,-b,0,31" - this will sort by red, green, reverse blue and only the palette indices
+                  from 0 to 31</p>
+
+              </div>
+            </details>
             <details>
               <summary>Manual edit</summary>
               <p>Edit and reorder palette index values below. Values can be in 9bit hex as $1FF or in decimal as values
