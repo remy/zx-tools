@@ -3,6 +3,7 @@
 html {
   --c-bg: #f9f9f9;
   --c-focus: #fff;
+  --c-light-text: rgb(0, 0, 0, 0.2);
   --c-fg: #000;
   background: var(--c-bg);
 }
@@ -342,4 +343,15 @@ input[type='checkbox'] {
 
 .locked ~ #pal-swap-info {
   display: block;
+}
+
+#version {
+  max-width: 100%;
+}
+
+#version,
+#version a {
+  text-align: right;
+  color: var(--c-light-text);
+  font-size: 12px;
 }

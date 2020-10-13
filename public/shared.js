@@ -3,6 +3,12 @@ import changelog from './changelog';
 
 const repo = 'zx-tools';
 
+const footer = document.createElement('footer');
+document.body.appendChild(footer);
+footer.innerHTML = `<p id="version">VERSION: <a target="_blank" href="https://github.com/remy/${repo}/compare/${
+  hash.prev
+}...${hash.curr}">${hash.curr.substring(0, 7)}</a></p>`;
+
 const icons = {
   info: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18"><path class="filler" d="M21 19v1H3v-1l2-2v-6c0-3.1 2.03-5.83 5-6.71V4a2 2 0 012-2 2 2 0 012 2v.29c2.97.88 5 3.61 5 6.71v6l2 2m-7 2a2 2 0 01-2 2 2 2 0 01-2-2"/></svg>`,
   offline: `<svg viewBox="0 0 32 21" width="16" height="10.5" xmlns="http://www.w3.org/2000/svg"><g fill="none"><path class="toast-cloud" d="M27.883 10.582c.076-.364.117-.744.117-1.132 0-2.899-2.239-5.25-5-5.25-.445 0-.875.06-1.285.175C20.94 1.837 18.675 0 16 0c-2.73 0-5.033 1.914-5.76 4.534A7.645 7.645 0 008 4.2c-4.418 0-8 3.761-8 8.4S3.582 21 8 21h19c2.761 0 5-2.351 5-5.25 0-2.583-1.777-4.73-4.117-5.168z" class="filler" fill="#000"/><path d="M13 18l-5-5 2-2 3 3 7-7 2 2z" fill="none" class="toast-cloud-tick"/></g></svg>`,

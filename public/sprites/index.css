@@ -9,6 +9,7 @@ html {
   --c-fg: #fff;
   --c-bg: #373737;
   --c-focus: #262626;
+  --c-light-text: rgba(255, 255, 255, 0.3);
 }
 
 body {
