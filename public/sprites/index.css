@@ -665,7 +665,7 @@ details {
 }
 
 .button--download {
-  margin: 16px auto;
+  margin: 8px auto;
   width: auto;
   font-size: 90%;
 }
@@ -1000,10 +1000,19 @@ main:fullscreen > :last-child {
     width: 100%;
     align-items: flex-start;
     justify-content: center;
+    flex-wrap: wrap;
   }
 
-  #sprites button[data-action='download'] {
+  #tools {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  #sprites > :first-child {
     order: 4;
+  }
+
+  #sprites .button--download {
     margin-top: 0;
   }
 
@@ -1013,18 +1022,22 @@ main:fullscreen > :last-child {
   }
 
   #current-sprite {
-    order: 1;
-    margin: 20px;
+    order: 9;
+    margin: 0px;
+    margin: 0;
+    display: block;
+    width: 100%;
   }
 
   #sprites .container {
-    width: calc(32 * 16px);
+    width: calc(16 * 16px);
     order: 3;
     flex-grow: 1;
+    margin-bottom: 4px;
   }
 
   #sprites button {
-    margin: 16px;
+    /* margin: 16px; */
     padding: 16px 32px;
   }
 

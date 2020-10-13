@@ -10,3 +10,4 @@ web_modules/
 scratch/
 .now
 /public/hash.js
+public/static/testing
