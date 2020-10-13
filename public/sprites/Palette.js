@@ -14,6 +14,7 @@ import Hooks from '../lib/Hooks';
 import { $ } from '../lib/$';
 import debounce from 'lodash.debounce';
 import SpriteSheet from './SpriteSheet';
+import parseToInt from '../lib/number';
 
 const colourTest = document.createElement('div');
 document.body.appendChild(colourTest);
@@ -300,6 +301,19 @@ export class Palette extends Hooks {
     this.shift(1);
   }
 
+  copy(value) {
+    this.clipboard = value;
+  }
+
+  paste(index) {
+    this.data[index] = this.clipboard;
+    this.updateTable();
+    window.sprites.paintAll();
+    this.render();
+    this.trigger('change');
+    this.updateCounts();
+  }
+
   /**
    * Mutates the palette order
    *
@@ -568,8 +582,11 @@ export class Palette extends Hooks {
 
     let index;
 
-    if (/^(0x[\da-f]{1,3}$)|(\d{1,3}$)/.test(value)) {
-      index = parseInt(value, value.includes('0x') ? 16 : 10);
+    const numericLike =
+      value.split('').filter((_) => /0-9/.test(_)).length <= 4;
+
+    if (numericLike) {
+      index = parseToInt(value);
     } else {
       colourTest.style.backgroundColor = value;
 
