@@ -1,8 +1,15 @@
-const UNKNOWN = null;
-const HEX = 16;
-const DEC = 10;
-const OCT = 8;
-const BIN = 2;
+/** @typedef {number} Type */
+
+/**
+ * @enum {Type}
+ */
+const types = {
+  UNKNOWN: null,
+  HEX: 16,
+  DEC: 10,
+  OCT: 8,
+  BIN: 2,
+};
 
 /**
  * Parse assembly like numbers
@@ -24,11 +31,39 @@ const BIN = 2;
  *  14o    octal
  */
 export default function parseToInt(string) {
+  let res = NaN;
+
+  let { type, modified } = parse(string);
+  res = parseInt(modified, type);
+
+  return res;
+}
+
+/**
+ * Tries to recognise the number based on common numerical prefixes and suffixes
+ *
+ * @param {string} string
+ * @returns {boolean}
+ */
+export function recognised(string) {
+  const { type } = parse(string);
+  return type !== types.UNKNOWN;
+}
+
+/**
+ *
+ * @param {string} string
+ * @returns {{ type: Type, modified: string }}
+ */
+function parse(string) {
   const last = string.substring(string.length - 1); // ?
   const first = string.substring(0, 1); // ?
   const prefix = string.substring(0, 2); // ?
 
-  let res = NaN;
+  const { UNKNOWN, OCT, HEX, BIN, DEC } = types;
+
+  let modified = string;
+
   let type = UNKNOWN;
 
   if (last === 'o' || last === 'q') {
@@ -38,52 +73,71 @@ export default function parseToInt(string) {
 
   if (prefix === '0o' || prefix === '0q') {
     type = OCT;
-    string = string.substring(2);
+    modified = string.substring(2);
   } else if (first === '0') {
     if (prefix !== '0x' && prefix !== '0q' && prefix != '0b') {
       type = OCT;
-      string = string.substring(1);
+      modified = string.substring(1);
     }
   }
 
   if (first === '$' || first === '#') {
     type = HEX;
-    string = string.substring(1);
+    modified = string.substring(1);
   }
 
   if (last === 'h') {
     type = HEX;
-    string = string.slice(0, -1);
+    modified = string.slice(0, -1);
   }
 
   if (last === 'd') {
     type = DEC;
-    string = string.slice(0, -1);
+    modified = string.slice(0, -1);
   }
 
   if (first === '%') {
     type = BIN;
-    string = string.substring(1);
+    modified = string.substring(1);
   }
 
   if (last === 'b') {
     type = BIN;
-    string = string.slice(0, -1);
+    modified = string.slice(0, -1);
   }
 
   if (type === UNKNOWN) {
     if (prefix === '0x') {
       type = HEX;
-      string = string.substring(2);
+      modified = string.substring(2);
     }
 
     if (prefix === '0b') {
       type = BIN;
-      string = string.substring(2);
+      modified = string.substring(2);
     }
   }
 
-  res = parseInt(string, type);
+  if (type === UNKNOWN) {
+    if (allNumbers(string)) {
+      type = DEC;
+    }
+  } else {
+    // final check
+    if (!allNumbers(modified)) {
+      type = UNKNOWN;
+      modified = string;
+    }
+  }
 
-  return res;
+  return { type, modified };
+}
+
+/**
+ *
+ * @param {string} string
+ * @returns {boolean}
+ */
+function allNumbers(string) {
+  return /^\d+$/.test(string);
 }

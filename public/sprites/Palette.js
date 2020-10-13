@@ -14,7 +14,7 @@ import Hooks from '../lib/Hooks';
 import { $ } from '../lib/$';
 import debounce from 'lodash.debounce';
 import SpriteSheet from './SpriteSheet';
-import parseToInt from '../lib/number';
+import parseToInt, { recognised } from '../lib/number';
 
 const colourTest = document.createElement('div');
 document.body.appendChild(colourTest);
@@ -582,10 +582,7 @@ export class Palette extends Hooks {
 
     let index;
 
-    const numericLike =
-      value.split('').filter((_) => /0-9/.test(_)).length <= 4;
-
-    if (numericLike) {
+    if (recognised(value)) {
       index = parseToInt(value);
     } else {
       colourTest.style.backgroundColor = value;
