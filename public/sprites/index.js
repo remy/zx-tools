@@ -1050,9 +1050,9 @@ generateNewSpriteSheet({ check: false });
 
 buildStyleSheet();
 
-fetch('/testing/jetpac.png')
-  .then((res) => res.blob())
-  .then((res) => {
-    const file = new Blob([res], { type: 'image/png' });
-    fileToImageWindow(res, file);
-  });
+// fetch('/testing/jetpac.png')
+//   .then((res) => res.blob())
+//   .then((res) => {
+//     const file = new Blob([res], { type: 'image/png' });
+//     fileToImageWindow(res, file);
+//   });
