@@ -282,9 +282,10 @@ export default class ImageWindow {
     let paletteIndex = null;
     const transparent = palette.transparent9Bit;
 
-    const paletteLookup = Array.from({ length: 256 }, (_, i) =>
-      palette.getHex(i)
-    );
+    let paletteLookup = Array.from({ length: 256 }, (_, i) => i);
+    paletteLookup = paletteLookup
+      .filter((i) => !palette.transparency.includes(palette.table[i]))
+      .map((i) => palette.getHex(i));
     const nearest = nearestColour.from(paletteLookup);
 
     const width = parseInt(this.controls.w.value, 10);

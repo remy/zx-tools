@@ -552,6 +552,7 @@ details {
 
 #importer > div {
   display: flex;
+  flex-wrap: wrap;
 }
 
 #png-container {
@@ -1003,9 +1004,11 @@ main:fullscreen > :last-child {
     flex-wrap: wrap;
   }
 
-  #tools {
+  #tools,
+  .tools {
     padding-left: 0;
     padding-right: 0;
+    padding-top: 0;
   }
 
   #sprites > :first-child {
