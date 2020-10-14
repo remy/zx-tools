@@ -49,6 +49,7 @@ export default class Animate extends Hooks {
         bg: null,
         w: null,
         h: null,
+        skip: null,
       },
       {
         w: {
@@ -58,6 +59,14 @@ export default class Animate extends Hooks {
         h: {
           dom: '#comp-height',
           callback: (value) => (this.h = value),
+        },
+        skip: {
+          dom: '#comp-skip',
+          parse: (value) => parseInt(value, 10),
+          callback: (value) => {
+            this.skip = value;
+            this.trigger('change');
+          },
         },
         scale: {
           dom: '#animate-scale',
@@ -186,7 +195,7 @@ export default class Animate extends Hooks {
   }
 
   serialize() {
-    const { to, from, scale, bg, speed, effect, visible } = this;
+    const { to, from, scale, bg, speed, effect, visible, h, w, skip } = this;
     return {
       to,
       from,
@@ -195,20 +204,27 @@ export default class Animate extends Hooks {
       speed,
       effect,
       visible,
+      h,
+      w,
+      skip,
     };
   }
 
   restore(props) {
-    ['to', 'from', 'scale', 'bg', 'speed', 'effect'].forEach((prop) => {
-      this.controls[prop] = props[prop];
-    });
+    ['to', 'from', 'scale', 'bg', 'speed', 'effect', 'h', 'w', 'skip'].forEach(
+      (prop) => {
+        this.controls[prop] = props[prop];
+      }
+    );
 
     this.visible = props.visible;
   }
 
   draw() {
     const { from, to, frame, bounce, w } = this;
+    let skip = this.skip + 1;
     let current;
+
     let scale = to - from;
     if (bounce && scale !== 0) {
       current = from + Math.abs((frame % (scale * 2)) - scale);
@@ -218,7 +234,7 @@ export default class Animate extends Hooks {
     }
     this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.width);
     for (let i = 0; i < this.size; i++) {
-      const sprite = this.sprites.sprites[current + i];
+      const sprite = this.sprites.sprites[current + i * skip];
       if (sprite) {
         // this.ctx.drawImage(sprite.canvas, 0, 0, 16, 16);
         const x = (i % w) * this.scale;
