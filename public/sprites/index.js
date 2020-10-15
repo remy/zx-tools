@@ -265,7 +265,8 @@ hasPriority.onchange = (e) => {
 palette.moveTo(tabs.selected === 'sprite-editor' ? 'sprite-editor' : 'palette');
 palette.render();
 palette.hook(() => {
-  globalTransparencyWarning.hidden = palette.transparencyIsDefault;
+  globalTransparencyWarning.hidden =
+    palette.transparent === -1 || palette.transparencyIsDefault;
   globalTransparency.textContent = palette.transparent;
 });
 tileMap.hook(debounce(saveLocal, 2000));
@@ -910,8 +911,7 @@ document.querySelector('#upload-pal').addEventListener('change', (e) => {
   const reader = new FileReader();
   reader.onload = (event) => {
     const data = new Uint8Array(event.target.result);
-    palette.restoreFromData(data);
-    palette.filename = file.name;
+    palette.import(file, data);
   };
   reader.readAsArrayBuffer(file);
 });

@@ -15,6 +15,7 @@ import { $ } from '../lib/$';
 import debounce from 'lodash.debounce';
 import SpriteSheet from './SpriteSheet';
 import parseToInt, { recognised } from '../lib/number';
+import { decode } from '../lib/encode';
 
 const colourTest = document.createElement('div');
 document.body.appendChild(colourTest);
@@ -154,8 +155,10 @@ export class Palette extends Hooks {
    * Loads the palette based on file data from a .pal file
    *
    * @param {Uint8Array} data
+   * @param {boolean} update should the palette be fully rendered?
+   * @returns {Uint16Array} paletteData
    */
-  restoreFromData(data) {
+  restoreFromData(data, update = true) {
     this.priority = new Set();
     data = new Uint16Array(data.buffer).map((_, i) => {
       if (isPriority(_)) {
@@ -164,11 +167,15 @@ export class Palette extends Hooks {
       return nextLEShortToP(_);
     });
 
-    this.data = data;
-    this.updateTable();
-    this.render();
-    this.trigger('change');
-    this.updateCounts();
+    if (update) {
+      this.data = data;
+      this.updateTable();
+      this.render();
+      this.trigger('change');
+      this.updateCounts();
+    }
+
+    return data;
   }
 
   attach() {
@@ -176,8 +183,7 @@ export class Palette extends Hooks {
     let data = this.data;
 
     drop(node, (data, file) => {
-      this.restoreFromData(data);
-      this.filename = file.name;
+      this.import(file, data);
     });
 
     const zoom = document.querySelector('#palette .zoom');
@@ -544,11 +550,15 @@ export class Palette extends Hooks {
       return index;
     }
     index = this.data.indexOf(0x1c7);
-    return index;
+    if (index !== -1) {
+      return index;
+    }
+
+    return 0x1c7;
   }
 
   /**
-   * Transparency as an 8bit value
+   * Transparency as an 9bit value
    *
    * @type {number}
    */
@@ -738,6 +748,77 @@ export class Palette extends Hooks {
     if (this.next()) {
       target.nextElementSibling.classList.add('lock');
     }
+  }
+
+  /**
+   * Imports .gpl and JASC .pal files try to detect the format
+   *
+   * @param {File} file
+   * @param {Uint8Array} data
+   */
+  async import({ name }, data) {
+    if (!name.endsWith('.pal') && !name.endsWith('.gpl')) {
+      // unknown
+      return;
+    }
+    const text = decode(data);
+    this.filename = name;
+    this.priority = new Set();
+
+    if (text.startsWith('GIMP Palette')) {
+      this.data = this.importGPL(text);
+    } else if (text.startsWith('JASC-PAL')) {
+      this.data = this.importJASC(text);
+    } else {
+      // 9 bit Next native
+      this.data = this.restoreFromData(data, false);
+    }
+
+    this.updateTable();
+    this.render();
+    this.trigger('change');
+    this.updateCounts();
+  }
+
+  /**
+   * @param {string} text
+   * @returns {Uint16Array} paletteData
+   */
+  importGPL(text) {
+    const rgb = text
+      .split('\n')
+      .map((_) => _.trim())
+      .filter((_) => _.length && !_.startsWith('#'))
+      .slice(1) // GIMP Palette
+      .map((_) =>
+        _.split(/\s+/)
+          .slice(0, 3)
+          .map((_) => parseInt(_, 10))
+      ) // convert to [r, g, b]
+      .map(([r, g, b]) => next512FromRGB({ r, g, b }))
+      .slice(0, 256);
+
+    return new Uint16Array(Array.from({ length: 256 }, (_, i) => rgb[i] || 0));
+  }
+
+  /**
+   * @param {string} text
+   * @returns {Uint16Array} paletteData
+   */
+  importJASC(text) {
+    const rgb = text
+      .split('\n')
+      .map((_) => _.trim())
+      .filter((_) => _.length && !_.startsWith('#'))
+      .slice(3) // first three lines
+      .map((_) =>
+        _.split(/\s+/)
+          .slice(0, 3)
+          .map((_) => parseInt(_, 10))
+      ) // convert to [r, g, b]
+      .map(([r, g, b]) => next512FromRGB({ r, g, b }))
+      .slice(0, 256);
+    return new Uint16Array(Array.from({ length: 256 }, (_, i) => rgb[i] || 0));
   }
 
   /**

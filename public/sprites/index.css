@@ -371,10 +371,13 @@ button svg {
 
 .input-button input {
   z-index: 10;
+  width: 100%;
   cursor: pointer !important;
   opacity: 0;
   display: block;
   position: absolute;
+  margin: 0 !important;
+  padding-left: 100%;
   left: 0;
   right: 0;
   bottom: 0;
