@@ -413,6 +413,7 @@ async function renderImageForBmp(file) {
     data: new Uint8Array(imageData.data.buffer),
     width,
     height,
+    palBitSize: 9,
   });
   const bmpData = bmp.encode();
 
@@ -441,17 +442,25 @@ async function renderImageForBmp(file) {
   buttonSL.title =
     'Note that this image format uses the default L2 256 palette';
   div.appendChild(buttonSL);
-  buttonSL.onclick = () =>
+  buttonSL.onclick = () => {
+    // convert the palette to next raw data
+    const layerBmp = new BmpEncoder({
+      data: new Uint8Array(imageData.data.buffer),
+      width,
+      height,
+      palBitSize: 8,
+    });
+
     save(
-      Uint8Array.from(bmp.pixels),
+      Uint8Array.from(layerBmp.pixels),
       basename(filename) + '.' + (ext[width] || ext.default)[1]
     );
+  };
 
   const buttonNXIp = document.createElement('button');
   buttonNXIp.innerText = 'NXI with palette';
   div.appendChild(buttonNXIp);
 
-  // convert the palette to next raw data
   const bytes = new Uint8Array(512 + bmp.index.length);
   const p1 = Array.from(bmp.palette);
   const p2 = new Uint16Array(256);

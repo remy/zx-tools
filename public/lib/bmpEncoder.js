@@ -7,7 +7,12 @@
  *
  */
 
-import { toRGB332, rgbFrom8Bit } from '../sprites/lib/colour';
+import {
+  toRGB332,
+  rgbFrom8Bit,
+  next512FromRGB,
+  rgbFromNext,
+} from '../sprites/lib/colour';
 
 const sizes = {
   Uint8: 1,
@@ -25,8 +30,9 @@ export default class BmpEncoder {
    * @param {Uint8Array} options.data byte array order by RGBA
    * @param {number} options.width
    * @param {number} options.height
+   * @param {number} [options.palBitSize=8] can be 8 or 9
    */
-  constructor({ data, width, height }) {
+  constructor({ data, width, height, palBitSize = 8 }) {
     this.data = data;
     this.width = width;
     this.height = height;
@@ -50,10 +56,10 @@ export default class BmpEncoder {
     this.colors = 0;
     this.importantColors = 0;
 
-    this.createPalette();
+    this.createPalette(palBitSize);
   }
 
-  createPalette() {
+  createPalette(palBitSize) {
     const p = new Set();
     const pixels = [];
     for (let i = 0; i < this.data.length; i += 4) {
@@ -62,7 +68,8 @@ export default class BmpEncoder {
       const b = this.data[i + 2];
       const a = this.data[i + 3];
 
-      let value = toRGB332({ r, g, b });
+      let value =
+        palBitSize === 8 ? toRGB332({ r, g, b }) : next512FromRGB({ r, g, b });
 
       if (a === 0) {
         p.add(227);
@@ -73,13 +80,15 @@ export default class BmpEncoder {
       }
     }
 
-    const pData = Uint8Array.from(p);
+    const pData = Uint16Array.from(p);
     const length = this.width * this.height;
     const palette = new Uint8Array((1 << 8) * 4);
     palette.fill(0);
     palette.set(
       pData.reduce((acc, curr) => {
-        const { r, g, b } = rgbFrom8Bit(curr);
+        const { r, g, b } =
+          palBitSize === 8 ? rgbFrom8Bit(curr) : rgbFromNext(curr);
+
         return acc.concat(b, g, r, 0);
       }, []),
       0
