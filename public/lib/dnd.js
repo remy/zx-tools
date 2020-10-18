@@ -34,7 +34,8 @@ export default function drop(root, callback) {
           callback(
             new Uint8Array(event.target.result),
             droppedFile,
-            e.dataTransfer.files
+            e.dataTransfer.files,
+            e
           );
         };
         reader.readAsArrayBuffer(droppedFile);

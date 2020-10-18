@@ -73,11 +73,8 @@
           </ol>
         </footer>
       </details>
-      <details open>
+      <details>
         <summary>Image and font conversion</summary>
-        <div>
-          <label for="bmp-to-next">Convert image to Spectrum Next bitmap: </label><input type="file" id="bmp-to-next">
-        </div>
         <div>
           <label for="font-import">Generate spectrum font data (select a TTF file): </label> <select id="font-size">
             <option value="3">3px</option>
@@ -104,6 +101,33 @@
         </div>
         <div id="result"></div>
       </details>
+
+      <details open>
+        <summary>ZX Next image conversion</summary>
+        <p>Generate 8bit BMP, .SL2 and .SLR and .NXI files.<br><small>Read more <a target="_blank"
+              href="https://wiki.specnext.dev/File_Formats">about native Next formats</a>.</small></p>
+        <div>
+          <span>1. Palette:</span>
+          <div>
+            <label><input checked value="default" name="next-pal" type="radio"> Modify to use default L2 256
+              colours</label>
+          </div>
+          <div>
+            <label><input value="detect" name="next-pal" type="radio"> Detect from uploaded image</label>
+          </div>
+          <div>
+            <label><input value="custom" name="next-pal" type="radio"> Use custom palette (.pal/.gpl) <input type="file"
+                id="upload-pal"></label>
+          </div>
+        </div>
+        <div>
+          <label for="bmp-to-next">2. Convert image to Spectrum Next formats: </label><input type="file"
+            id="bmp-to-next">
+        </div>
+
+        <div id="next-image-result"></div>
+      </details>
+
 
     </main>
     <script src="/shared.js"></script>

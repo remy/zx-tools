@@ -6,12 +6,14 @@
  * Not support quality compression
  *
  */
+import nearestColour from 'nearest-color';
 
 import {
   toRGB332,
   rgbFrom8Bit,
   next512FromRGB,
   rgbFromNext,
+  rgbToHex,
 } from '../sprites/lib/colour';
 
 const sizes = {
@@ -30,9 +32,10 @@ export default class BmpEncoder {
    * @param {Uint8Array} options.data byte array order by RGBA
    * @param {number} options.width
    * @param {number} options.height
-   * @param {number} [options.palBitSize=8] can be 8 or 9
+   * @param {number} [options.palBitSize=9] can be 8 or 9
+   * @param {number} [options.palette] predefined palette
    */
-  constructor({ data, width, height, palBitSize = 8 }) {
+  constructor({ data, width, height, palBitSize = 9, palette = null }) {
     this.data = data;
     this.width = width;
     this.height = height;
@@ -56,12 +59,13 @@ export default class BmpEncoder {
     this.colors = 0;
     this.importantColors = 0;
 
-    this.createPalette(palBitSize);
+    this.createPalette(palette, palBitSize);
   }
 
-  createPalette(palBitSize) {
-    const p = new Set();
+  createPalette(pData, palBitSize) {
     const pixels = [];
+
+    const p = new Set();
     for (let i = 0; i < this.data.length; i += 4) {
       const r = this.data[i];
       const g = this.data[i + 1];
@@ -80,27 +84,52 @@ export default class BmpEncoder {
       }
     }
 
-    const pData = Uint16Array.from(p);
-    const length = this.width * this.height;
+    if (!pData) {
+      pData = Uint16Array.from(p);
+    }
+
+    let paletteLookup = Array.from({ length: 256 }, (_, i) => i).map((i) => {
+      const curr = pData[i];
+      const { r, g, b } =
+        palBitSize === 8 ? rgbFrom8Bit(curr) : rgbFromNext(curr);
+      return (
+        '#' +
+        [r, g, b]
+          .map((_) => _.toString(16).padStart(2, '0'))
+          .join('')
+          .toUpperCase()
+      );
+    });
+    const nearest = nearestColour.from(paletteLookup);
+
+    const length = this.width * this.height; // this is equal to pixels.length
+    const index = new Uint8Array(length);
+    for (let i = 0; i < length; i++) {
+      let pIndex = pData.indexOf(pixels[i]);
+
+      if (pIndex === -1) {
+        const [r, g, b] = this.data.slice(i * 4, i * 4 + 3);
+        const best = nearest(rgbToHex({ r, g, b }));
+        const bestIndex = paletteLookup.indexOf(best);
+        pIndex = bestIndex;
+        pixels[i] = bestIndex;
+      }
+      index[i] = pIndex;
+    }
+
     const palette = new Uint8Array((1 << 8) * 4);
     palette.fill(0);
     palette.set(
       pData.reduce((acc, curr) => {
         const { r, g, b } =
           palBitSize === 8 ? rgbFrom8Bit(curr) : rgbFromNext(curr);
-
         return acc.concat(b, g, r, 0);
       }, []),
       0
     );
 
-    const index = new Uint8Array(length);
-    for (let i = 0; i < length; i++) {
-      index[i] = pData.indexOf(pixels[i]);
-    }
-
     this.pixels = pixels;
-    this.index = index;
+    this.index = index; // bitmap index data
     this.palette = palette;
 
     const bytes = new Uint8Array(palette.length + index.length);

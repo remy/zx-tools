@@ -73,5 +73,5 @@ export const $ = (selector, context = document) => {
     console.warn(`${selector} zero results`);
   }
 
-  return NodeListArray.from(res);
+  return res.length ? NodeListArray.from(res) : {};
 };

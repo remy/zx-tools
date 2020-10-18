@@ -11,14 +11,18 @@ import { toHex } from '../lib/to.js';
 import BmpEncoder from '../lib/bmpEncoder.js';
 import fontMetrics, { computeHeightFromMetrics } from '../lib/fontMetrics';
 import { indexToNextLEShort, next512FromRGB } from '../sprites/lib/colour.js';
+import { Palette } from '../sprites/Palette.js';
 
 let explore = null;
+let uploadedPalette = null;
+let palInputType = 'default';
 const buttons = $('[data-action]');
 
-const result = $('#result')[0];
+const result = document.querySelector('#result');
+const nextResult = document.querySelector('#next-image-result');
 const fontSize = document.querySelector('#font-size');
-const tapExplore = $('#tap-explore-result')[0];
-const tapCreatorOutput = $('#tap-creator tbody')[0];
+const tapExplore = document.querySelector('#tap-explore-result');
+const tapCreatorOutput = document.querySelector('#tap-creator tbody');
 
 let tapper = new Tapper();
 window.tapper = tapper;
@@ -389,6 +393,7 @@ function loadImage(file) {
 }
 
 async function renderImageForBmp(file) {
+  const palette = palInputType === 'custom' ? uploadedPalette : new Palette();
   const canvas = document.createElement('canvas');
   /** @type HTMLImageElement */
   let img = await loadImage(file);
@@ -413,7 +418,7 @@ async function renderImageForBmp(file) {
     data: new Uint8Array(imageData.data.buffer),
     width,
     height,
-    palBitSize: 9,
+    palette: palInputType === 'detect' ? null : palette.data,
   });
   const bmpData = bmp.encode();
 
@@ -432,16 +437,23 @@ async function renderImageForBmp(file) {
 
   const filename = file.name;
 
+  const g1 = document.createElement('div');
+  g1.className = 'button-group';
+  div.appendChild(g1);
+
+  const g2 = document.createElement('div');
+  g2.className = 'button-group';
+  div.appendChild(g2);
+
   const button = document.createElement('button');
-  button.innerText = 'Download as 8bit BMP';
-  div.appendChild(button);
+  button.innerText = 'BMP';
+  g1.appendChild(button);
   button.onclick = () => save(bmpData, basename(filename) + '.bmp');
 
   const buttonSL = document.createElement('button');
-  buttonSL.innerText = 'Download as ' + (ext[width] || ext.default)[0];
-  buttonSL.title =
-    'Note that this image format uses the default L2 256 palette';
-  div.appendChild(buttonSL);
+  buttonSL.innerText = (ext[width] || ext.default)[0];
+
+  g1.appendChild(buttonSL);
   buttonSL.onclick = () => {
     // convert the palette to next raw data
     const layerBmp = new BmpEncoder({
@@ -457,11 +469,18 @@ async function renderImageForBmp(file) {
     );
   };
 
-  const buttonNXIp = document.createElement('button');
-  buttonNXIp.innerText = 'NXI with palette';
-  div.appendChild(buttonNXIp);
+  const buttonNXP = document.createElement('button');
+  buttonNXP.innerText = 'PAL';
+  g1.appendChild(buttonNXP);
 
-  const bytes = new Uint8Array(512 + bmp.index.length);
+  const buttonNXIp = document.createElement('button');
+  buttonNXIp.innerText = 'NXI + pal';
+  g2.appendChild(buttonNXIp);
+
+  const buttonNXI = document.createElement('button');
+  buttonNXI.innerText = 'NXI - pal';
+  g2.appendChild(buttonNXI);
+
   const p1 = Array.from(bmp.palette);
   const p2 = new Uint16Array(256);
   for (let i = 0; i < p1.length; i += 4) {
@@ -470,17 +489,26 @@ async function renderImageForBmp(file) {
   }
   const p3 = new Uint8Array(p2.buffer);
 
-  // window.p1 = p1;
-  // window.p2 = p2;
-  // window.p3 = p3;
   buttonNXIp.onclick = () => {
+    const bytes = new Uint8Array(512 + bmp.index.length);
     bytes.set(p3, 0);
     bytes.set(bmp.index, 512);
-
     save(bytes, basename(filename) + '.nxi');
   };
 
-  result.prepend(div);
+  buttonNXI.onclick = () => {
+    const bytes = new Uint8Array(bmp.index.length);
+    bytes.set(bmp.index, 0);
+    save(bytes, basename(filename) + '.nxi');
+  };
+
+  buttonNXP.onclick = () => {
+    const bytes = new Uint8Array(512);
+    bytes.set(p3, 0);
+    save(bytes, basename(filename) + '.pal');
+  };
+
+  nextResult.prepend(div);
 }
 
 function container(filename, altDownload, r = result) {
@@ -618,12 +646,27 @@ function importFont(data, file) {
     .catch((e) => console.log(e));
 }
 
-async function fileHandler(data, file, id) {
+/**
+ * @param {Uint8Array} data
+ * @param {File} file
+ * @param {FileList} fileList
+ * @param {Event} event
+ * @returns {*}
+ */
+async function fileHandler(data, file, fileList, event) {
+  const { id } = event.target;
   const { name, type } = file;
+
   const ext = name.split('.').pop().toUpperCase();
 
   if (id === 'create-tap') {
     return createTapAddFile(data, file);
+  }
+
+  if (id === 'upload-pal') {
+    uploadedPalette = new Palette();
+    uploadedPalette.import(file, data);
+    return;
   }
 
   if (id === 'font-import') {
@@ -656,11 +699,17 @@ async function fileHandler(data, file, id) {
 drop(document.body, fileHandler);
 drop(document.querySelector('#tap-creator'), createTapAddFile);
 
-$('input').on('change', (event) => {
+$('input[type="file"]').on('change', (event) => {
   const file = event.target.files[0];
-  const id = event.target.id;
   const reader = new FileReader();
-  reader.onload = (event) =>
-    fileHandler(new Uint8Array(event.target.result), file, id);
+  reader.onload = (readerEvent) => {
+    fileHandler(new Uint8Array(readerEvent.target.result), file, null, event);
+    if (event.target.id === 'bmp-to-next') event.target.value = '';
+  };
   reader.readAsArrayBuffer(file);
+});
+
+$('input[name="next-pal"]').on('change', (e) => {
+  palInputType = e.target.value;
+  nextResult.innerHTML = '';
 });

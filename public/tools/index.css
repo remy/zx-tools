@@ -11,18 +11,20 @@ select {
   font-size: inherit;
 }
 
-#result {
-  display: flex;
-  flex-wrap: wrap;
-}
-
 .container {
   display: flex;
   flex-direction: column;
   padding: 8px;
 }
 
-#result .container img[src^='blob'] {
+#result,
+#next-image-result {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+#result .container img[src^='blob'],
+#next-image-result .container img[src^='blob'] {
   width: max-content;
 }
 
@@ -179,4 +181,27 @@ tr input {
 tr select {
   vertical-align: sub;
   vertical-align: -moz-middle-with-baseline;
+}
+
+.button-group {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.button-group button {
+  flex: 1;
+  margin-right: 8px;
+}
+
+.button-group button:last-child {
+  margin-right: 0;
+}
+
+#upload-pal {
+  display: none;
+}
+
+input[value='custom']:checked + #upload-pal {
+  display: inline-block;
 }

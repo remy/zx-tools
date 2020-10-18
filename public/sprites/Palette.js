@@ -19,7 +19,6 @@ import { decode } from '../lib/encode';
 
 const colourTest = document.createElement('div');
 document.body.appendChild(colourTest);
-const editor = $('#palette-editor');
 
 /**
  * @typedef { import("./lib/colour").RGBA } RGBA
@@ -57,6 +56,8 @@ function defaultPalette(length = 256) {
   const bytes = byteArray(length).map((_) => convertTo9Bit(_));
   return bytes;
 }
+
+const editor = $('#palette-editor');
 
 /**
  * Binds the editor to the live palette
@@ -102,10 +103,11 @@ export class Palette extends Hooks {
   priority = new Set();
 
   /**
-   * @param {Element} node DOM node to insert picker
-   * @param {Uint16Array} [data] initial palette data, defaults to Spectrum Next default
+   * @param {object} options
+   * @param {Uint16Array} [options.data] initial palette data, defaults to Spectrum Next default
+   * @param {Element} [options.node] DOM node to insert picker
    */
-  constructor(node, data = defaultPalette()) {
+  constructor({ node, data = defaultPalette() } = {}) {
     super();
     this.data = data;
     this.updateTable();
@@ -124,6 +126,8 @@ export class Palette extends Hooks {
 
   /** @param {Element|null} value selected index node */
   set lock(value) {
+    if (!this.node) return;
+
     if (value !== null) {
       this.node.parentElement.classList.add('locked');
     } else {
@@ -133,7 +137,8 @@ export class Palette extends Hooks {
   }
 
   updateCounts() {
-    if (!window.sprites.data) return;
+    if (!window.sprites) return;
+    if (!this.node) return;
 
     let countMap = this.node.querySelector('.palette-count');
 
@@ -193,7 +198,10 @@ export class Palette extends Hooks {
     const complete = document.querySelector('#complete');
     this.complete = complete;
 
-    const completePalette = new Palette(complete, byteArray(512));
+    const completePalette = new Palette({
+      node: complete,
+      data: byteArray(512),
+    });
     completePalette.render();
 
     this.lock = null;
@@ -618,6 +626,8 @@ export class Palette extends Hooks {
 
   render(sort = false) {
     const into = this.node;
+    if (!into) return;
+
     into.innerHTML = '';
     const lock = this.lock ? parseInt(this.lock.dataset.index, 10) : null;
     let sorted = Array.from(this.table);
@@ -928,7 +938,12 @@ export class Palette extends Hooks {
   }
 }
 
-const palette = new Palette(document.querySelector('#palette .picker'));
+const palette = new Palette();
 export default palette;
-palette.attach();
-initEditor();
+
+const node = document.querySelector('#palette .picker');
+if (node) {
+  palette.node = node;
+  palette.attach();
+  initEditor();
+}
