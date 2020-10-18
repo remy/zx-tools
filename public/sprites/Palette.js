@@ -138,6 +138,7 @@ export class Palette extends Hooks {
 
   updateCounts() {
     if (!window.sprites) return;
+    if (!window.sprites.data) return;
     if (!this.node) return;
 
     let countMap = this.node.querySelector('.palette-count');
