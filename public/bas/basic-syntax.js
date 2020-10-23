@@ -60,7 +60,8 @@ CodeMirror.defineSimpleMode('basic', {
       regex: new RegExp(`\\b(?:${$keywords.join('|')})(?:[\\b|\\s|]|$)`),
       token: 'keyword',
     },
-    { regex: /\b(REM)\b(.*)/, token: ['keyword', 'comment comment-body'] },
+    { regex: /\b(REM)\b(.+)/, token: ['keyword', 'comment comment-body'] },
+    { regex: /\b(REM)\s*$/, token: ['keyword'] },
     {
       regex: new RegExp('&|\\*|\\-|\\+|=|<>|<|>|\\|\\^|<<|>>|~'),
       token: 'operator',
