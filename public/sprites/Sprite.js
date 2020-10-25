@@ -1,5 +1,5 @@
 import { width, xyToIndex, emptyCanvas } from './sprite-tools.js';
-import { transparent, toRGB332 } from './lib/colour.js';
+import { transparent } from './lib/colour.js';
 import palette from './Palette';
 
 /**
@@ -119,6 +119,7 @@ export default class Sprite {
 
   mirror(horizontal = true) {
     return new Promise((resolve) => {
+      this.render();
       const i = new Image();
       const url = this.canvas.toDataURL(); // needed over a blob because blob is apparently a reference
       i.src = url;
@@ -141,9 +142,11 @@ export default class Sprite {
 
   rotate() {
     return new Promise((resolve) => {
+      this.render();
       const i = new Image();
       const url = this.canvas.toDataURL(); // needed over a blob because blob is apparently a reference
       i.src = url;
+      document.body.appendChild(i);
       i.onload = () => {
         this.ctx.clearRect(0, 0, width, width);
         this.ctx.translate(width / 2, width / 2);
@@ -166,7 +169,7 @@ export default class Sprite {
       if (a === 0) {
         this.pixels[i] = transparent;
       } else {
-        this.pixels[i] = toRGB332({ r, g, b });
+        this.pixels[i] = palette.getFromRGB({ r, g, b });
       }
     }
   }

@@ -850,7 +850,7 @@ export class Palette extends Hooks {
    * Returns the palette index for a given RGB
    *
    * @param {RGBA} rgba object
-   * @returns {number} index
+   * @returns {number} 8bit value index
    */
   getFromRGB({ r, g, b, a }) {
     if (a === 0) {
