@@ -132,7 +132,11 @@ export default class Tool {
   }
 
   start(event, sprites) {
-    const coords = getCoords(event, 64); // FIXME
+    const coords = getCoords(
+      event,
+      512 / sprites.defaultScale,
+      512 / sprites.defaultScale
+    );
     this._coords = coords;
     sprites.snapshot();
   }
@@ -149,6 +153,8 @@ export default class Tool {
       512 / sprites.defaultScale,
       512 / sprites.defaultScale
     );
+
+    console.log(coords);
 
     let target = this.colour.value;
 
