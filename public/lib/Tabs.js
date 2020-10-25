@@ -38,11 +38,11 @@ export default class Tabs extends Hooks {
 
     this.tabs = $(selector + ' > .tabs a');
 
-    // this.tabs.on('click', (e) => {
-    //   e.preventDefault();
-    //   this.show(e.target.hash.substring(1));
-    //   window.history.pushState(null, '', e.target.hash);
-    // });
+    this.tabs.on('click', (e) => {
+      e.preventDefault();
+      this.show(e.target.hash.substring(1));
+      window.history.pushState(null, '', e.target.hash);
+    });
 
     this.show(window.location.hash.substring(1) || this.panels[0].id);
 

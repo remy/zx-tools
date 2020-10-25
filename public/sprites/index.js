@@ -298,14 +298,25 @@ async function fileToImageWindow(data, file) {
   const ctx = document.querySelector('#importer canvas.png').getContext('2d');
   imageWindow = new ImageWindow(res.data, ctx, res);
   imageWindow.oncopy = (data, offset) => {
+    const current = sprites.current;
     if (offset) {
-      sprites.current = sprites.current + offset;
+      if (imageWindow.dimensions === 8) {
+        sprites.current = current + ((offset / 4) | 0);
+      } else {
+        sprites.current = current + offset;
+      }
     }
-    sprites.set(data);
+
+    if (imageWindow.dimensions === 8) {
+      const adjust = sprites.current * 256 + (offset % 4) * 64;
+      sprites.set(data, adjust);
+    } else {
+      sprites.set(data);
+    }
     sprites.renderSubSprites();
 
     if (offset) {
-      sprites.current = sprites.current - offset;
+      sprites.current = current;
     }
   };
   window.imageWindow = imageWindow;
@@ -1050,7 +1061,7 @@ generateNewSpriteSheet({ check: false });
 
 buildStyleSheet();
 
-// fetch('/testing/jetpac.png')
+// fetch('/testing/font.png')
 //   .then((res) => res.blob())
 //   .then((res) => {
 //     const file = new Blob([res], { type: 'image/png' });

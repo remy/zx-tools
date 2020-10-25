@@ -1135,6 +1135,7 @@ input[type='color'] {
 }
 
 .button-radio {
+  text-align: center;
   display: block;
   font-size: 12px;
 }

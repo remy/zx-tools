@@ -36,7 +36,7 @@ export default class ImageWindow {
     this.useMagenta = false;
 
     new Bind(
-      { dimensions: 16, magenta: false },
+      { dimensions: this.dimensions, magenta: false },
       {
         magenta: {
           dom: '#transparent-magenta',
@@ -93,6 +93,7 @@ export default class ImageWindow {
   set dimensions(size) {
     this._dimensions = size;
     this.parent.dataset.dimensions = size;
+    this.paint();
   }
 
   get dimensions() {
@@ -110,12 +111,28 @@ export default class ImageWindow {
     return (0xff >> (this.zoomFactor + 3)) << 3;
   }
 
-  coords(x = this.x, y = this.y) {
-    const delta = this.zoomDelta;
-    return {
-      x: Math.abs(x - delta),
-      y: Math.abs(y - delta),
-    };
+  coords(x = this.x, y = this.y, abs = true) {
+    let delta = this.zoomDelta;
+
+    if (abs) {
+      return {
+        x: Math.abs(x - delta),
+        y: Math.abs(y - delta),
+      };
+    } else {
+      const adjust = {
+        8: -4,
+        16: 0,
+        32: 8,
+        64: 24,
+      };
+
+      delta = delta - adjust[this.dimensions];
+      return {
+        x: (x - delta) * -1,
+        y: (y - delta) * -1,
+      };
+    }
   }
 
   start(event) {
@@ -276,8 +293,10 @@ export default class ImageWindow {
     const dim = this.dimensions;
     const ctx = this.__ctx;
 
-    const ittr = (dim / 16) ** 2;
-    const a = dim / 16;
+    const edge = dim === 8 ? 8 : 16;
+
+    const ittr = (dim / edge) ** 2;
+    const step = dim / edge;
 
     let paletteIndex = null;
     const transparent = palette.transparent9Bit;
@@ -362,21 +381,27 @@ export default class ImageWindow {
         }
       }
 
-      const adjust = (dim - 16) / 2;
-      x -= adjust;
-      y -= adjust;
+      let adjust = (dim - edge) / 2;
+      if (edge === 8) {
+        adjust = 4;
+        x -= 4;
+        y -= 4;
+      } else {
+        x -= adjust;
+        y -= adjust;
+      }
 
       for (let j = 0; j < ittr; j++) {
         const pal = new Set();
-        let data = new Uint16Array(16 * 16); // : new Uint8Array(16 * 16);
-        const xa = (j % a) * 16;
-        const ya = ((j / a) | 0) * 16;
+        let data = new Uint16Array(edge * edge);
+        const xa = (j % step) * edge;
+        const ya = ((j / step) | 0) * edge;
 
-        const imageData = ctx.getImageData(x + xa, y + ya, 16, 16);
+        const imageData = ctx.getImageData(x + xa, y + ya, edge, edge);
 
         for (let i = 0; i < data.length; i++) {
           let j = i;
-          if (as8x8) {
+          if (as8x8 && edge === 16) {
             j =
               112 * Math.floor(i / 128) +
               16 * Math.floor((i % 64) / 8) +
@@ -424,14 +449,14 @@ export default class ImageWindow {
         }
 
         if (fourBit) {
-          const modified = new Uint8Array(16 * 16);
+          const modified = new Uint8Array(edge * edge);
           const pal = palette.get4Bit(paletteIndex);
           data.forEach((_, i) => {
             modified[i] = paletteIndex * 16 + pal.indexOf(_);
           });
           data = modified;
         } else {
-          const modified = new Uint8Array(16 * 16);
+          const modified = new Uint8Array(edge * edge);
           data.forEach((_, i) => {
             modified[i] = palette.table.indexOf(_);
           });
@@ -455,7 +480,7 @@ export default class ImageWindow {
         ? 512 << (this.zoomFactor * -1)
         : 512 >> this.zoomFactor;
 
-    const localCords = this.coords(x, y);
+    const localCords = this.coords(x, y, false);
     this.status.innerHTML = `Zoom: ${5 - this.zoomFactor}:1<br>X/Y: ${
       localCords.x
     }/${localCords.y}<br>W/H: ${this.__ctx.canvas.width}/${
