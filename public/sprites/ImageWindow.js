@@ -302,7 +302,19 @@ export default class ImageWindow {
     const transparent = palette.transparent9Bit;
 
     let paletteLookup = Array.from({ length: 256 }, (_, i) => i);
-    paletteLookup = paletteLookup.map((i) => palette.getHex(i));
+    const transparencyPositions = [];
+    paletteLookup = paletteLookup
+      .filter((i) => {
+        const isTransparent = palette.transparency.includes(palette.table[i]);
+        if (isTransparent) {
+          transparencyPositions.push(i);
+        }
+        return !isTransparent;
+      })
+      .map((i) => {
+        return palette.getHex(i);
+      });
+
     const nearest = nearestColour.from(paletteLookup);
 
     const width = parseInt(this.controls.w.value, 10);
@@ -415,7 +427,6 @@ export default class ImageWindow {
           // existing palette
           let index = next512FromRGB({ r, g, b });
 
-          // FIXME support defined transparency
           if (a === 0) {
             pal.add(transparent);
             if (!over) {
@@ -440,11 +451,25 @@ export default class ImageWindow {
 
               let bestIndex = paletteLookup.indexOf(best);
 
+              const adjust = transparencyPositions.filter((_) => _ < bestIndex);
+
               // if the best match happens to be transparent (which is actually magenta)
               // then we'll shift to the next best colour
-              if (palette.transparency.includes(bestIndex)) {
-                bestIndex = 463;
-              }
+              // if (best === '#9200FF')
+              //   console.log(
+              //     'using nearest',
+              //     { r, g, b },
+              //     {
+              //       index,
+              //       best,
+              //       bestIndex,
+              //       adjust: adjust.length,
+              //       pal: palette.data[bestIndex],
+              //       prevBestIndex: paletteLookup.indexOf(best),
+              //     }
+              //   );
+
+              bestIndex += adjust.length;
 
               index = palette.data[bestIndex];
             }
