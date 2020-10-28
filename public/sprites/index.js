@@ -1061,9 +1061,9 @@ generateNewSpriteSheet({ check: false });
 
 buildStyleSheet();
 
-fetch('/testing/atic-serf-16x32a.png')
-  .then((res) => res.blob())
-  .then((res) => {
-    const file = new Blob([res], { type: 'image/png' });
-    fileToImageWindow(res, file);
-  });
+// fetch('/testing/atic-serf-16x32a.png')
+//   .then((res) => res.blob())
+//   .then((res) => {
+//     const file = new Blob([res], { type: 'image/png' });
+//     fileToImageWindow(res, file);
+//   });

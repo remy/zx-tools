@@ -448,7 +448,7 @@ export default class ImageWindow {
                 bestIndex++; // adjust the value since it's _after_ transparent
               }
 
-              console.log('no match', { r, g, b }, { best, bestIndex, index });
+              // console.log('no match', { r, g, b }, { best, bestIndex, index });
               index = palette.data[bestIndex];
             }
 
