@@ -301,6 +301,8 @@ export default class ImageWindow {
     let paletteIndex = null;
     const transparent = palette.transparent9Bit;
 
+    const transparentIndex = palette.transparent;
+
     let paletteLookup = Array.from({ length: 256 }, (_, i) => i);
     paletteLookup = paletteLookup
       .filter((i) => !palette.transparency.includes(palette.table[i]))
@@ -439,7 +441,14 @@ export default class ImageWindow {
             // match to the nearest colour
             if (palette.data.indexOf(index) === -1) {
               const best = nearest(rgbToHex({ r, g, b }));
-              const bestIndex = paletteLookup.indexOf(best);
+
+              let bestIndex = paletteLookup.indexOf(best);
+
+              if (bestIndex > transparentIndex) {
+                bestIndex++; // adjust the value since it's _after_ transparent
+              }
+
+              console.log('no match', { r, g, b }, { best, bestIndex, index });
               index = palette.data[bestIndex];
             }
 

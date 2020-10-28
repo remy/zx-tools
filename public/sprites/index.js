@@ -110,7 +110,7 @@ function generateNewSpriteSheet({
     data = Uint8Array.from({ length: 256 * 16 * 4 }, () => {
       // if (check == false && i < 256) return i;
       if (fourBit) return 0;
-      return transparent;
+      return palette.transparent;
     });
   }
 
@@ -1061,9 +1061,9 @@ generateNewSpriteSheet({ check: false });
 
 buildStyleSheet();
 
-// fetch('/testing/font.png')
-//   .then((res) => res.blob())
-//   .then((res) => {
-//     const file = new Blob([res], { type: 'image/png' });
-//     fileToImageWindow(res, file);
-//   });
+fetch('/testing/atic-serf-16x32a.png')
+  .then((res) => res.blob())
+  .then((res) => {
+    const file = new Blob([res], { type: 'image/png' });
+    fileToImageWindow(res, file);
+  });
