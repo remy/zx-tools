@@ -124,13 +124,14 @@ function generateNewSpriteSheet({
       restored.lastSaved > Date.now() - ONE_WEEK &&
       restored.spriteSheet
     ) {
+      palette.restoreFromData(Uint8Array.from(restored.palette.data));
+      palette.filename = restored.palette.filename;
+
       spriteData = Uint8Array.from(restored.spriteSheet.data);
       sprites = newSpriteSheet(spriteData);
 
       sprites.filename = restored.spriteSheet.filename;
       file.name = sprites.filename;
-      palette.restoreFromData(Uint8Array.from(restored.palette.data));
-      palette.filename = restored.palette.filename;
 
       if (restored.animate) {
         animate.restore(restored.animate);

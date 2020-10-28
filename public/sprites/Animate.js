@@ -43,7 +43,7 @@ export default class Animate extends Hooks {
       {
         scale: this.scale,
         from: null, // null means read from html
-        to: null,
+        frames: null,
         speed: null,
         effect: null,
         bg: null,
@@ -77,23 +77,17 @@ export default class Animate extends Hooks {
         },
         from: {
           parse: (value) => parseInt(value, 10),
-          dom: '#animate input[name="from"]',
+          dom: '#animate input[name="animate-from"]',
           callback: (value) => {
-            if (value > controls.to) {
-              controls.to = value;
-            }
             this.from = value;
             this.trigger('change');
           },
         },
-        to: {
+        frames: {
           parse: (value) => parseInt(value, 10),
-          dom: '#animate input[name="to"]',
+          dom: '#animate input[name="animate-frames"]',
           callback: (value) => {
-            if (value < controls.from) {
-              controls.from = value;
-            }
-            this.to = value;
+            this.frames = value;
             this.trigger('change');
           },
         },
@@ -195,9 +189,20 @@ export default class Animate extends Hooks {
   }
 
   serialize() {
-    const { to, from, scale, bg, speed, effect, visible, h, w, skip } = this;
+    const {
+      frames,
+      from,
+      scale,
+      bg,
+      speed,
+      effect,
+      visible,
+      h,
+      w,
+      skip,
+    } = this;
     return {
-      to,
+      frames,
       from,
       scale,
       bg,
@@ -211,27 +216,36 @@ export default class Animate extends Hooks {
   }
 
   restore(props) {
-    ['to', 'from', 'scale', 'bg', 'speed', 'effect', 'h', 'w', 'skip'].forEach(
-      (prop) => {
-        this.controls[prop] = props[prop];
-      }
-    );
+    [
+      'frames',
+      'from',
+      'scale',
+      'bg',
+      'speed',
+      'effect',
+      'h',
+      'w',
+      'skip',
+    ].forEach((prop) => {
+      this.controls[prop] = props[prop];
+    });
 
     this.visible = props.visible;
   }
 
   draw() {
-    const { from, to, frame, bounce, w } = this;
+    const { from, frames, frame, bounce, w } = this;
     let skip = this.skip + 1;
     let current;
 
-    let scale = to - from;
+    let scale = frames * (this.size - 1);
     if (bounce && scale !== 0) {
       current = from + Math.abs((frame % (scale * 2)) - scale);
     } else {
-      scale++;
+      scale += frames;
       current = from + (frame % scale);
     }
+
     this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.width);
     for (let i = 0; i < this.size; i++) {
       const sprite = this.sprites.sprites[current + i * skip];
@@ -255,8 +269,4 @@ export default class Animate extends Hooks {
       this.tick();
     });
   }
-
-  play() {}
-
-  stop() {}
 }
