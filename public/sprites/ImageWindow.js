@@ -301,12 +301,8 @@ export default class ImageWindow {
     let paletteIndex = null;
     const transparent = palette.transparent9Bit;
 
-    const transparentIndex = palette.transparent;
-
     let paletteLookup = Array.from({ length: 256 }, (_, i) => i);
-    paletteLookup = paletteLookup
-      .filter((i) => !palette.transparency.includes(palette.table[i]))
-      .map((i) => palette.getHex(i));
+    paletteLookup = paletteLookup.map((i) => palette.getHex(i));
     const nearest = nearestColour.from(paletteLookup);
 
     const width = parseInt(this.controls.w.value, 10);
@@ -444,11 +440,12 @@ export default class ImageWindow {
 
               let bestIndex = paletteLookup.indexOf(best);
 
-              if (bestIndex > transparentIndex) {
-                bestIndex++; // adjust the value since it's _after_ transparent
+              // if the best match happens to be transparent (which is actually magenta)
+              // then we'll shift to the next best colour
+              if (palette.transparency.includes(bestIndex)) {
+                bestIndex = 463;
               }
 
-              // console.log('no match', { r, g, b }, { best, bestIndex, index });
               index = palette.data[bestIndex];
             }
 
