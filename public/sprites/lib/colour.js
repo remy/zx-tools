@@ -183,9 +183,19 @@ export function rgbFromNext(value) {
  * @example
  * 10110011 (179) becomes 101100111 (359)
  * convertTo9Bit(0b10110011)
+ *
+ * The standard way of auto conversion of an
+ * 8bit value to its 9bit equivalent internally
+ * is by performing a logical OR of the high B
+ * bit with the low B bit of the 8bit colour
+ * and the result becoming the 9th B bit (B LSB)
+ * Example: 10110011 → 101100111
  */
 export function convertTo9Bit(value) {
-  const hb = (value & 0b00000010) >> 1;
+  const hb = (value | (value << 1)) & 1;
+
+  // this was the old, wrong code:
+  // const hb = (value & 0b00000010) >> 1;
   return (value << 1) | hb;
 }
 
