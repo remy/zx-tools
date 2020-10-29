@@ -5,9 +5,12 @@ const repo = 'zx-tools';
 
 const footer = document.createElement('footer');
 document.body.appendChild(footer);
-footer.innerHTML = `<p id="version">VERSION: <a target="_blank" href="https://github.com/remy/${repo}/compare/${
+footer.innerHTML = `<p id="version">Version: <a target="_blank" href="https://github.com/remy/${repo}/compare/${
   hash.prev
-}...${hash.curr}">${hash.curr.substring(0, 7)}</a></p>`;
+}...${hash.curr}">${new Date(hash.timestamp * 1000)
+  .toJSON()
+  .replace('T', ' ')
+  .replace(/:\d{2}\.\d{3}Z$/, '')}</a></p>`;
 
 const icons = {
   info: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18"><path class="filler" d="M21 19v1H3v-1l2-2v-6c0-3.1 2.03-5.83 5-6.71V4a2 2 0 012-2 2 2 0 012 2v.29c2.97.88 5 3.61 5 6.71v6l2 2m-7 2a2 2 0 01-2 2 2 2 0 01-2-2"/></svg>`,
