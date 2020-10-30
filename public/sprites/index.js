@@ -65,6 +65,14 @@ function pad3(n) {
  */
 function newSpriteSheet(data, file = { name: 'untitled.spr' }) {
   let tmp;
+
+  if (data && sprites && data.length < sprites.data.length) {
+    // we've got a partial
+    sprites.data.set(data, sprites.current * 256);
+    sprites.paintAll();
+    return sprites;
+  }
+
   if (sprites) tmp = sprites.defaultScale;
   sprites = new SpriteSheet(data, {
     ctx,
