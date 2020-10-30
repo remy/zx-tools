@@ -110,6 +110,7 @@ function generateNewSpriteSheet({
     data = Uint8Array.from({ length: 256 * 16 * 4 }, () => {
       // if (check == false && i < 256) return i;
       if (fourBit) return 0;
+
       return palette.transparent;
     });
   }
@@ -610,6 +611,13 @@ buttons.on('click', async (e) => {
       }
     }
 
+    if (action === 'export-as-spr') {
+      const filename = prompt('.spr filename?', 'untitled.spr');
+      if (filename) {
+        save(exporter.spr(), filename);
+      }
+    }
+
     if (action === 'export-as-png') {
       const filename = prompt('PNG Filename?', 'untitled.png');
       if (filename) {
@@ -1062,7 +1070,7 @@ generateNewSpriteSheet({ check: false });
 
 buildStyleSheet();
 
-// fetch('/testing/atic-serf-16x32a.png')
+// fetch('/testing/atic-wizard-16x32-v2a.png')
 //   .then((res) => res.blob())
 //   .then((res) => {
 //     const file = new Blob([res], { type: 'image/png' });

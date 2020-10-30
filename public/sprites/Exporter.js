@@ -249,6 +249,14 @@ export default class Exporter extends Hooks {
     return bmp.encode();
   }
 
+  spr() {
+    let { min, max } = this.sRange;
+    max = max + 1;
+    const mul = this._sprites.fourBit ? 128 : 256;
+    const data = this._sprites.getData();
+    return data.slice(min * mul, max * mul);
+  }
+
   png(spriteWidth) {
     const ctx = this.spritesToCanvas(spriteWidth);
     return new Promise((resolve) => {

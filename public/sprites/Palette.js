@@ -166,7 +166,8 @@ export class Palette extends Hooks {
    */
   restoreFromData(data, update = true) {
     this.priority = new Set();
-    data = new Uint16Array(data.buffer).map((_, i) => {
+
+    data = new Uint16Array(data.buffer.slice(0, 512)).map((_, i) => {
       if (isPriority(_)) {
         this.priority.add(i);
       }
@@ -768,7 +769,11 @@ export class Palette extends Hooks {
    * @param {Uint8Array} data
    */
   async import({ name }, data) {
-    if (!name.endsWith('.pal') && !name.endsWith('.gpl')) {
+    if (
+      !name.endsWith('.pal') &&
+      !name.endsWith('.gpl') &&
+      !name.includes('.nx')
+    ) {
       // unknown
       return;
     }

@@ -199,6 +199,8 @@ export function convertTo9Bit(value) {
   return (value << 1) | hb;
 }
 
+// convertTo9Bit(227) // ?
+
 /**
  * The default transparency on the zx spectrum next (in 8bit form)
  */
