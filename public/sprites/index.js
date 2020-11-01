@@ -66,9 +66,21 @@ function pad3(n) {
 function newSpriteSheet(data, file = { name: 'untitled.spr' }) {
   let tmp;
 
+  const fourBit = $('#size-4-bit').checked || file.name.includes('.nx');
+
   if (data && sprites && data.length < sprites.data.length) {
     // we've got a partial
-    sprites.data.set(data, sprites.current * 256);
+    if (fourBit) {
+      const fourBitData = new Uint8Array(data.length * 2);
+
+      data.map((byte, ptr) => {
+        fourBitData[ptr * 2] = byte >> 4;
+        fourBitData[ptr * 2 + 1] = byte & 0x0f;
+      });
+      sprites.data.set(fourBitData, sprites.current * 256);
+    } else {
+      sprites.data.set(data, sprites.current * 256);
+    }
     sprites.paintAll();
     return sprites;
   }
@@ -77,7 +89,7 @@ function newSpriteSheet(data, file = { name: 'untitled.spr' }) {
   sprites = new SpriteSheet(data, {
     ctx,
     subSprites,
-    fourBit: $('#size-4-bit').checked || file.name.includes('.nx'),
+    fourBit,
   });
   if (tmp) sprites.setScale(tmp);
   tileMap.sprites = sprites; // just in case
