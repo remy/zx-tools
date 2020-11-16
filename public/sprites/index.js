@@ -246,6 +246,10 @@ tabs.hook((tab) => {
   }
 
   if (tab === 'export') {
+    if (sprites) {
+      exporter.settings.sprite8x8 = sprites.defaultScale === 8;
+    }
+
     exporter.update();
   }
 
@@ -605,7 +609,7 @@ buttons.on('click', async (e) => {
 
     if (action === 'export-sprite-range-all') {
       exporter.sRange.min = 0;
-      exporter.sRange.max = 63;
+      exporter.sRange.max = exporter.settings.sprite8x8 ? 255 : 63;
     }
 
     exporter.update(true);

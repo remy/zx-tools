@@ -659,18 +659,22 @@
             <div class="button-group">
               <button data-action="export-copy">Copy to clipboard</button>
               <button data-action="export-download-source">Download source</button>
-              <button data-action="export-download" disabled>Download binary</button>
+              <!-- <button data-action="export-download" disabled>Download binary</button> -->
             </div>
 
             <h3>Additional formats</h3>
 
-            <div style="width: 300px">
-              <div class="flex-row align-center button-group"><span style="font-size: 12px; margin-right: 8px;">Sprites
+            <div style="width: 360px">
+              <div class="flex-row align-center button-group"><span
+                  style="white-space: nowrap; font-size: 12px; margin-right: 8px;">Sprites
                   as
                 </span>
                 <button data-action="export-as-bmp">BMP</button>
                 <button data-action="export-as-png">PNG</button>
                 <button data-action="export-as-spr">SPR</button>
+                <div class="flex-row align-center"><input name="tile-size" id="tile-size" type="checkbox"><label
+                    style="font-size: 12px;" for="tile-size"> 8x8</label></div>
+
               </div>
               <button data-action="export-as-piskel">Export sprite as .piskel</button>
               <button data-action="export-pal-as-gpl">Download GIMP Palette .gpl</button>

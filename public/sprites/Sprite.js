@@ -180,6 +180,7 @@ export default class Sprite {
     subSprite = this.subSprite,
     scale = this.scale,
     ctx = this.ctx,
+    skipClear = false,
   } = {}) {
     const pixels = this.pixels;
 
@@ -207,7 +208,7 @@ export default class Sprite {
       ptr++;
     }
 
-    if (x !== 0 || y !== 0) {
+    if (skipClear === false && (x !== 0 || y !== 0)) {
       emptyCanvas(ctx);
     }
 

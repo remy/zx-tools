@@ -82,7 +82,7 @@ export default class Exporter extends Hooks {
   constructor() {
     super();
     const callback = () => this.update();
-    this.sRange = rangeBind('sprite', { callback, max: 2 });
+    this.sRange = rangeBind('sprite', { callback, max: 63 });
     this.pRange = rangeBind('palette', {
       max: 255,
       callback,
@@ -99,6 +99,7 @@ export default class Exporter extends Hooks {
         pad: 'no',
         paletteBits: 9,
         size: 'byte',
+        sprite8x8: false,
       },
       {
         dist: {
@@ -130,6 +131,13 @@ export default class Exporter extends Hooks {
               }
             }
             callback();
+          },
+        },
+        sprite8x8: {
+          dom: '#tile-size',
+          callback(value) {
+            $('#export-sprite-range-end').max = value ? 255 : 63;
+            return callback(value);
           },
         },
         bytesPerLine: { dom: '#export-sprite-asm-bytes', callback },
@@ -181,7 +189,7 @@ export default class Exporter extends Hooks {
   }
 
   /**
-   * @returns {SpriteSheet}
+   * @returns {Sprite[]} sprites
    */
   get sprites() {
     if (!this._sprites) return [];
@@ -212,25 +220,56 @@ export default class Exporter extends Hooks {
 
   spritesToCanvas(spriteWidth = 64) {
     let { min, max } = this.sRange;
+    const sprite8x8 = this.settings.sprite8x8 ? 8 : 16;
+
     max = max + 1;
     const size = max - min;
     const sprites = this.sprites;
     const ctx = document.createElement('canvas').getContext('2d');
-    let width = 16 * size;
-    let height = 16;
+    let width = sprite8x8 * size;
+    let height = sprite8x8;
 
     if (size > spriteWidth) {
-      width = 16 * spriteWidth;
-      height = 16 * ((size / spriteWidth) | 0);
+      width = sprite8x8 * spriteWidth;
+      height = sprite8x8 * ((size / spriteWidth) | 0);
     }
 
     ctx.canvas.width = width;
     ctx.canvas.height = height;
 
     sprites.forEach((sprite, i) => {
-      const x = i % spriteWidth;
-      const y = (i / spriteWidth) | 0;
-      ctx.drawImage(sprite.ctx.canvas, x * 16, y * 16);
+      if (sprite8x8 === 8) {
+        for (let j = 0; j < 4; j++) {
+          const k = i * 2;
+          let x = (k % spriteWidth) * sprite8x8;
+          let y = (((k * 2) / spriteWidth) | 0) * sprite8x8;
+
+          x = x + (j % 2) * sprite8x8;
+          y = y + ((j / 2) | 0) * sprite8x8;
+
+          const opts = {
+            x,
+            y,
+            scale: 8,
+            ctx,
+            subSprite: j,
+            skipClear: true,
+          };
+
+          sprite.render(opts);
+        }
+      } else {
+        const x = (i % spriteWidth) * sprite8x8;
+        const y = ((i / spriteWidth) | 0) * sprite8x8;
+
+        sprite.render({
+          x,
+          y,
+          scale: 16,
+          skipClear: true,
+          ctx,
+        });
+      }
     });
 
     return ctx;
@@ -259,6 +298,7 @@ export default class Exporter extends Hooks {
 
   png(spriteWidth) {
     const ctx = this.spritesToCanvas(spriteWidth);
+
     return new Promise((resolve) => {
       ctx.canvas.toBlob(resolve);
     });
@@ -298,8 +338,6 @@ export default class Exporter extends Hooks {
     // bit of a hack, but worthwhile
     if (force === false && !window.location.hash.includes('export')) return;
     if (!this.settings) {
-      console.log('no settings');
-
       return; // not ready yet
     }
 
@@ -313,6 +351,7 @@ export default class Exporter extends Hooks {
 
         return;
       }
+
       let { min, max } = this.sRange;
       max = max + 1;
       /** @type {Sprite[]} */
