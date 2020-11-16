@@ -205,33 +205,41 @@ export default class ImageWindow {
     if (fromSelection) {
       imageData = ctx.getImageData(x, y, dim, dim);
       length = dim * dim;
-      for (let i = 0; i < length; i++) {
-        let j = i;
-        const [r, g, b, a] = imageData.data.slice(j * 4, j * 4 + 4);
-        const index = next512FromRGB({ r, g, b });
-        if (a === 0) {
-          pal.add(transparent);
-        } else if (index === 0x1c6 || index === 0x1c7) {
-          if (this.useMagenta) {
-            pal.add(transparent);
-          } else {
-            pal.add(463);
-          }
-        } else {
-          pal.add(index);
-        }
-      }
-
-      palArray = Array.from(pal);
     } else {
-      palArray = Array.from(palette.importBinary(this.fileData));
-      palArray.forEach((value, index) => {
-        palette.set(paletteIndex * 16 + index, value);
-      });
-      palette.updateTable();
+      try {
+        palArray = Array.from(palette.importBinary(this.fileData));
+        palArray.forEach((value, index) => {
+          palette.set(paletteIndex * 16 + index, value);
+        });
+        palette.updateTable();
 
-      return;
+        return;
+      } catch (e) {
+        // console.log('indexed import failed: ' + e.message);
+
+        imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
+        length = ctx.canvas.width * ctx.canvas.height;
+      }
     }
+
+    for (let i = 0; i < length; i++) {
+      let j = i;
+      const [r, g, b, a] = imageData.data.slice(j * 4, j * 4 + 4);
+      const index = next512FromRGB({ r, g, b });
+      if (a === 0) {
+        pal.add(transparent);
+      } else if (index === 0x1c6 || index === 0x1c7) {
+        if (this.useMagenta) {
+          pal.add(transparent);
+        } else {
+          pal.add(463);
+        }
+      } else {
+        pal.add(index);
+      }
+    }
+
+    palArray = Array.from(pal);
 
     if (fourBit) {
       if (palArray.length < 16) {
