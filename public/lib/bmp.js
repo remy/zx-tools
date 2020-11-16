@@ -79,10 +79,10 @@ BmpDecoder.prototype.parseHeader = function () {
       var red = this.buffer.getUint8(this.pos++);
       var quad = this.buffer.getUint8(this.pos++);
       this.palette[i] = {
-        red: red,
-        green: green,
-        blue: blue,
-        quad: quad,
+        red,
+        green,
+        blue,
+        quad,
       };
     }
   }

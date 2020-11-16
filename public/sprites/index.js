@@ -321,6 +321,7 @@ exporter.hook(saveLocal);
 async function fileToImageWindow(data, file) {
   const res = await parseNoTransformFile(data, file);
   res.filename = file.name;
+  res.fileData = data;
   const ctx = document.querySelector('#importer canvas.png').getContext('2d');
   imageWindow = new ImageWindow(res.data, ctx, res);
   imageWindow.oncopy = (data, offset) => {
@@ -1094,9 +1095,13 @@ generateNewSpriteSheet({ check: false });
 
 buildStyleSheet();
 
-// fetch('/testing/atic-wizard-16x32-v2a.png')
-//   .then((res) => res.blob())
+// fetch('/testing/indexed-export.bmp')
+//   .then((res) => res.arrayBuffer())
 //   .then((res) => {
+//     // const p = new Palette();
+//     // const palData = p.importBMP(res);
+//     // console.log(palData);
+
 //     const file = new Blob([res], { type: 'image/png' });
 //     fileToImageWindow(res, file);
 //   });

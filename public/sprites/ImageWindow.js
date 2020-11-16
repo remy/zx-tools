@@ -16,7 +16,9 @@ export default class ImageWindow {
   x = 0;
   y = 0;
 
-  constructor(data, ctx, { width, height, original }) {
+  constructor(data, ctx, { width, height, original, fileData }) {
+    this.fileData = fileData;
+
     this.ctx = ctx;
     this.__ctx = document.createElement('canvas').getContext('2d');
     this.__ctx.canvas.width = width;
@@ -55,7 +57,7 @@ export default class ImageWindow {
       end: (e) => this.end(e),
     });
 
-    this.render(this.__ctx, data);
+    this.render(this.__ctx);
     // this.zoom = 0;
     this.zoom = 2;
     this.y = this.x = 56;
@@ -185,7 +187,7 @@ export default class ImageWindow {
    */
   importPalette(fourBit = false) {
     const fromSelection = !confirm(
-      'Import from entire image (or selection)?\n\nOK = entire image\nCancel = selection'
+      'Import source indexed palette or selection?\n\nOK = entire source palette\nCancel = selection'
     );
 
     const dim = this.dimensions;
@@ -196,35 +198,40 @@ export default class ImageWindow {
     let paletteIndex = null;
     let imageData;
     let length;
+    let palArray;
 
     // read all the pixels and load into a palette
     const pal = new Set();
     if (fromSelection) {
       imageData = ctx.getImageData(x, y, dim, dim);
       length = dim * dim;
-    } else {
-      imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
-      length = ctx.canvas.width * ctx.canvas.height;
-    }
-
-    for (let i = 0; i < length; i++) {
-      let j = i;
-      const [r, g, b, a] = imageData.data.slice(j * 4, j * 4 + 4);
-      const index = next512FromRGB({ r, g, b });
-      if (a === 0) {
-        pal.add(transparent);
-      } else if (index === 0x1c6 || index === 0x1c7) {
-        if (this.useMagenta) {
+      for (let i = 0; i < length; i++) {
+        let j = i;
+        const [r, g, b, a] = imageData.data.slice(j * 4, j * 4 + 4);
+        const index = next512FromRGB({ r, g, b });
+        if (a === 0) {
           pal.add(transparent);
+        } else if (index === 0x1c6 || index === 0x1c7) {
+          if (this.useMagenta) {
+            pal.add(transparent);
+          } else {
+            pal.add(463);
+          }
         } else {
-          pal.add(463);
+          pal.add(index);
         }
-      } else {
-        pal.add(index);
       }
-    }
 
-    let palArray = Array.from(pal);
+      palArray = Array.from(pal);
+    } else {
+      palArray = Array.from(palette.importBinary(this.fileData));
+      palArray.forEach((value, index) => {
+        palette.set(paletteIndex * 16 + index, value);
+      });
+      palette.updateTable();
+
+      return;
+    }
 
     if (fourBit) {
       if (palArray.length < 16) {

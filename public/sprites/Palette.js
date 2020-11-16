@@ -1,3 +1,4 @@
+import { Unpack } from '@remy/unpack';
 import drop from '../lib/dnd';
 import track from '../lib/track-down';
 import {
@@ -16,6 +17,7 @@ import debounce from 'lodash.debounce';
 import SpriteSheet from './SpriteSheet';
 import parseToInt, { recognised } from '../lib/number';
 import { decode } from '../lib/encode';
+import BmpDecoder from '../lib/bmp';
 
 const colourTest = document.createElement('div');
 document.body.appendChild(colourTest);
@@ -794,6 +796,103 @@ export class Palette extends Hooks {
     this.render();
     this.trigger('change');
     this.updateCounts();
+  }
+
+  /**
+   * @param {Uint8Array} data png byte data
+   * @returns {Uint16Array} paletteData
+   */
+  importBinary(data) {
+    const unpack = new Unpack(data);
+    const { sig } = unpack.parse('C8$sig');
+
+    if (sig[0] === 66 && sig[1] === 77) {
+      // bmp
+      return this.importBMP(data);
+    } else {
+      // try png
+      return this.importPNG(data);
+    }
+  }
+
+  /**
+   * @param {Uint8Array} data png byte data
+   * @returns {Uint16Array} paletteData
+   */
+  importBMP(data) {
+    const bmp = new BmpDecoder(new Uint8Array(data));
+    const pal = [];
+    for (let i = 0; i < bmp.palette.length; i++) {
+      const { red, green, blue } = bmp.palette[i];
+      pal.push(next512FromRGB({ r: red, g: green, b: blue }));
+    }
+
+    return new Uint16Array(Array.from({ length: 256 }, (_, i) => pal[i] || 0));
+  }
+
+  /**
+   * @param {Uint8Array} data png byte data
+   * @returns {Uint16Array} paletteData
+   */
+  importPNG(data) {
+    const unpack = new Unpack(data);
+    const { sig } = unpack.parse('C8$sig');
+    const pal = [];
+
+    const pngSig = [137, 80, 78, 71, 13, 10, 26, 10];
+    const bad = Array.from(sig).find((_, i) => pngSig[i] !== _);
+    if (bad) {
+      throw new Error('Unknown file/png type');
+    }
+
+    const chunk1 = unpack.parse('I$length A4$type');
+
+    // first chunk is `IHDR`
+    if (chunk1.type !== 'IHDR') {
+      throw new Error(`Unexpected ${chunk1.type} chunk - expected "IHDR"`);
+    }
+
+    const header = unpack.parse(`
+    I$w;
+    I$h;
+    C$bitDepth;
+    C$colourType;
+    C$compressionMethod;
+    C$filterMethod;
+    C$interlaceMethod;
+    I$crc;
+    `);
+
+    if (header.colourType !== 3) {
+      throw new Error('Only indexed png supported');
+    }
+
+    let palette = null;
+    do {
+      const { type, length } = unpack.parse('I$length A4$type');
+      /** @type Uint8Array */
+      const { data } = unpack.parse(`C${length}$data`);
+      const { crc } = unpack.parse(`I$crc`); // TODO ?? ¯\_(ツ)_/¯
+
+      if (type === 'PLTE') {
+        palette = true;
+        const palLength = data.length / 3;
+        if (palLength !== ((data.length / 3) | 0)) {
+          throw new Error('Problem with palette index length');
+        }
+
+        for (let i = 0; i < data.length; i += 3) {
+          const [r, g, b] = data.slice(i, i + 3);
+          pal.push(next512FromRGB({ r, g, b }));
+        }
+
+        break;
+      } else if (!type) {
+        break;
+      }
+    } while (palette === null);
+
+    return new Uint16Array(Array.from({ length: 256 }, (_, i) => pal[i] || 0));
   }
 
   /**
