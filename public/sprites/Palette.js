@@ -765,16 +765,21 @@ export class Palette extends Hooks {
   }
 
   /**
-   * Imports .gpl and JASC .pal files try to detect the format
+   * Imports palette from files
    *
    * @param {File} file
    * @param {Uint8Array} data
    */
   async import({ name }, data) {
+    name = name.toLowerCase();
     if (
       !name.endsWith('.pal') &&
       !name.endsWith('.gpl') &&
-      !name.includes('.nx')
+      !name.includes('.nx') &&
+      !name.endsWith('.act') &&
+      !name.endsWith('.png') &&
+      !name.endsWith('.bmp') &&
+      !name.endsWith('.aco')
     ) {
       // unknown
       return;
@@ -783,7 +788,15 @@ export class Palette extends Hooks {
     this.filename = name;
     this.priority = new Set();
 
-    if (text.startsWith('GIMP Palette')) {
+    if (name.endsWith('.aco')) {
+      this.data = this.importACO(data);
+    } else if (name.endsWith('.act')) {
+      this.data = this.importACT(data);
+    } else if (name.endsWith('.bmp')) {
+      this.data = this.importBMP(data);
+    } else if (name.endsWith('.png')) {
+      this.data = this.importPNG(data);
+    } else if (text.startsWith('GIMP Palette')) {
       this.data = this.importGPL(text);
     } else if (text.startsWith('JASC-PAL')) {
       this.data = this.importJASC(text);
@@ -796,6 +809,46 @@ export class Palette extends Hooks {
     this.render();
     this.trigger('change');
     this.updateCounts();
+  }
+
+  /**
+   * @param {Uint8Array} data
+   * @returns {Uint16Array} paletteData
+   */
+  importACT(data) {
+    const pal = [];
+    for (let i = 0; i < data.length; i += 3) {
+      const [r, g, b] = data.slice(i, i + 3);
+      pal.push(next512FromRGB({ r, g, b }));
+    }
+
+    if (data.length === 772) {
+      const last = data.slice(768);
+      console.log(last);
+    }
+
+    return new Uint16Array(Array.from({ length: 256 }, (_, i) => pal[i] || 0));
+  }
+
+  /**
+   * @param {Uint8Array} data
+   * @returns {Uint16Array} paletteData
+   */
+  importACO(data) {
+    const pal = [];
+    const unpack = new Unpack(data);
+    const { length } = unpack.parse('S$version S$length');
+
+    for (let i = 0; i < length; i++) {
+      const { type, colour } = unpack.parse('S$type S4$colour');
+      if (type === 0) {
+        // rgb
+        const [r, g, b] = colour.map((_) => _ >> 8);
+        pal.push(next512FromRGB({ r, g, b }));
+      }
+    }
+
+    return new Uint16Array(Array.from({ length: 256 }, (_, i) => pal[i] || 0));
   }
 
   /**
