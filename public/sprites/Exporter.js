@@ -404,7 +404,9 @@ export default class Exporter extends Hooks {
         data = new Uint16Array(new DataView(tiles.bank.buffer).buffer);
       }
 
-      lines.push(...bytesToLines(data, { ...this.settings }));
+      lines.push(
+        ...bytesToLines(data, { ...this.settings, bytesPerLine: tiles.width })
+      );
       lines.push('');
     }
 

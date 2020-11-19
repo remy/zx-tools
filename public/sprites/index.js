@@ -52,6 +52,10 @@ const subSprites = $('#preview-8x8 canvas').map((canvas) => {
 /** @type {SpriteSheet} */
 let sprites = null;
 
+/**
+ * @param {number} n
+ * @returns {string}
+ */
 function pad3(n) {
   return n.toString().padStart(3, '0');
 }
@@ -148,20 +152,22 @@ function generateNewSpriteSheet({
       palette.restoreFromData(Uint8Array.from(restored.palette.data));
       palette.filename = restored.palette.filename;
 
+      // happens _after_ palette reset
+      if (restored.spriteSheet.fourBit) {
+        $('#size-4-bit').checked = true;
+      }
       spriteData = Uint8Array.from(restored.spriteSheet.data);
       sprites = newSpriteSheet(spriteData);
+
+      if (restored.spriteSheet.fourBit) {
+        sprites.fourBit = true;
+      }
 
       sprites.filename = restored.spriteSheet.filename;
       file.name = sprites.filename;
 
       if (restored.animate) {
         animate.restore(restored.animate);
-      }
-
-      // happens _after_ palette reset
-      if (restored.spriteSheet.fourBit) {
-        sprites.fourBit = true;
-        $('#size-4-bit').checked = true;
       }
 
       if (restored.tileMap) {
@@ -246,8 +252,11 @@ tabs.hook((tab) => {
   }
 
   if (tab === 'export') {
+    console.log('default scale', sprites.defaultScale);
+
     if (sprites) {
       exporter.settings.sprite8x8 = sprites.defaultScale === 8;
+      console.log(exporter.settings.sprite8x8);
     }
 
     exporter.update();
@@ -702,14 +711,9 @@ document.documentElement.addEventListener('keydown', (e) => {
     return;
   }
 
-  if (e.key === '?') {
-    return tabs.show('usage');
-  }
-
-  if (e.key === 'Shift') {
-    tool.shift(true);
-  }
-
+  // if (e.key === '?') {
+  //   return tabs.show('usage');
+  // }
   if (e.key === 's' && e.metaKey) {
     e.preventDefault();
     saveLocal();
@@ -767,29 +771,45 @@ document.documentElement.addEventListener('keydown', (e) => {
     return;
   }
 
-  if (e.key === 'r' && !e.metaKey) {
-    if (sprites.defaultScale === 8) {
-      return alert(`Rotate isn't supported yet for 8x8 sprites`);
+  if (tabs.selected === 'tiles') {
+    if (e.key === 'r') {
+      const source = parseInt(prompt('Replace which sprite #id?'), 10);
+      const target = parseInt(prompt('New sprite #id?'), 10);
+      tileMap.replace(source, target);
+      tileMap.paint();
+      tileMap.trigger();
     }
-    sprites.rotate();
-    return;
   }
 
-  if (e.key === 'h' && !e.metaKey) {
-    if (sprites.defaultScale === 8) {
-      return alert(`Mirror isn't supported yet for 8x8 sprites`);
-    }
-    sprites.mirror(true);
-    return;
-  }
-
-  if (e.key === 'v' && !e.metaKey) {
-    if (sprites.defaultScale === 8) {
-      return alert(`Flip isn't supported yet for 8x8 sprites`);
+  if (tabs.selected === 'sprite-editor') {
+    if (e.key === 'Shift') {
+      tool.shift(true);
     }
 
-    sprites.mirror(false);
-    return;
+    if (e.key === 'r' && !e.metaKey) {
+      if (sprites.defaultScale === 8) {
+        return alert(`Rotate isn't supported yet for 8x8 sprites`);
+      }
+      sprites.rotate();
+      return;
+    }
+
+    if (e.key === 'h' && !e.metaKey) {
+      if (sprites.defaultScale === 8) {
+        return alert(`Mirror isn't supported yet for 8x8 sprites`);
+      }
+      sprites.mirror(true);
+      return;
+    }
+
+    if (e.key === 'v' && !e.metaKey) {
+      if (sprites.defaultScale === 8) {
+        return alert(`Flip isn't supported yet for 8x8 sprites`);
+      }
+
+      sprites.mirror(false);
+      return;
+    }
   }
 
   if (e.shiftKey === false && e.key === 'z' && (e.metaKey || e.ctrlKey)) {
@@ -804,15 +824,6 @@ document.documentElement.addEventListener('keydown', (e) => {
   }
 
   if (e.key === 'D') {
-    if (event.shiftKey) {
-      exporter.update(true);
-      navigator.clipboard.writeText(exporter.output.value).then(() => {
-        const btn = $('button[data-action="download"]');
-        btn.classList.add('copied');
-        setTimeout(() => btn.classList.remove('copied'), 1100);
-      });
-      return;
-    }
     download();
     return;
   }

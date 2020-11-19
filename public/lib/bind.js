@@ -1,5 +1,5 @@
 // author: Remy Sharp
-// license: http://rem.mit-license.org/
+// license: https://rem.mit-license.org/
 // source: https://github.com/remy/bind/
 /* eslint-env browser */
 var Bind = (function Bind(global) {
@@ -17,7 +17,7 @@ var Bind = (function Bind(global) {
   var pass = function (v) {
     return v;
   };
-  var tryit = function (fn) {
+  var tryIt = function (fn) {
     return function () {
       try {
         return fn.apply(this, arguments);
@@ -127,7 +127,9 @@ var Bind = (function Bind(global) {
     try {
       var context = settings.context || document;
       $ = context.querySelectorAll.bind(context);
-    } catch (e) {}
+    } catch (e) {
+      // noop
+    }
 
     // loop through each property, and make getters & setters for
     // each type of "regular" value. If the key/value pair is an
@@ -144,7 +146,8 @@ var Bind = (function Bind(global) {
       var path = [].slice.call(_path);
       var callback;
       var transform = function (v) {
-        return safe(v);
+        if (typeof v === 'string') return safe(v);
+        return v;
       };
       var parse = pass;
 
@@ -164,10 +167,10 @@ var Bind = (function Bind(global) {
           callback = selector.callback;
         }
         if (selector.transform) {
-          transform = tryit(selector.transform.bind({ safe: safe }));
+          transform = tryIt(selector.transform.bind({ safe: safe }));
         }
         if (selector.parse) {
-          parse = tryit(selector.parse);
+          parse = tryIt(selector.parse);
         }
         // finally assign the DOM selector to the selector var so code
         // can continue as it was
@@ -177,7 +180,7 @@ var Bind = (function Bind(global) {
       var elements;
       if (typeof selector === 'string') {
         // cache the matched elements. Note the :) is because qSA won't allow an
-        // empty (or undefined) string so I like the smilie.
+        // empty (or undefined) string so I like the smiley.
         elements = $(selector || '☺');
       } else if (global.Element && selector instanceof global.Element) {
         elements = [selector];
@@ -200,6 +203,7 @@ var Bind = (function Bind(global) {
 
         if (value === null || value === undefined) {
           if (valueSetters.indexOf(elements[0].nodeName) !== -1) {
+            // eslint-disable-next-line no-prototype-builtins
             if (elements[0].hasOwnProperty('checked')) {
               value = parse(
                 elements[0].value === 'on'
@@ -231,8 +235,8 @@ var Bind = (function Bind(global) {
                 // special case for multi-select items
                 var result = transform(value, target);
                 if (element.type === 'checkbox') {
-                  if (value instanceof Array) {
-                    var found = value.filter(function (value) {
+                  if (result instanceof Array) {
+                    var found = result.filter(function (value) {
                       if (value === element.value) {
                         element.checked = element.value === value;
                         return true;
@@ -242,7 +246,9 @@ var Bind = (function Bind(global) {
                       element.checked = false;
                     }
                   } else if (typeof result === 'boolean') {
-                    element.checked = value;
+                    element.checked = result;
+                  } else {
+                    // console.log('no op');
                   }
                 } else if (element.type === 'radio') {
                   element.checked = element.value === result;
@@ -535,7 +541,7 @@ var Bind = (function Bind(global) {
 
   function __export(target, object) {
     if (!(object instanceof Object)) {
-      return object; // this is a primative
+      return object; // this is a primitive
     }
 
     forEach(Object.getOwnPropertyNames(object), function (key) {
@@ -569,7 +575,7 @@ var Bind = (function Bind(global) {
 
   function Bind(obj, mapping, context) {
     if (!this || this === global) {
-      return new Bind(obj, mapping);
+      return new Bind(obj, mapping, context);
     }
 
     var settings = {
@@ -594,9 +600,9 @@ var Bind = (function Bind(global) {
       // but reference the passed in "new" value or `this` keyword
       // this can be worked around by wrapping the following code
       // in a setTimeout(fn, 0) - but this means any changes that are
-      // synchonous in the code that creates the bind object, will
+      // synchronous in the code that creates the bind object, will
       // run *before* this callback loop runs. Basically: race.
-      forEach(settings.deferred, function deferreds(fn) {
+      forEach(settings.deferred, function (fn) {
         fn();
       });
     }
@@ -610,8 +616,9 @@ var Bind = (function Bind(global) {
   };
 
   return Bind;
-})(this);
+})(window);
 
 if (typeof exports !== 'undefined') {
+  // eslint-disable-next-line no-undef
   module.exports = Bind;
 }

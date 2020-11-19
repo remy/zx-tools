@@ -151,6 +151,14 @@ export default class TileMap extends Hooks {
     this._undoPtr = this.history.length - 1;
   }
 
+  replace(source, target) {
+    this.snapshot();
+    this.bank = this.bank.map((_) => {
+      if (_ === source) return target;
+      return _;
+    });
+  }
+
   undo() {
     const data = this.history[this._undoPtr];
 

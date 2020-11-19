@@ -604,11 +604,12 @@
 
               </div>
               <div>
-                <h4><label><input type="checkbox" name="export-section" value="sprites"
+                <h4 class="flex-row align-center"><label><input type="checkbox" name="export-section" value="sprites"
                       id="export-sprites">Sprites</label>
+                  &nbsp;<input name="tile-size" id="tile-size" type="checkbox"><label style="font-size: 12px;"
+                    for="tile-size">8x8</label>
                 </h4>
                 <div class="export-options export-sprites">
-
                   <div class="multi-input">
                     <label>Range: </label>
                     <input id="export-sprite-range-start" size="4" type="number" min="0" value="0" max="63"> to <input
@@ -674,8 +675,6 @@
                 <button data-action="export-as-bmp">BMP</button>
                 <button data-action="export-as-png">PNG</button>
                 <button data-action="export-as-spr">SPR</button>
-                <div class="flex-row align-center"><input name="tile-size" id="tile-size" type="checkbox"><label
-                    style="font-size: 12px;" for="tile-size"> 8x8</label></div>
 
               </div>
               <button data-action="export-as-piskel">Export sprite as .piskel</button>
