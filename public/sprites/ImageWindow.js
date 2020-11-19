@@ -203,7 +203,10 @@ export default class ImageWindow {
     // read all the pixels and load into a palette
     const pal = new Set();
     if (fromSelection) {
-      imageData = ctx.getImageData(x, y, dim, dim);
+      const width = parseInt(this.controls.w.value, 10);
+      const height = parseInt(this.controls.h.value, 10);
+
+      imageData = ctx.getImageData(x, y, dim * width, dim * height);
       length = dim * dim;
     } else {
       try {
@@ -215,7 +218,7 @@ export default class ImageWindow {
 
         return;
       } catch (e) {
-        // console.log('indexed import failed: ' + e.message);
+        console.log('indexed import failed: ' + e.message);
 
         imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
         length = ctx.canvas.width * ctx.canvas.height;
