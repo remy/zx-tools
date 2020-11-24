@@ -23,6 +23,10 @@ select {
   flex-wrap: wrap;
 }
 
+#result canvas {
+  margin-right: 8px;
+}
+
 #result .container img[src^='blob'],
 #next-image-result .container img[src^='blob'] {
   width: max-content;

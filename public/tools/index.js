@@ -12,6 +12,7 @@ import BmpEncoder from '../lib/bmpEncoder.js';
 import fontMetrics, { computeHeightFromMetrics } from '../lib/fontMetrics';
 import { indexToNextLEShort, next512FromRGB } from '../sprites/lib/colour.js';
 import { Palette } from '../sprites/Palette.js';
+import { renderImageFromNextFormat } from './lib/next-image.js';
 
 let explore = null;
 let uploadedPalette = null;
@@ -685,6 +686,13 @@ async function fileHandler(data, file, fileList, event) {
       data = data.slice(128);
     }
     pixelsForSCR(data, container(name));
+  } else if (id === 'upload-next-format') {
+    renderImageFromNextFormat(
+      file,
+      data,
+      uploadedPalette || new Palette(),
+      result
+    );
   } else if (id === 'upload-convert') {
     const blob = new Blob([data], { type });
     const url = URL.createObjectURL(blob);
