@@ -340,7 +340,8 @@ export default class ImageWindow {
     const auto = width * height;
 
     for (let k = 0; k < auto; k++) {
-      let { x, y } = this.coords();
+      // allow use to copy from outside the original image
+      let { x, y } = this.coords(this.x, this.y, false);
 
       x = x + (k % width) * dim;
       y = y + ((k / width) | 0) * dim;
