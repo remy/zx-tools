@@ -28,7 +28,7 @@ if (!location.origin.includes('localhost')) {
           title: 'Available offline',
           icon: icons.offline,
           message:
-            'This entire site and all tools are now fully available offline.',
+            'This entire site works offline, nothing for you to do, just pull your connection and it works 👍',
           dismiss() {
             localStorage.setItem('toast.offline', 1);
           },
