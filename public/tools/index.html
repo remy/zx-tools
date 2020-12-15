@@ -28,7 +28,7 @@
 
     <main>
       <details>
-        <summary>Explore .TAP, .TZX and .GDE files</summary>
+        <summary>Explore .TAP, .TZX .GDE and .ODS files</summary>
         <label for="upload-tap">Upload a file: </label><input type="file" id="upload-tap">
         <div id="tap-explore-result"></div>
         <div id="download-data">
@@ -104,6 +104,91 @@
             id="upload-next-format">
         </div>
         <div id="result"></div>
+      </details>
+
+      <details open id="export">
+        <summary>Binary editing tools</summary>
+        <div class="container">
+
+          <div class="flex-row">
+            <div>
+              <h4>Source</h4>
+              <div>
+                <!-- <label for="export-source-file">Input file</label> -->
+                <input type="file" id="export-source-file">
+              </div>
+
+              <div>
+                <label for="export-source-offset">Offset: </label>
+                <input type="number" size="4" max="0" value="0" min="0" id="export-source-offset">
+              </div>
+
+              <div>
+                <label for="export-source-length">Length:</label>
+                <input type="number" size="4" max="0" value="0" min="0" id="export-source-length">
+              </div>
+
+
+              <div class="button-group">
+                <button data-action="export-copy">Copy to clipboard</button>
+                <button data-action="export-download-source">Download source</button>
+                <button data-action="export-download">Download binary</button>
+              </div>
+            </div>
+
+            <div>
+              <div id="export-format">
+                <h4>Format</h4>
+                <div>
+                  <span>Destination</span>
+                  <label><input type="radio" name="export-destination" value="asm">Assembly</label>
+                  <label><input type="radio" name="export-destination" value="basic">BASIC</label>
+                </div>
+                <div>
+                  <span>Size</span>
+                  <label><input type="radio" name="export-byte-size" value="byte">Byte</label>
+                  <label><input type="radio" name="export-byte-size" value="word">Word</label>
+                </div>
+                <div>
+                  <label for="export-sprite-asm-bytes"><span class="export-value-size">byte</span>s per line</label>
+                  <input type="number" id="export-sprite-asm-bytes" min="1" max="128" value="16" size="4">
+                </div>
+                <div>
+                  <span>Space around <span class="export-value-size">byte</span>s?</span>
+                  <label><input type="radio" name="export-spaces" value="yes">Y</label>
+                  <label><input type="radio" name="export-spaces" value="no">N</label>
+                </div>
+                <div>
+                  <span>Pad <span class="export-value-size">byte</span>s?</span>
+                  <label><input type="radio" name="export-pad" value="yes">Y</label>
+                  <label><input type="radio" name="export-pad" value="no">N</label>
+                </div>
+                <div>
+                  <label for="export-sprite-asm-prefix">Line prefix</label>
+                  <input type="text" value="db" id="export-sprite-asm-prefix" size="6">
+                </div>
+                <div>
+                  <label for="export-sprite-asm-byte-type"><span class="export-value-size">byte</span> format</label>
+                  <select id="export-sprite-asm-byte-type">
+                    <option value="dec">decimal</option>
+                    <option value="$">hex $</option>
+                    <option value="0x">hex 0x</option>
+                    <option value="h">hex h</option>
+                  </select>
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+
+          <div class="flex-col">
+            <div>
+              <textarea class="code" rows="8" readonly id="export-output"></textarea>
+            </div>
+
+          </div>
+        </div>
       </details>
 
       <details open>

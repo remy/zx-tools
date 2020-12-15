@@ -333,7 +333,7 @@ export default class Exporter extends Hooks {
   }
 
   update(force = false) {
-    this.trigger('update');
+    this.trigger('update', force);
 
     // bit of a hack, but worthwhile
     if (force === false && !window.location.hash.includes('export')) return;
@@ -344,6 +344,20 @@ export default class Exporter extends Hooks {
     const lines = [];
     const { selection, dist, paletteBits, size } = this.settings;
     const asm = dist === 'asm';
+
+    if (this.binaryFile) {
+      let data = null;
+      if (size === 'byte') {
+        data = this.binaryFile;
+      } else {
+        data = new Uint16Array(new DataView(this.binaryFile.buffer).buffer);
+      }
+
+      lines.push(...bytesToLines(data, { ...this.settings }));
+      lines.push('');
+      this.output.value = lines.join('\n');
+      return;
+    }
 
     if (selection.includes('sprites')) {
       if (!this.sprites) {

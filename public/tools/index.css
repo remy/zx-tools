@@ -209,3 +209,33 @@ tr select {
 input[value='custom']:checked + #upload-pal {
   display: inline-block;
 }
+
+textarea.code {
+  padding: 8px;
+  min-height: 200px;
+  width: 100%;
+  border: 1px solid #ccc;
+}
+
+#export h4 {
+  margin: 0;
+}
+
+#export .flex-row > div {
+  width: 45%;
+  margin-right: 5%;
+  margin-bottom: 16px;
+  flex-grow: 1;
+}
+
+#export .flex-row > div:first-child div {
+  margin: 8px 0;
+}
+
+#export .flex-row > div:last-child {
+  margin-right: 0%;
+}
+
+#export .button-group {
+  flex-wrap: wrap;
+}

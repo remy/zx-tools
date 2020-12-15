@@ -13,6 +13,9 @@ import fontMetrics, { computeHeightFromMetrics } from '../lib/fontMetrics';
 import { indexToNextLEShort, next512FromRGB } from '../sprites/lib/colour.js';
 import { Palette } from '../sprites/Palette.js';
 import { renderImageFromNextFormat } from './lib/next-image.js';
+import ods from './lib/ods.js';
+import Exporter from '../sprites/Exporter';
+import Bind from '../lib/bind';
 
 let explore = null;
 let uploadedPalette = null;
@@ -27,6 +30,105 @@ const tapCreatorOutput = document.querySelector('#tap-creator tbody');
 
 let tapper = new Tapper();
 window.tapper = tapper;
+
+class ExportBinary {
+  constructor() {
+    this.exporter = new Exporter();
+    this.exporter.binaryFile = [];
+    this.filename = 'untitled';
+
+    drop(document.querySelector('#export'), (data, file) =>
+      this.setFile(data, file)
+    );
+
+    $('#export button[data-action]').on('click', (e) => {
+      const { action } = e.target.dataset;
+
+      if (action === 'export-copy') {
+        navigator.clipboard.writeText(this.output.value);
+        return;
+      }
+
+      const asm = this.exporter.settings.dist === 'asm';
+      if (action === 'export-download-source') {
+        const filename = prompt(
+          'Filename?',
+          this.filename + '.' + (asm ? 's' : 'bas')
+        );
+        if (filename) {
+          const file = new TextEncoder().encode(this.output.value);
+          save(file, filename);
+        }
+      }
+
+      if (action === 'export-download') {
+        const filename = prompt('Filename?', this.fullFilename);
+        if (filename) {
+          const file = this.exporter.binaryFile;
+          save(file, filename);
+        }
+      }
+    });
+
+    $('#export-source-file').on('change', (event) => {
+      const file = event.target.files[0];
+      const reader = new FileReader();
+      reader.onload = (readerEvent) => {
+        this.setFile(new Uint8Array(readerEvent.target.result), file);
+      };
+      reader.readAsArrayBuffer(file);
+    });
+
+    this.exporter.hook((_, forced) => {
+      if (!forced) this.update();
+    });
+
+    const callback = () => {
+      if (!this.file) return;
+
+      const max = this.file.length - this.settings.offset;
+      $('#export-source-length')[0].setAttribute('max', max);
+
+      if (this.settings.length > max) {
+        this.settings.length = max;
+      }
+
+      this.exporter.binaryFile = this.file.slice(
+        this.settings.offset,
+        this.settings.length
+      );
+
+      this.update();
+    };
+
+    this.settings = new Bind(
+      { offset: 0, length: 0 },
+      {
+        offset: { dom: '#export-source-offset', callback },
+        length: { dom: '#export-source-length', callback },
+      }
+    );
+  }
+
+  get output() {
+    return this.exporter.output;
+  }
+
+  setFile(data, file) {
+    this.file = data;
+    this.filename = file.name.split('.').slice(-1).join('.');
+    this.fullFilename = file.name;
+    this.exporter.binaryFile = data;
+    this.settings.length = data.length;
+    $('#export-source-length')[0].setAttribute('max', data.length);
+    $('#export-source-offset')[0].setAttribute('max', data.length);
+    this.update();
+  }
+
+  update() {
+    this.exporter.update(true);
+  }
+}
 
 function selected(value, cmp) {
   if (value === cmp) return 'selected';
@@ -233,6 +335,8 @@ buttons.on('click', async (e) => {
 
     return;
   }
+
+  if (!action.startsWith('download-')) return;
 
   const ids = Array.from(
     tapExplore.querySelectorAll('input[name="block"]:checked')
@@ -647,6 +751,14 @@ function importFont(data, file) {
     .catch((e) => console.log(e));
 }
 
+function exploreOds(data) {
+  const ta = document.createElement('textarea');
+  ta.value = ods(data);
+  ta.setAttribute('spellcheck', 'false');
+  ta.className = 'code';
+  tapExplore.appendChild(ta);
+}
+
 /**
  * @param {Uint8Array} data
  * @param {File} file
@@ -657,6 +769,8 @@ function importFont(data, file) {
 async function fileHandler(data, file, fileList, event) {
   const { id } = event.target;
   const { name, type } = file;
+
+  console.log({ id, name, type });
 
   const ext = name.split('.').pop().toUpperCase();
 
@@ -678,6 +792,8 @@ async function fileHandler(data, file, fileList, event) {
     exploreTap(data);
   } else if (ext === 'TZX') {
     exploreTzx(data);
+  } else if (ext === 'ODS') {
+    exploreOds(data);
   } else if (ext === 'GDE') {
     window.location = '/tools/gde';
   } else if (ext === 'SCR') {
@@ -699,11 +815,14 @@ async function fileHandler(data, file, fileList, event) {
     const res = await dither({ url });
     pixelsForSCR(res, container(name, res));
     URL.revokeObjectURL(url);
+  } else if (id === 'export-source-file') {
+    exporter.setFile(data);
   } else {
     renderImageForBmp(file, data);
   }
 }
 
+const exporter = new ExportBinary();
 drop(document.body, fileHandler);
 drop(document.querySelector('#tap-creator'), createTapAddFile);
 
