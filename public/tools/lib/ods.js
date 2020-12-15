@@ -4,7 +4,7 @@ const table = getTable();
  * @param {Uint8Array} data
  * @returns {string}
  */
-export default function (data) {
+export default function ods(data) {
   const res = [];
   let line = '';
 
@@ -40,6 +40,12 @@ export default function (data) {
       line += spaces;
 
       // now the opcode
+
+      if (i === 0 && data[i + 2] === 0) {
+        // weird pre-header format
+        i++;
+        continue;
+      }
 
       const opcode = table.opcodes[data[i + 2]];
 

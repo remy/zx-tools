@@ -770,8 +770,6 @@ async function fileHandler(data, file, fileList, event) {
   const { id } = event.target;
   const { name, type } = file;
 
-  console.log({ id, name, type });
-
   const ext = name.split('.').pop().toUpperCase();
 
   if (id === 'create-tap') {
