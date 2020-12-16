@@ -1,5 +1,9 @@
 const table = getTable();
 
+// ods(
+//   require('fs').readFileSync(__dirname + '/../../static/testing/plottest.ods')
+// );
+
 /**
  * @param {Uint8Array} data
  * @returns {string}
@@ -7,6 +11,7 @@ const table = getTable();
 export default function ods(data) {
   const res = [];
   let line = '';
+  let hasOp = false;
 
   for (let i = 0; i < data.length; i++) {
     const byte = data[i];
@@ -27,12 +32,14 @@ export default function ods(data) {
       // start of new line
       res.push(line);
       line = '';
+      hasOp = false;
       continue;
     } else if (byte === 255) {
       // end of file
       break;
     }
 
+    // insert N spaces where N is determined by next byte
     if (byte === 10) {
       // next byte is number of spaces
       const spaces = ' '.repeat(data[i + 1]);
@@ -41,23 +48,34 @@ export default function ods(data) {
 
       // now the opcode
 
-      if (i === 0 && data[i + 2] === 0) {
-        // weird pre-header format
-        i++;
-        continue;
-      }
+      // if (i === 0 && data[i + 2] === 0) {
+      //   // weird pre-header format
+      //   i++;
+      //   continue;
+      // }
 
-      const opcode = table.opcodes[data[i + 2]];
+      continue;
+    }
 
+    if (byte >= 0x0b && byte <= 0x20) {
+      // let i = byte;
+      // while (i < 0x20) i++;
+
+      line += ' '.repeat(33 - byte);
+
+      continue;
+    }
+
+    if (!hasOp && byte >= 0x80) {
+      const opcode = table.opcodes[byte];
       // peek
-      if (data[i + 3] === 1) {
+      if (data[i + 1] === 1) {
         line += opcode[1];
         i++;
       } else {
         line += opcode[0];
       }
-
-      i += 2;
+      hasOp = true;
 
       continue;
     }
