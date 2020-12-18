@@ -1,9 +1,5 @@
 const table = getTable();
 
-// ods(
-//   require('fs').readFileSync(__dirname + '/../../static/testing/plottest.ods')
-// );
-
 /**
  * @param {Uint8Array} data
  * @returns {string}
@@ -43,7 +39,7 @@ export default function ods(data) {
     if (byte === 10) {
       // next byte is number of spaces
       const spaces = ' '.repeat(data[i + 1]);
-
+      i++;
       line += spaces;
 
       // now the opcode
@@ -96,7 +92,7 @@ export default function ods(data) {
     line += String.fromCharCode(byte);
   }
 
-  return res.join('\n'); // ?
+  return res.join('\n');
 }
 
 function getTable() {
