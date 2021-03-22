@@ -786,6 +786,13 @@ document.documentElement.addEventListener('keydown', (e) => {
       tool.shift(true);
     }
 
+    if (e.key === 'c' && (e.metaKey || e.ctrlKey)) {
+      sprites.copy();
+    }
+    if (e.key === 'v' && (e.metaKey || e.ctrlKey)) {
+      sprites.paste(e.shiftKey);
+    }
+
     if (e.key === 'r' && !e.metaKey) {
       if (sprites.defaultScale === 8) {
         return alert(`Rotate isn't supported yet for 8x8 sprites`);
