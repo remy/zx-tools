@@ -16,6 +16,9 @@ import { generateBlock } from '../lib/audio/index.js';
 import { createWavFromBuffer } from '../lib/audio/make-wav.js';
 import { load } from '../lib/load-basic.js';
 
+/**
+ * saves to local storage
+ */
 function localSave() {
   sessionStorage.setItem('code', cm.getValue());
 }
@@ -161,6 +164,11 @@ $('button').on('click', (e) => {
   if (action === 'download') download(type);
 });
 
+/**
+ * Trigger download for a type
+ *
+ * @param {string} action wav, bank, bas, 3dos
+ */
 function download(action) {
   const filename = prompt('Program name?', 'untitled');
 

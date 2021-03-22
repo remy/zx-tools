@@ -183,3 +183,19 @@ details {
 details[open] {
   padding-bottom: 40px;
 }
+
+button,
+.button {
+  margin: 0;
+  margin-bottom: 8px;
+  background: #111;
+  border: 2px solid #111;
+  border-radius: 3px;
+}
+
+button:hover,
+.button:hover {
+  background: #444;
+  outline: none;
+  border-color: #000;
+}

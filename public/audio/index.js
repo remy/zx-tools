@@ -505,10 +505,11 @@ function getSelection() {
   return range;
 }
 
-table.addEventListener('copy', (event) => {
+window.addEventListener('copy', (event) => {
   const effect = bank.effect;
   copyBank.effect.clear();
   const selection = getSelection();
+  console.log(selection, document.activeElement);
   selection.forEach((id) => {
     copyBank.effect.push(effect.get(id));
   });
@@ -516,11 +517,12 @@ table.addEventListener('copy', (event) => {
   event.preventDefault();
 });
 
-document.documentElement.addEventListener('paste', (event) => {
+document.documentElement.addEventListener('paste', async (event) => {
   const focused = document.activeElement;
   if (focused.tagName === 'INPUT') {
     return;
   }
+
   let insert = focused.tagName === 'TR';
   let paste = Uint8Array.from(
     (event.clipboardData || window.clipboardData)
@@ -666,6 +668,19 @@ buttons.on('click', async (e) => {
 
   if (action === 'download') {
     return download();
+  }
+
+  if (action === 'copy') {
+    const effect = bank.effect;
+    copyBank.effect.clear();
+    for (let i = 0; i < effect.length; i++) {
+      copyBank.effect.push(effect.get(i));
+    }
+
+    navigator.clipboard.writeText(copyBank.effect.export().join(','));
+    console.log(copyBank.effect.export().join(','));
+    event.preventDefault();
+    return;
   }
 
   if (action === 'stop') {

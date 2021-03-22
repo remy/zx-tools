@@ -161,13 +161,14 @@ export function calculateSampleSize(...pulses) {
 }
 
 /**
- *
- * @param {Object} block
+ * @param {object} block
  * @param {AudioContext} block.ctx Audio context
- * @param {UInt8Array} block.data Fully formed binary data
+ * @param {Uint8Array} block.data Fully formed binary data
  * @param {string} block.filename 10 chr filename
  * @param {number} block.param1 Autostart line (0x4000 for screen data)
  * @param {number} block.param2 Memory start for vars (optional)
+ * @param {number} block.type type lookup
+ * @returns {AudioBuffer}
  */
 export function generateBlock({
   ctx,
