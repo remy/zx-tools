@@ -4,7 +4,7 @@ const table = getTable();
  * @param {Uint8Array} data
  * @returns {string}
  */
-export default function ods(data) {
+export default function odin(data) {
   const res = [];
   let line = '';
   let hasOp = false;
@@ -17,7 +17,7 @@ export default function ods(data) {
 
       if (SOF[0] !== 255 || SOF[1] !== 0) {
         // could this be the old format? - sod it, try anyway.
-        console.warn('Either not ODS file or old format');
+        console.warn('Either not ODN file or old format');
       } else {
         i += 5; // skip over the initial zero/start of line
         continue;
@@ -96,13 +96,18 @@ export default function ods(data) {
 }
 
 function getTable() {
+  // generated from https://gitlab.com/next-tools/odin/-/blob/master/src/shared/tokens.s#L372
   return {
     opcodes: {
+      // new directives
+      0xe2: { 0: 'SAVE ' },
+      0xe3: { 0: 'DEFC ' },
+      // all else
       0x80: { 0: 'ADC ' },
       0x81: { 0: 'ADD ' },
       0x82: { 0: 'AND ' },
-      0xe0: { 0: 'BIN ', 1: 'INCBIN ' },
       0x83: { 0: 'BIT ' },
+      0xe0: { 0: 'BIN ', 1: 'INCBIN ' },
       0xcf: { 0: 'BSLA ' },
       0xd3: { 0: 'BRLC ' },
       0xd0: { 0: 'BSRA ' },

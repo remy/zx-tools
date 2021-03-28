@@ -13,7 +13,7 @@ import fontMetrics, { computeHeightFromMetrics } from '../lib/fontMetrics';
 import { indexToNextLEShort, next512FromRGB } from '../sprites/lib/colour.js';
 import { Palette } from '../sprites/Palette.js';
 import { renderImageFromNextFormat } from './lib/next-image.js';
-import ods from './lib/ods.js';
+import odin from './lib/odn.js';
 import Exporter from '../sprites/Exporter';
 import Bind from '../lib/bind';
 
@@ -751,9 +751,9 @@ function importFont(data, file) {
     .catch((e) => console.log(e));
 }
 
-function exploreOds(data) {
+function exploreOdin(data) {
   const ta = document.createElement('textarea');
-  ta.value = ods(data);
+  ta.value = odin(data);
   ta.setAttribute('spellcheck', 'false');
   ta.className = 'code';
   tapExplore.appendChild(ta);
@@ -790,8 +790,8 @@ async function fileHandler(data, file, fileList, event) {
     exploreTap(data);
   } else if (ext === 'TZX') {
     exploreTzx(data);
-  } else if (ext === 'ODS') {
-    exploreOds(data);
+  } else if (ext === 'ODS' || ext === 'ODN') {
+    exploreOdin(data);
   } else if (ext === 'GDE') {
     window.location = '/tools/gde';
   } else if (ext === 'SCR') {
