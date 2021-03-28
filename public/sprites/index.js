@@ -712,7 +712,9 @@ trackDown(container, {
 
 // main key handlers
 document.documentElement.addEventListener('keyup', (e) => {
+  console.log(e.key);
   if (e.key === 'Shift') {
+    console.log('here');
     tool.shift(false);
   }
 });
@@ -802,6 +804,7 @@ document.documentElement.addEventListener('keydown', (e) => {
       const position = letter.charCodeAt(0) - 0x20;
       sprites.current = (position / 4) | 0;
       sprites.setSubSprite(position % 4);
+      tool.shift(false); // undo the tool toogle
       return;
     }
 
