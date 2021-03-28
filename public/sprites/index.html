@@ -122,7 +122,8 @@
                       style="width:24px;height:24px" viewBox="0 0 24 24">
                       <path fill="currentColor"
                         d="M4,2H14V4H4V14H2V4C2,2.89 2.89,2 4,2M8,6H18V8H8V18H6V8C6,6.89 6.89,6 8,6M12,10H20C21.11,10 22,10.89 22,12V20C22,21.11 21.11,22 20,22H12C10.89,22 10,21.11 10,20V12C10,10.89 10.89,10 12,10M14,12V20L20,16L14,12Z" />
-                    </svg></button></div>
+                    </svg></button>
+                </div>
                 <span class="button input-button" id="upload"><input type="file">Upload .spr</span>
                 <button data-action="new">New sprite sheet</button>
               </div>
@@ -216,10 +217,12 @@
                       <option>32</option>
                       <option>64</option>
                       <option>128</option>
-                    </select></div>
+                    </select>
+                  </div>
                   <div class="fixed-label"><label for="animate-speed">FPS </label>
                     <input min="1" max="255" value="1" size="8" id="animate-speed" name="speed" autocomplete="off"
-                      type="number"></div>
+                      type="number">
+                  </div>
                   <div>
                     <span>Effect </span>
                     <label><input checked name="effect" value="loop" id="animate-effect-loop" type="radio">Loop</label>
@@ -302,6 +305,14 @@
                 <div>
                   <dt>ctrl + z</dt>
                   <dd>undo</dd>
+                </div>
+                <div>
+                  <dt>ctrl + c</dt>
+                  <dd>copy</dd>
+                </div>
+                <div>
+                  <dt>ctrl + v</dt>
+                  <dd>paste</dd>
                 </div>
                 <div>
                   <dt>Drag and drop</dt>
@@ -488,7 +499,8 @@
                       <path
                         d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
                       <path d="M0 0h24v24H0V0z" fill="none" />
-                      <path d="M12 10h-2v2H9v-2H7V9h2V7h1v2h2v1z" /></svg></button>
+                      <path d="M12 10h-2v2H9v-2H7V9h2V7h1v2h2v1z" />
+                    </svg></button>
                   <button data-action="zoom-out">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#fff" width="24" height="24">
                       <path d="M0 0h24v24H0V0z" fill="none" />
@@ -679,67 +691,13 @@
               </div>
               <button data-action="export-as-piskel">Export sprite as .piskel</button>
               <button data-action="export-pal-as-gpl">Download GIMP Palette .gpl</button>
+              <button data-action="export-spr-as-font"
+                title="Exports 96 8x8 characters, 0s based on transparency, non-0 based on non-transparency">Export as
+                font binary</button>
             </div>
             <!-- <div>
               <button>Download zip</button>
             </div> -->
-          </div>
-        </section>
-
-        <section hidden id="usage" data-title="Usage">
-          <div>
-            <p><a target="_blank" href="https://github.com/remy/zx-tools/issues/new">Report an issue/suggestion</a></p>
-            <div class="col2">
-              <h2>Sprite Editor</h2>
-              <dl class="keys">
-                <dt>D</dt>
-                <dd>download spritesheet .spr file</dd>
-                <dt>r</dt>
-                <dd>rotate sprite</dd>
-                <dt>v</dt>
-                <dd>vertically mirror sprite</dd>
-                <dt>h</dt>
-                <dd>horizontally mirror sprite</dd>
-                <dt>b</dt>
-                <dd>select brush tool</dd>
-                <dt>f</dt>
-                <dd>select fill tool</dd>
-                <dt>e</dt>
-                <dd>select erase tool</dd>
-                <dt>p</dt>
-                <dd>select pan tool</dd>
-                <dt>alt + click</dt>
-                <dd>pick colour from sprite and add to palette</dd>
-                <dt>shift + click</dt>
-                <dd>switch to erase</dd>
-                <dt>left/right cursor</dt>
-                <dd>change current sprite in sprite sheet</dd>
-                <dt>shift + 1 - 4</dt>
-                <dd>select 8x8 sprite</dd>
-                <dt>shift + cursor keys</dt>
-                <dd>shift/pan sprite by 1 pixel</dd>
-                <dt>ctrl + shift + cursor keys</dt>
-                <dd>shift/pan sprite by 8 pixels</dd>
-                <dt>1 - 8</dt>
-                <dd>select palette colour <em>n</em></dd>
-                <dt>ctrl + z</dt>
-                <dd>undo</dd>
-                <dt>Drag and drop</dt>
-                <dd>Supported: .png and .spr files</dd>
-              </dl>
-              <h2>Tile Map</h2>
-              <p>Sprite 64 (index 63) is used to initially fill the tile map.</p>
-              <p>Drag and drop into the tab panel to restore previous .map files</p>
-              <h2>PNG Importer</h2>
-              <dl class="keys">
-                <dt>shift + cursor keys</dt>
-                <dd>shift/pan sprite by 1 pixel</dd>
-                <dt>ctrl + shift + cursor keys</dt>
-                <dd>shift/pan sprite by 8 pixels</dd>
-                <dt>Drag and drop</dt>
-                <dd>Supported: .png files of any dimension</dd>
-              </dl>
-            </div>
           </div>
         </section>
 

@@ -485,7 +485,10 @@ buttons.on('click', async (e) => {
   }
 
   if (action === 'toggle-scale') {
-    sprites.toggleScale();
+    // this is acted upon via the sprite interface, but the tileMap class
+    // actually propagates *and saves* the scale to the sprites, so we toggle
+    // the tile size instead.
+    tileMap.size = sprites.defaultScale === 8 ? 16 : 8;
     saveLocal();
   }
 
@@ -627,6 +630,14 @@ buttons.on('click', async (e) => {
 
     if (action === 'export-copy') {
       navigator.clipboard.writeText(exporter.output.value);
+    }
+
+    if (action === 'export-spr-as-font') {
+      const filename = prompt('Filename?', 'font.bin');
+      if (filename) {
+        const file = sprites.exportAsFont();
+        save(file, filename);
+      }
     }
 
     if (action === 'export-download-source') {
@@ -786,11 +797,21 @@ document.documentElement.addEventListener('keydown', (e) => {
       tool.shift(true);
     }
 
+    if (sprites.defaultScale === 8 && e.key === 'C' && e.shiftKey) {
+      const letter = prompt('Move to which character?');
+      const position = letter.charCodeAt(0) - 0x20;
+      sprites.current = (position / 4) | 0;
+      sprites.setSubSprite(position % 4);
+      return;
+    }
+
     if (e.key === 'c' && (e.metaKey || e.ctrlKey)) {
       sprites.copy();
+      return;
     }
     if (e.key === 'v' && (e.metaKey || e.ctrlKey)) {
       sprites.paste(e.shiftKey);
+      return;
     }
 
     if (e.key === 'r' && !e.metaKey) {

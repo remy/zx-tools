@@ -88,6 +88,25 @@ export default class SpriteSheet extends Hooks {
     this.paintAll();
   }
 
+  exportAsFont() {
+    const chars = 96;
+    const data = new Uint8Array(8 * chars);
+    let curr = 0;
+    let i = 0;
+    this.data.slice(0, chars * 8 * 8).forEach((byte, ptr) => {
+      const shift = 7 - (ptr % 8);
+      curr += (byte === palette.transparent ? 0 : 1) << shift;
+
+      if (shift === 0) {
+        data[i] = curr;
+        i++;
+        curr = 0;
+      }
+    });
+
+    return data;
+  }
+
   getData() {
     if (!this.fourBit) {
       return this.data;
@@ -364,8 +383,8 @@ export default class SpriteSheet extends Hooks {
     document.body.dataset.scale = this.defaultScale;
   }
 
-  toggleScale(paintSubSprites = true) {
-    this.setScale(this.defaultScale === 8 ? 16 : 8, paintSubSprites);
+  toggleScale() {
+    this.setScale(this.defaultScale === 8 ? 16 : 8);
   }
 
   clear() {
