@@ -238,11 +238,11 @@ export default class Animate extends Hooks {
     let skip = this.skip + 1;
     let current;
 
-    let scale = frames * (this.size - 1);
-    if (bounce && scale !== 0) {
+    if (bounce && frames > 1) {
+      let scale = (frames - 1) * this.size;
       current = from + Math.abs((frame % (scale * 2)) - scale);
     } else {
-      scale += frames;
+      let scale = frames * this.size;
       current = from + (frame % scale);
     }
 

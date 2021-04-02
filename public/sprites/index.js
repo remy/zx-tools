@@ -256,7 +256,6 @@ tabs.hook((tab) => {
 
     if (sprites) {
       exporter.settings.sprite8x8 = sprites.defaultScale === 8;
-      console.log(exporter.settings.sprite8x8);
     }
 
     exporter.update();
@@ -712,9 +711,7 @@ trackDown(container, {
 
 // main key handlers
 document.documentElement.addEventListener('keyup', (e) => {
-  console.log(e.key);
   if (e.key === 'Shift') {
-    console.log('here');
     tool.shift(false);
   }
 });
