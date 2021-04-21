@@ -192,14 +192,9 @@ export function rgbFromNext(value) {
  * Example: 10110011 → 101100111
  */
 export function convertTo9Bit(value) {
-  const hb = (value | (value << 1)) & 1;
-
-  // this was the old, wrong code:
-  // const hb = (value & 0b00000010) >> 1;
+  const hb = ((value & 2) >> 1) | (value & 1);
   return (value << 1) | hb;
 }
-
-// convertTo9Bit(227) // ?
 
 /**
  * The default transparency on the zx spectrum next (in 8bit form)
