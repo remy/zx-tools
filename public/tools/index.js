@@ -344,7 +344,7 @@ buttons.on('click', async (e) => {
 
   const id = ids[0];
   const block = explore.blocks[id];
-  let filename = explore.blocks[id - 1].header.filename.trim();
+  let filename = explore.blocks[id].header.filename.trim();
 
   let ext = '';
 
@@ -385,6 +385,7 @@ function exploreTzx(data) {
     renderBlockTable(explore.blocks);
   } catch (e) {
     tapExplore.innerHTML = `<div class="error"><p>The file couldn't be parsed. Please try a different file, or report the issue via the help menu (top right). Thanks.</p><pre><code>${e.message}\n\n${e.stack}</code></pre></div>`;
+    console.log(e);
   }
 }
 
@@ -439,6 +440,7 @@ param2: 0x${data.header.p2.toString(16).padStart(4, '0').toUpperCase()}`;
 }
 
 function renderBlockTable(blocks) {
+  console.log(blocks);
   tapExplore.onclick = (event) => {
     if (event.target.nodeName === 'LABEL' || event.target.nodeName === 'INPUT')
       return;

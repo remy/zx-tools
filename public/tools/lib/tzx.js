@@ -67,14 +67,18 @@ export class Tap {
   }
 
   toString() {
+    let extra = '';
+    if (this.pause !== undefined) {
+      extra = `, pause: ${this.pause} ms`;
+    }
     if (this.header.flagByte === 0) {
-      return `${this.headerType()}: ${this.header.filename}`;
+      return `${this.headerType()}: ${this.header.filename}${extra}`;
     } else if (this.length === 6912) {
-      return `SCREEN$ data`;
+      return `SCREEN$ data${extra}`;
     } else if (this.length === 768) {
-      return `Font`;
+      return `Font${extra}`;
     } else {
-      return `${this.length} bytes of data`;
+      return `${this.length} bytes of data${extra}`;
     }
   }
 
@@ -117,8 +121,9 @@ class TzxbData extends Tap {
   type = 'Standard Speed Data Block';
   // https://www.worldofspectrum.org/TZXformat.html#STDSPEED
   constructor(unpack) {
-    const len = unpack.parse('<xxS')[0];
-    super(unpack.parse(`C${len}$data`).data);
+    const { length, pause } = unpack.parse('<S$pause S$length');
+    super(unpack.parse(`C${length}$data`).data);
+    this.pause = pause;
   }
 }
 
@@ -187,6 +192,10 @@ class TzxbHardwareType {
 class TzxbPause {
   id = 0x20;
   type = 'Pause';
+
+  toString() {
+    return this.length;
+  }
 
   constructor(unpack) {
     this.length = unpack.parse('<S')[0];

@@ -925,7 +925,7 @@ export class Palette extends Hooks {
       const { type, length } = unpack.parse('I$length A4$type');
       /** @type Uint8Array */
       const { data } = unpack.parse(`C${length}$data`);
-      const { crc } = unpack.parse(`I$crc`); // TODO ?? ¯\_(ツ)_/¯
+      // const { crc } = unpack.parse(`I$crc`); // TODO ?? ¯\_(ツ)_/¯
 
       if (type === 'PLTE') {
         palette = true;
