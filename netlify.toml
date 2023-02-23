@@ -2,15 +2,15 @@
   publish = "dist"
 [[redirects]]
   from = "/txt2bas"
-  to = "https://txt2bas.now.sh/api/txt2bas"
+  to = "https://txt2bas.vercel.app/api/txt2bas"
   status = 200
 
 [[redirects]]
   from = "/bas2txt"
-  to = "https://txt2bas.now.sh/api/bas2txt"
+  to = "https://txt2bas.vercel.app/api/bas2txt"
   status = 200
 
 [[redirects]]
   from = "/request"
-  to = "https://txt2bas.now.sh/api/request"
+  to = "https://txt2bas.vercel.app/api/request"
   status = 200
