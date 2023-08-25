@@ -239,3 +239,28 @@ textarea.code {
 #export .button-group {
   flex-wrap: wrap;
 }
+
+label {
+  user-select: none;
+}
+
+label + input[type='text'],
+label + input[type='number'] {
+  border: 1px solid #ccc;
+}
+
+div > label > .export-value-size:first-child {
+  text-transform: capitalize;
+}
+
+.nest {
+  margin-left: 20px;
+}
+
+input[type='checkbox']:not(:checked) ~ .nest {
+  display: none;
+}
+
+input[type='checkbox']:checked ~ .nest {
+  display: block;
+}

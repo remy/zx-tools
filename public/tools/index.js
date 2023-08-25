@@ -653,8 +653,10 @@ function container(filename, altDownload, r = result) {
 
 /**
  * Print the single character and clean up the semi-opaque pixels
- * @param {Canvas2DContext} ctx
  * @param {String} c Character to render
+ * @param {number} i
+ * @param {string} [font="16px test"]
+ * @param {number} height
  * @returns {HTMLCanvasElement} canvas element
  */
 function generateChr(c, i, font = '16px "test"', height = 8) {

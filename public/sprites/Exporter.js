@@ -20,14 +20,28 @@ import BmpEncoder from '../lib/bmpEncoder';
  * @param {string} options.spaceAround
  * @param {string} options.pad
  * @param {string} options.size
+ * @param {boolean} options.group
+ * @param {number} options.groupLines
+ * @param {string} options.groupPrefix
  * @returns {string[]}
  */
 function bytesToLines(
   source,
-  { bytesPerLine, format, prefix, dist, spaceAround, pad, size }
+  {
+    bytesPerLine,
+    format,
+    prefix,
+    dist,
+    spaceAround,
+    pad,
+    size,
+    group,
+    groupPrefix,
+    groupLines,
+  }
 ) {
   const asm = dist === 'asm';
-  const lines = [];
+  let lines = [];
   const join = spaceAround === 'yes' ? ', ' : ',';
   pad = pad === 'yes';
   const padSize = size === 'byte' ? 2 : 4;
@@ -60,6 +74,22 @@ function bytesToLines(
 
   for (let j = 0; j < bytes.length; j++) {
     lines.push(`${asm ? '\t' : ''}${prefix} ${bytes[j].join(join)}`);
+  }
+
+  if (group) {
+    let ctr = 0;
+    lines = lines.reduce((acc, curr, i) => {
+      if (i % groupLines === 0) {
+        if (i !== 0) {
+          acc.push('');
+        }
+        acc.push(`${groupPrefix}${ctr++}${asm ? ':' : ''}`);
+      }
+
+      acc.push(curr);
+
+      return acc;
+    }, []);
   }
 
   return lines;
@@ -100,6 +130,9 @@ export default class Exporter extends Hooks {
         paletteBits: 9,
         size: 'byte',
         sprite8x8: false,
+        group: false,
+        groupLines: 4,
+        groupPrefix: '',
       },
       {
         dist: {
@@ -120,8 +153,7 @@ export default class Exporter extends Hooks {
           },
         },
         size: {
-          dom:
-            '#export input[name="export-byte-size"], #export .export-value-size',
+          dom: '#export input[name="export-byte-size"], #export .export-value-size',
           callback(size) {
             if (this.dist === 'asm') {
               if (size === 'byte') {
@@ -148,6 +180,18 @@ export default class Exporter extends Hooks {
         pad: { dom: '#export input[name="export-pad"]', callback },
         paletteBits: {
           dom: '#export input[name="export-palette-format"]',
+          callback,
+        },
+        group: {
+          dom: '#export input[name="export-grouping"]',
+          callback,
+        },
+        groupLines: {
+          dom: '#export input[name="export-grouping-lines"]',
+          callback,
+        },
+        groupPrefix: {
+          dom: '#export input[name="export-grouping-prefix"]',
           callback,
         },
       }

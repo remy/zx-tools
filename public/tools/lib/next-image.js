@@ -1,4 +1,4 @@
-import { rgbFromIndex, rgbFromNext } from '../../sprites/lib/colour';
+import { rgbFromNext } from '../../sprites/lib/colour';
 import { Palette } from '../../sprites/Palette';
 
 /**

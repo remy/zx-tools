@@ -9,7 +9,6 @@
     "deploy": "npm run build; git add dist; git commit -m'new build'; git push origin master",
     "functions": "now --prod",
     "build": "sh ./hashit.sh; rm -rf dist; parcel build public/index.html public/**/index.html public/**/**/index.html",
-    "serve-dist": "serve dist -p 8080",
     "test": "tap  --no-coverage-report --watch __tests__/**/*.test.js"
   },
   "staticFiles": {
@@ -31,7 +30,7 @@
     "multer": "^1.4.2",
     "nearest-color": "^0.4.4",
     "parcel-plugin-simple-sw": "^1.0.1",
-    "txt2bas": "^1.14.9"
+    "txt2bas": "^1.17.0"
   },
   "devDependencies": {
     "@babel/core": "^7.0.0-0",
@@ -46,6 +45,7 @@
     "parcel-bundler": "^1.12.4",
     "parcel-plugin-static-files-copy": "^2.3.1",
     "sass": "^1.26.3",
+    "serve": "^12.0.0",
     "tap": "^14.10.7",
     "typescript": "^3.9.6"
   },

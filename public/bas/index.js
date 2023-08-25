@@ -177,7 +177,12 @@ function download(action) {
   }
 
   if (action === 'wav') {
-    const basic = file2bas(cm.getValue(), action, filename, false);
+    const basic = file2bas(cm.getValue(), {
+      format: action,
+      filename,
+      defines: true,
+      validate: false,
+    });
     const param1 = new DataView(basic.buffer).getUint16(0, false); // ?
     const res = generateBlock({
       type: 'PROGRAM',
@@ -197,13 +202,18 @@ function download(action) {
     save(bufferLists, filename + '.wav');
     cm.setValue(line2txt(basic));
   } else if (action === 'bank') {
-    const file = file2bas(cm.getValue(), { bank: true });
+    const file = file2bas(cm.getValue(), {
+      bank: true,
+      defines: true,
+      validate: false,
+    });
     save(file, filename + '.bank');
   } else {
     let file = file2bas(cm.getValue(), {
       format: action,
       filename,
       defines: true,
+      validate: false,
     });
     save(file, filename + (action === '3dos' ? '.bas' : '.tap'));
     // cm.setValue(file2txt(file));

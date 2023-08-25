@@ -355,3 +355,8 @@ input[type='checkbox'] {
   color: var(--c-light-text);
   font-size: 12px;
 }
+
+fieldset {
+  border: 1px solid #ccc;
+  margin: 0;
+}
