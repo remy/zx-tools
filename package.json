@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "checkjs": "tsc",
+  "engines": {
+    "node": "18.*"
+  },
   "scripts": {
     "dev": "rm -rf dist; parcel watch public/index.html public/**/index.html public/**/**/index.html",
     "serve": "serve dist -p 8080",
@@ -22,7 +25,7 @@
   "author": "Remy Sharp (https://remysharp.com)",
   "license": "MIT",
   "dependencies": {
-    "@remy/unpack": "^2.1.6",
+    "@remy/unpack": "^2.1.7",
     "axios": "^0.19.2",
     "codemirror": "^5.57.0",
     "esm": "^3.2.25",
@@ -30,7 +33,7 @@
     "multer": "^1.4.2",
     "nearest-color": "^0.4.4",
     "parcel-plugin-simple-sw": "^1.0.1",
-    "txt2bas": "^1.17.0"
+    "txt2bas": "^1.21.1"
   },
   "devDependencies": {
     "@babel/core": "^7.0.0-0",
