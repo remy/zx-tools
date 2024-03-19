@@ -247,8 +247,12 @@ tabs.hook((tab) => {
   sprites.paint();
   tileMap.paint();
 
+  var downloadSprites = document.querySelector('#download-sprites');
   if (tab === 'sprite-editor') {
     palette.moveTo('sprite-editor');
+    downloadSprites.style.display = '';
+  }else {
+    downloadSprites.style.display = 'none';
   }
 
   if (tab === 'export') {
@@ -468,8 +472,15 @@ buttons.on('click', async (e) => {
 
   if (action === 'clear-map') {
     if (confirm('This will replace your current map, continue?')) {
+      const tileFill = parseInt(prompt('Tile id?'), 10);
+      let paletteFill = 0;
+      
+      if($('#include-palette').checked == true) {
+        paletteFill = parseInt(prompt('Palette id?'), 10);
+      }
+     
       localStorage.removeItem('tileMap');
-      tileMap.clear();
+      tileMap.clear(tileFill, paletteFill);
       tileMap.scale = 3; // FIX hack for local storage out of sync
       saveLocal();
     }
@@ -1054,6 +1065,7 @@ fourBitPalSelected.addEventListener('change', () => {
   const pixels = sprites.sprite.pixels;
   pixels.forEach((value, i) => {
     const root = value & 15; // effectively mod 16
+    console.log('>>>>', root)
     pixels[i] = root + 16 * base;
   });
   sprites.paintAll();
@@ -1070,7 +1082,9 @@ function downloadTiles() {
   const filename = prompt('Filename:', tileMap.filename);
   if (filename) {
     const includeHeader = $('#include-tile-header').checked;
-    let length = tileMap.bank.length;
+    const includePalette = $('#include-palette').checked;
+
+    let length = includePalette ? tileMap.bank.length * 2 : tileMap.bank.length;
     let offset = 0;
 
     if (includeHeader) {
@@ -1088,7 +1102,16 @@ function downloadTiles() {
         })
       );
     }
-    data.set(tileMap.bank, offset);
+
+    if(includePalette == true) {
+      let dataIdx = offset;
+      for(let i = 0 ; i < tileMap.bank.length  ; i++) {
+        data[offset++] = tileMap.bank[i];
+        data[offset++] = tileMap.palettes[i]<<4; // bits 15-12 : palette offset
+      }
+    } else{
+      data.set(tileMap.bank, offset);
+    }
     save(data, filename);
   }
 }

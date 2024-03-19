@@ -5,6 +5,8 @@ import trackDown from '../lib/track-down.js';
 import Hooks from '../lib/Hooks.js';
 
 const currentTile = document.querySelector('#current-tile');
+let tileFill = 63; // fill with the last sprite value
+let paletteFill = 0;
 
 const dummySpriteSheet = {
   get() {
@@ -47,6 +49,7 @@ export default class TileMap extends Hooks {
   history = [];
   _undoPtr = 0;
   showIndexOverlay = false;
+  paletteOffset = -1; // negative for disabled
 
   /** @type {string} */
   filename = 'untitled.map';
@@ -57,7 +60,10 @@ export default class TileMap extends Hooks {
     const { bank, w, h } = sizes.get(size);
     // max bank size: 16k
     this.bank = new Uint8Array(bank);
-    this.bank.fill(63); //1024 / size - 1);
+    this.bank.fill(tileFill); //1024 / size - 1);
+
+    this.palettes = new Uint8Array(bank);
+    this.palettes.fill(0); 
 
     this.ctx = document.createElement('canvas').getContext('2d');
 
@@ -93,13 +99,51 @@ export default class TileMap extends Hooks {
       height: $(`.tile-controls input[name="height"]`),
       scale: $(`.tile-controls input[name="size"]`),
       showIndex: $(`.tile-controls input[name="show-index-overlay"]`),
+      paletteReference: $(`.tile-controls div[name="palette-reference"]`),
+      paletteReferenceSelectionDiv: $(`.tile-controls div[name="pal-ref-selection-div"]`),
+      includePalette: $(`.tile-controls input[name="include-palette"]`),
     };
 
     this.showIndexOverlay = this.elements.showIndex.checked;
     if (this.showIndexOverlay) this.showIndex();
 
-    $(`.tile-controls input[name="size"]`).on('change', (e) => {
-      this.sprites.setScale(parseInt(e.target.value, 10));
+    document.querySelector('#pal-ref-selection').addEventListener('change', (e) => {
+      this.paletteOffset = parseInt(e.target.value, 10);
+    });
+
+    this.elements.scale.on('change', (e) => {
+      let scale = parseInt(e.target.value, 10);
+      this.tileSize = scale;
+      if(scale === 8) {
+        this.elements.paletteReference.style.display = '';
+      } else {
+        this.disableIncludePalette();
+      }
+      this.sprites.setScale(scale);
+    });
+
+    this.elements.includePalette.on('change', (e) => {
+      if(e.target.checked == true){
+        $('#include-tile-header').checked = false;
+        
+        this.elements.paletteReferenceSelectionDiv.style.display = '';
+        $('#size-4-bit').checked = true;
+        $('#size-8-bit').checked = false;
+        this.paletteOffset = 0;
+        document.querySelector('#pal-ref-selection').value = 0;
+      } else {
+        this.elements.paletteReferenceSelectionDiv.style.display = 'none';
+        this.paletteOffset = -1;
+      }
+    });
+
+    $('#bit-size').on('change', () => {
+      if($('#size-8-bit').checked == true) {
+        this.disableIncludePalette();
+
+      } else if($('#size-4-bit').checked == true && this.size == 8) {
+        this.elements.paletteReference.style.display = '';
+      }
     });
 
     $('.tile-controls input').on('change', () => {
@@ -138,10 +182,25 @@ export default class TileMap extends Hooks {
     }
   }
 
-  clear() {
+  disableIncludePalette(){
+    $('#include-palette').checked = false;
+    this.elements.includePalette.value = false;
+    this.elements.paletteReferenceSelectionDiv.style.display = 'none';
+    this.elements.paletteReference.style.display = 'none';
+    this.paletteOffset = -1;
+  }
+
+  clear(newTileFill = tileFill, newPaletteFill = paletteFill) {
+    tileFill = newTileFill;
+    paletteFill = newPaletteFill;
+
     const bank = new Uint8Array(this.width * this.height);
-    bank.fill(63); //1024 / this.size - 1);
-    this.load({ bank });
+    bank.fill(tileFill);
+
+    const palettes = new Uint8Array(this.width * this.height);
+    palettes.fill(paletteFill); 
+
+    this.load({ bank, palettes });
     this.paint();
   }
 
@@ -175,6 +234,7 @@ export default class TileMap extends Hooks {
   serialize() {
     return {
       bank: Array.from(this.bank),
+      palettes: Array.from(this.palettes),
       filename: this.filename,
       scale: this.scale,
       width: this.width,
@@ -240,7 +300,7 @@ export default class TileMap extends Hooks {
 
     // max bank size: 16k
     const bank = new Uint8Array(w * h);
-    bank.fill(63); // fill with the last sprite value
+    bank.fill(tileFill); 
 
     if (w !== width) {
       const adjust = w > width ? width : w;
@@ -253,6 +313,10 @@ export default class TileMap extends Hooks {
     }
 
     this.bank = bank;
+
+    const palettes = new Uint8Array(w * h);
+    palettes.fill(0);
+    this.palettes = palettes;
 
     el.width = w * size * this.scale;
     el.height = h * size * this.scale;
@@ -271,9 +335,11 @@ export default class TileMap extends Hooks {
     return this._sprites;
   }
 
-  load({ bank, dimensions = {}, sprites = null }) {
+  load({ bank, dimensions = {}, sprites = null, palettes = null }) {
     if (Object.keys(dimensions).length) this.setDimensions(dimensions);
-
+    if(palettes) {
+        this.palettes = palettes;
+    }
     this.history = [];
     this.bank = bank;
     this.snapshot();
@@ -294,6 +360,9 @@ export default class TileMap extends Hooks {
   set(index) {
     if (this._lastSet !== index) {
       this.bank[index] = this.sprites.spriteIndex(this.size);
+      if(this.paletteOffset > 0) {
+        this.palettes[index] = this.paletteOffset;
+      }    
       this.snapshot();
       this._lastSet = index;
       this.trigger();
@@ -327,8 +396,11 @@ export default class TileMap extends Hooks {
 
     this._tmp = index;
 
-    if (index !== null) {
-      currentTile.innerHTML = `X:${x} Y:${y} #${this.bank[index]} @ ${index}`;
+    if (index !== null) {    
+      currentTile.innerHTML = `X:${x} Y:${y} #${this.bank[index]} @${index}`;
+      if($('#include-palette').checked == true) {
+        currentTile.innerHTML += ` Palette:${this.palettes[index]}`
+      }
     } else {
       currentTile.innerHTML = '';
     }

@@ -28,13 +28,13 @@
     </nav>
     <main>
       <div id="sprites">
-        <div>
+        <div id="download-sprites">
           <button title="[D]ownload" class="button--download has-copy"
             data-action="download">Download<br>spritesheet</button>
 
           <div class="button-group button-radio-group" id="bit-size">
             <input checked id="size-8-bit" type="radio" name="bit-size"><label for="size-8-bit"
-              class="button button-radio" data-action="8bit">8bit</label>
+              class="button button-radio" data-action="8bit" title="When switching from 4bit to 8bit, manually set all palette offsets to 0 to display colors correctly. ">8bit</label>
             <input id="size-4-bit" type="radio" name="bit-size"><label for="size-4-bit" class="button button-radio"
               data-action="4bit">4bit</label>
           </div>
@@ -463,15 +463,39 @@
                   class="current-scale"></span> tiles
                 tall</label>
             </div>
+
+            <div name="palette-reference">
+              <strong title="It is active for 4-bit sprites and 8px tiles.">Palette Reference</strong> 
+                <label title="It allows setting palette offset for each 8x8 tile.&#10;Offset information will be stored in an output map file, generating 2 bytes for a single tile.&#10;Changes in the palette do not affect the display, select palette offset in Sprite Editor to change the displayed color.">
+                <input type="checkbox" name="include-palette" id="include-palette"> include palette offset</label>
+              <div name="pal-ref-selection-div" style="display: none;"><select id="pal-ref-selection">
+                <option>0</option>
+                <option>1</option>
+                <option>2</option>
+                <option>3</option>
+                <option>4</option>
+                <option>5</option>
+                <option>6</option>
+                <option>7</option>
+                <option>8</option>
+                <option>9</option>
+                <option>10</option>
+                <option>11</option>
+                <option>12</option>
+                <option>13</option>
+                <option>14</option>
+                <option>15</option>
+              </select> palette offset </div>
+            </div>
+
             <div>
               <strong>Options</strong>
               <label><input type="checkbox" name="show-index-overlay"> show index overlay</label>
               <label><input type="radio" value="hatched" checked name="transparency"> hatched transparency</label>
               <label><input type="radio" value="black" name="transparency"> black for transparency</label>
               <label><input type="file" id="tile-bg"> background</label>
-              <label><input type="checkbox" checked value="3dos" id="include-tile-header" name="include-tile-header">
-                include
-                header<br><span><small>Header required if using
+              <label title="Only for BASIC"><input type="checkbox" checked value="3dos" id="include-tile-header" name="include-tile-header">
+                include header<br><span><small>Header required if using
                     <code>LOAD</code> in NextBASIC</small></span></label>
             </div>
             <span class="button input-button" id="upload-map"><input type="file">Upload map</span>
