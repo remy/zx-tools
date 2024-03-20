@@ -154,8 +154,6 @@ export default class Tool {
       512 / sprites.defaultScale
     );
 
-    console.log(coords);
-
     let target = this.colour.value;
 
     if (this.selected === 'erase') {

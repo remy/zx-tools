@@ -440,7 +440,6 @@ param2: 0x${data.header.p2.toString(16).padStart(4, '0').toUpperCase()}`;
 }
 
 function renderBlockTable(blocks) {
-  console.log(blocks);
   tapExplore.onclick = (event) => {
     if (event.target.nodeName === 'LABEL' || event.target.nodeName === 'INPUT')
       return;
