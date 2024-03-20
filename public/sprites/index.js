@@ -176,8 +176,11 @@ function generateNewSpriteSheet({
           sprites,
           bank: new Uint8Array(tileMapData.bank),
           dimensions: tileMapData,
+          palettes: new Uint8Array(tileMapData.palettes),
         });
         tileMap.filename = tileMapData.filename;
+        $('#include-palette').checked = tileMapData.includePal;
+        tileMap.updateIncludePaletteUI();
         tileMap.paint();
       }
 
@@ -207,8 +210,11 @@ function generateNewSpriteSheet({
           if (i > max) max = i;
         });
 
-        fourBitPalSelected.value = (max / 16) | 0;
-        palette.node.parentNode.dataset.pal = (max / 16) | 0;
+        const palOffset = (max / 16) | 0;
+        sprites.sprite.palOffset = palOffset;
+
+        fourBitPalSelected.value = palOffset;
+        palette.node.parentNode.dataset.pal = palOffset;
       }
     }
     currentSpriteId.textContent = `sprite #${pad3(sprites.spriteIndex())}`;
@@ -251,7 +257,7 @@ tabs.hook((tab) => {
   if (tab === 'sprite-editor') {
     palette.moveTo('sprite-editor');
     downloadSprites.style.display = '';
-  }else {
+  } else {
     downloadSprites.style.display = 'none';
   }
 
@@ -474,11 +480,11 @@ buttons.on('click', async (e) => {
     if (confirm('This will replace your current map, continue?')) {
       const tileFill = parseInt(prompt('Tile id?'), 10);
       let paletteFill = 0;
-      
-      if($('#include-palette').checked == true) {
+
+      if ($('#include-palette').checked == true) {
         paletteFill = parseInt(prompt('Palette id?'), 10);
       }
-     
+
       localStorage.removeItem('tileMap');
       tileMap.clear(tileFill, paletteFill);
       tileMap.scale = 3; // FIX hack for local storage out of sync
@@ -1051,6 +1057,7 @@ fourBitPalPicker.addEventListener('click', (e) => {
   const base = parseInt(e.target.textContent, 16);
   fourBitPalSelected.value = base;
   palette.node.parentNode.dataset.pal = base;
+  sprites.sprite.palOffset = base;
   const pixels = sprites.sprite.pixels;
   pixels.forEach((value, i) => {
     const root = value & 15; // effectively mod 16
@@ -1065,7 +1072,6 @@ fourBitPalSelected.addEventListener('change', () => {
   const pixels = sprites.sprite.pixels;
   pixels.forEach((value, i) => {
     const root = value & 15; // effectively mod 16
-    console.log('>>>>', root)
     pixels[i] = root + 16 * base;
   });
   sprites.paintAll();
@@ -1103,13 +1109,12 @@ function downloadTiles() {
       );
     }
 
-    if(includePalette == true) {
-      let dataIdx = offset;
-      for(let i = 0 ; i < tileMap.bank.length  ; i++) {
+    if (includePalette == true) {
+      for (let i = 0; i < tileMap.bank.length; i++) {
         data[offset++] = tileMap.bank[i];
-        data[offset++] = tileMap.palettes[i]<<4; // bits 15-12 : palette offset
+        data[offset++] = tileMap.palettes[i] << 4; // bits 15-12 : palette offset
       }
-    } else{
+    } else {
       data.set(tileMap.bank, offset);
     }
     save(data, filename);
