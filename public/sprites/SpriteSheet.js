@@ -284,10 +284,15 @@ export default class SpriteSheet extends Hooks {
   }
 
   pget(args) {
-    return this.sprites[this._current].pget({
+    const pixel = this.sprites[this._current].pget({
       ...args,
       scale: this.defaultScale,
     });
+
+    if (this.fourBit) {
+      return pixel % 16;
+    }
+    return pixel;
   }
 
   get current() {
