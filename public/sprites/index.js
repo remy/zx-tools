@@ -389,12 +389,34 @@ function fileToTile(data, file) {
 
   const dimensions = {};
   let bank = null;
+  let palettes = undefined;
   if (header.sig !== 'PLUS3DOS') {
-    const dims = prompt('Tile map width?');
-    const width = parseInt(dims.trim(), 10);
-    dimensions.width = width; // aka autostart
-    dimensions.height = data.length / width;
-    bank = new Uint8Array(data);
+    const dimW = prompt('Tile map width?');
+
+    if (dimW === null) {
+      return;
+    }
+
+    const dimH = prompt('Tile map height?');
+
+    if (dimH === null) {
+      return;
+    }
+    const width = parseInt(dimW.trim(), 10);
+    const height = parseInt(dimH.trim(), 10);
+
+    dimensions.width = width;
+    dimensions.height = height;
+
+    if (data.length === width * height * 2) {
+      // then we have a palette
+      palettes = new Uint8Array(
+        data.filter((_, i) => i % 2 === 1).map((_) => _ >> 4)
+      );
+      bank = new Uint8Array(data.filter((_, i) => i % 2 === 0));
+    } else {
+      bank = new Uint8Array(data.filter((_, i) => i % 2 === 0));
+    }
   } else if (header.hOffset !== 0x8000) {
     // then we've got a version where I tucked the dimensions in the file
     dimensions.width = header.autostart; // aka autostart
@@ -404,7 +426,7 @@ function fileToTile(data, file) {
     bank = new Uint8Array(data.slice(unpack.offset));
   }
   tileMap.filename = file.name;
-  tileMap.load({ bank, dimensions });
+  tileMap.load({ bank, dimensions, palettes });
   tileMap.sprites = sprites; // just in case
   tileMap.paint();
 }
