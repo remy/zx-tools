@@ -1075,9 +1075,10 @@ $('#tile-bg').on('change', (e) => {
   canvas.style.backgroundSize = '100%';
 });
 
-fourBitPalPicker.addEventListener('click', (e) => {
-  const base = parseInt(e.target.textContent, 16);
-  fourBitPalSelected.value = base;
+/**
+ * @param {number} base
+ */
+function updatePaletteSelection(base) {
   palette.node.parentNode.dataset.pal = base;
   sprites.sprite.palOffset = base;
   const pixels = sprites.sprite.pixels;
@@ -1086,17 +1087,17 @@ fourBitPalPicker.addEventListener('click', (e) => {
     pixels[i] = root + 16 * base;
   });
   sprites.paintAll();
+}
+
+fourBitPalPicker.addEventListener('click', (e) => {
+  const base = parseInt(e.target.textContent, 16);
+  fourBitPalSelected.value = base;
+  updatePaletteSelection(base);
 });
 fourBitPalSelected.addEventListener('change', () => {
   // change all the sprite preview values to X
   const base = parseInt(fourBitPalSelected.value, 10);
-  palette.node.parentNode.dataset.pal = base;
-  const pixels = sprites.sprite.pixels;
-  pixels.forEach((value, i) => {
-    const root = value & 15; // effectively mod 16
-    pixels[i] = root + 16 * base;
-  });
-  sprites.paintAll();
+  updatePaletteSelection(base);
 });
 
 function downloadPal() {
