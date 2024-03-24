@@ -509,7 +509,6 @@ window.addEventListener('copy', (event) => {
   const effect = bank.effect;
   copyBank.effect.clear();
   const selection = getSelection();
-  console.log(selection, document.activeElement);
   selection.forEach((id) => {
     copyBank.effect.push(effect.get(id));
   });

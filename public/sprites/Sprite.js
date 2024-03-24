@@ -15,10 +15,13 @@ export default class Sprite {
    */
   constructor(pixels) {
     this.pixels = pixels;
-    this.ctx = document.createElement('canvas').getContext('2d');
+    this.ctx = document
+      .createElement('canvas')
+      .getContext('2d', { willReadFrequently: true });
     this.ctx.canvas.width = this.ctx.canvas.height = width;
     this.render();
     this.subSprite = 0;
+    this.palOffset = 0; // used in 4bit sprites
   }
 
   /** @type {number} */
@@ -181,6 +184,7 @@ export default class Sprite {
     scale = this.scale,
     ctx = this.ctx,
     skipClear = false,
+    palOffset = this.palOffset,
   } = {}) {
     const pixels = this.pixels;
 
@@ -200,6 +204,11 @@ export default class Sprite {
     for (i; i < j; i++) {
       let index = pixels[i];
 
+      // modify the index based on the offset
+      if (palOffset !== undefined && scale === 8) {
+        index = (index % 16) + 16 * palOffset;
+      }
+
       const { r, g, b, a } = palette.getRGB(index);
       imageData.data[ptr * 4 + 0] = r;
       imageData.data[ptr * 4 + 1] = g;
@@ -217,7 +226,17 @@ export default class Sprite {
   }
 
   // we always paint square…
-  paint(ctx, { x = 0, y = 0, w = null, scale = null, subSprite = null } = {}) {
+  paint(
+    ctx,
+    {
+      x = 0,
+      y = 0,
+      w = null,
+      scale = null,
+      subSprite = null,
+      palOffset = this.palOffset,
+    } = {}
+  ) {
     if (w === null) {
       w = ctx.canvas.width;
     }
@@ -228,15 +247,23 @@ export default class Sprite {
 
     let source = this.ctx.canvas;
 
-    if (this.cachedSource[subSprite]) {
-      source = this.cachedSource[subSprite];
+    const cacheKey =
+      subSprite !== null ? `${subSprite}-${scale}-${palOffset}` : null;
+
+    if (this.cachedSource[cacheKey]) {
+      source = this.cachedSource[cacheKey];
     } else if (scale) {
-      const ctx = document.createElement('canvas').getContext('2d');
+      const ctx = document
+        .createElement('canvas')
+        .getContext('2d', { willReadFrequently: true });
       ctx.canvas.width = scale;
       ctx.canvas.height = scale;
-      this.render({ ctx, scale, subSprite });
+      this.render({ ctx, scale, subSprite, palOffset });
       source = ctx.canvas;
-      this.cachedSource[subSprite] = source;
+
+      if (cacheKey) {
+        this.cachedSource[cacheKey] = source;
+      }
     }
 
     ctx.drawImage(source, 0, 0, source.width, source.height, x, y, w, w);

@@ -176,8 +176,11 @@ function generateNewSpriteSheet({
           sprites,
           bank: new Uint8Array(tileMapData.bank),
           dimensions: tileMapData,
+          palettes: new Uint8Array(tileMapData.palettes),
         });
         tileMap.filename = tileMapData.filename;
+        $('#include-palette').checked = tileMapData.includePal;
+        tileMap.updateIncludePaletteUI();
         tileMap.paint();
       }
 
@@ -207,8 +210,11 @@ function generateNewSpriteSheet({
           if (i > max) max = i;
         });
 
-        fourBitPalSelected.value = (max / 16) | 0;
-        palette.node.parentNode.dataset.pal = (max / 16) | 0;
+        const palOffset = (max / 16) | 0;
+        sprites.sprite.palOffset = palOffset;
+
+        fourBitPalSelected.value = palOffset;
+        palette.node.parentNode.dataset.pal = palOffset;
       }
     }
     currentSpriteId.textContent = `sprite #${pad3(sprites.spriteIndex())}`;
@@ -247,8 +253,12 @@ tabs.hook((tab) => {
   sprites.paint();
   tileMap.paint();
 
+  var downloadSprites = document.querySelector('#download-sprites');
   if (tab === 'sprite-editor') {
     palette.moveTo('sprite-editor');
+    downloadSprites.style.display = '';
+  } else {
+    downloadSprites.style.display = 'none';
   }
 
   if (tab === 'export') {
@@ -379,12 +389,34 @@ function fileToTile(data, file) {
 
   const dimensions = {};
   let bank = null;
+  let palettes = undefined;
   if (header.sig !== 'PLUS3DOS') {
-    const dims = prompt('Tile map width?');
-    const width = parseInt(dims.trim(), 10);
-    dimensions.width = width; // aka autostart
-    dimensions.height = data.length / width;
-    bank = new Uint8Array(data);
+    const dimW = prompt('Tile map width?');
+
+    if (dimW === null) {
+      return;
+    }
+
+    const dimH = prompt('Tile map height?');
+
+    if (dimH === null) {
+      return;
+    }
+    const width = parseInt(dimW.trim(), 10);
+    const height = parseInt(dimH.trim(), 10);
+
+    dimensions.width = width;
+    dimensions.height = height;
+
+    if (data.length === width * height * 2) {
+      // then we have a palette
+      palettes = new Uint8Array(
+        data.filter((_, i) => i % 2 === 1).map((_) => _ >> 4)
+      );
+      bank = new Uint8Array(data.filter((_, i) => i % 2 === 0));
+    } else {
+      bank = new Uint8Array(data.filter((_, i) => i % 2 === 0));
+    }
   } else if (header.hOffset !== 0x8000) {
     // then we've got a version where I tucked the dimensions in the file
     dimensions.width = header.autostart; // aka autostart
@@ -394,7 +426,7 @@ function fileToTile(data, file) {
     bank = new Uint8Array(data.slice(unpack.offset));
   }
   tileMap.filename = file.name;
-  tileMap.load({ bank, dimensions });
+  tileMap.load({ bank, dimensions, palettes });
   tileMap.sprites = sprites; // just in case
   tileMap.paint();
 }
@@ -468,8 +500,15 @@ buttons.on('click', async (e) => {
 
   if (action === 'clear-map') {
     if (confirm('This will replace your current map, continue?')) {
+      const tileFill = parseInt(prompt('Tile id?'), 10);
+      let paletteFill = 0;
+
+      if ($('#include-palette').checked == true) {
+        paletteFill = parseInt(prompt('Palette id?'), 10);
+      }
+
       localStorage.removeItem('tileMap');
-      tileMap.clear();
+      tileMap.clear(tileFill, paletteFill);
       tileMap.scale = 3; // FIX hack for local storage out of sync
       saveLocal();
     }
@@ -1036,27 +1075,29 @@ $('#tile-bg').on('change', (e) => {
   canvas.style.backgroundSize = '100%';
 });
 
-fourBitPalPicker.addEventListener('click', (e) => {
-  const base = parseInt(e.target.textContent, 16);
-  fourBitPalSelected.value = base;
+/**
+ * @param {number} base
+ */
+function updatePaletteSelection(base) {
   palette.node.parentNode.dataset.pal = base;
+  sprites.sprite.palOffset = base;
   const pixels = sprites.sprite.pixels;
   pixels.forEach((value, i) => {
     const root = value & 15; // effectively mod 16
     pixels[i] = root + 16 * base;
   });
   sprites.paintAll();
+}
+
+fourBitPalPicker.addEventListener('click', (e) => {
+  const base = parseInt(e.target.textContent, 16);
+  fourBitPalSelected.value = base;
+  updatePaletteSelection(base);
 });
 fourBitPalSelected.addEventListener('change', () => {
   // change all the sprite preview values to X
   const base = parseInt(fourBitPalSelected.value, 10);
-  palette.node.parentNode.dataset.pal = base;
-  const pixels = sprites.sprite.pixels;
-  pixels.forEach((value, i) => {
-    const root = value & 15; // effectively mod 16
-    pixels[i] = root + 16 * base;
-  });
-  sprites.paintAll();
+  updatePaletteSelection(base);
 });
 
 function downloadPal() {
@@ -1070,7 +1111,9 @@ function downloadTiles() {
   const filename = prompt('Filename:', tileMap.filename);
   if (filename) {
     const includeHeader = $('#include-tile-header').checked;
-    let length = tileMap.bank.length;
+    const includePalette = $('#include-palette').checked;
+
+    let length = includePalette ? tileMap.bank.length * 2 : tileMap.bank.length;
     let offset = 0;
 
     if (includeHeader) {
@@ -1088,7 +1131,15 @@ function downloadTiles() {
         })
       );
     }
-    data.set(tileMap.bank, offset);
+
+    if (includePalette == true) {
+      for (let i = 0; i < tileMap.bank.length; i++) {
+        data[offset++] = tileMap.bank[i];
+        data[offset++] = tileMap.palettes[i] << 4; // bits 15-12 : palette offset
+      }
+    } else {
+      data.set(tileMap.bank, offset);
+    }
     save(data, filename);
   }
 }
