@@ -4,7 +4,7 @@
   "main": "index.js",
   "checkjs": "tsc",
   "engines": {
-    "node": "18.*"
+    "node": "18.18.2"
   },
   "scripts": {
     "dev": "rm -rf dist; parcel watch public/index.html public/**/index.html public/**/**/index.html",
