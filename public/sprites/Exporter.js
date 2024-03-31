@@ -421,24 +421,43 @@ export default class Exporter extends Hooks {
         lines.push(`#autoline 10,10`);
         lines.push(`REM sprite count: ${max - min}`);
       }
-      for (let i = 0; i < sprites.length; i++) {
-        if (asm) {
-          // lines.push(`sprite${min + i}_index=${min + i}`);
-          lines.push(`sprite${min + i}:`);
-        } else {
-          lines.push(`REM sprite ${min + i}`);
-        }
 
-        let data;
-        if (size === 'byte') {
-          data = sprites[i].getData(this.fourBit);
-        } else {
-          const pixels = new Uint8Array(sprites[i].getData(this.fourBit));
-          data = new Uint16Array(new DataView(pixels.buffer).buffer);
-        }
+      if (this.settings.sprite8x8) {
+        const width = this.fourBit ? 32 : 64;
+        for (let i = min; i < max; i++) {
+          lines.push(`sprite${i}:`);
+          ``;
+          const sprite = sprites[(i / 4) | 0];
+          const offset = (i % 4) * width;
+          // console.log('slice', i, i % 4, width, sprite.getData(this.fourBit));
+          let data = sprite.getData(this.fourBit).slice(offset, offset + width);
 
-        lines.push(...bytesToLines(data, { ...this.settings }));
-        lines.push('');
+          if (size !== 'byte') {
+            data = new Uint16Array(new DataView(data.buffer).buffer);
+          }
+          lines.push(...bytesToLines(data, { ...this.settings }));
+          lines.push('');
+        }
+      } else {
+        for (let i = 0; i < sprites.length; i++) {
+          if (asm) {
+            // lines.push(`sprite${min + i}_index=${min + i}`);
+            lines.push(`sprite${min + i}:`);
+          } else {
+            lines.push(`REM sprite ${min + i}`);
+          }
+
+          let data;
+          if (size === 'byte') {
+            data = sprites[i].getData(this.fourBit);
+          } else {
+            const pixels = new Uint8Array(sprites[i].getData(this.fourBit));
+            data = new Uint16Array(new DataView(pixels.buffer).buffer);
+          }
+
+          lines.push(...bytesToLines(data, { ...this.settings }));
+          lines.push('');
+        }
       }
     }
 
