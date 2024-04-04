@@ -49,7 +49,7 @@ export default class SpriteSheet extends Hooks {
       const ctx = document.createElement('canvas').getContext('2d');
       ctx.canvas.width = ctx.canvas.height = width * scale;
       this.previewCtx.push(ctx);
-      sprite.paint(ctx);
+      sprite.paint(ctx, { fourBit: this.fourBit });
     }
 
     this.snapshot();
@@ -260,7 +260,7 @@ export default class SpriteSheet extends Hooks {
     if (this.defaultScale === 8) {
       this.renderSubSprites(i);
     } else {
-      sprite.paint(this.previewCtx[i]);
+      sprite.paint(this.previewCtx[i], { fourBit: this.fourBit });
     }
     this.trigger();
   }
@@ -328,7 +328,7 @@ export default class SpriteSheet extends Hooks {
 
   setSubSprite(index) {
     this.sprite.subSprite = index;
-    this.sprite.render();
+    this.sprite.render({ fourBit: this.fourBit });
     this.trigger('select');
     this.paint();
   }
@@ -342,6 +342,7 @@ export default class SpriteSheet extends Hooks {
     sprite.paint(this.subSprites[sprite.subSprite], {
       scale: 8,
       subSprite,
+      fourBit: this.fourBit,
     });
     const w = 16;
     const [x, y] = this.miniCoords[subSprite];
@@ -352,6 +353,7 @@ export default class SpriteSheet extends Hooks {
       w,
       x,
       y,
+      fourBit: this.fourBit,
     });
   }
 
@@ -414,6 +416,7 @@ export default class SpriteSheet extends Hooks {
     sprite.paint(this.ctx, {
       scale: this.defaultScale,
       subSprite: sprite.subSprite,
+      fourBit: this.fourBit,
     }); // paint the preview
 
     if (this.defaultScale === 8) {
@@ -424,7 +427,7 @@ export default class SpriteSheet extends Hooks {
       }
     } else {
       // paint into the sprite sheet
-      sprite.paint(this.previewCtx[i], { scale: 16 });
+      sprite.paint(this.previewCtx[i], { scale: 16, fourBit: this.fourBit });
     }
 
     this.getPreviewElements().map((_) => _.classList.remove('focus'));

@@ -185,6 +185,7 @@ export default class Sprite {
     ctx = this.ctx,
     skipClear = false,
     palOffset = this.palOffset,
+    fourBit = false,
   } = {}) {
     const pixels = this.pixels;
 
@@ -205,7 +206,7 @@ export default class Sprite {
       let index = pixels[i];
 
       // modify the index based on the offset
-      if (palOffset !== undefined && scale === 8) {
+      if (palOffset !== undefined && fourBit && scale === 8) {
         index = (index % 16) + 16 * palOffset;
       }
 
@@ -235,6 +236,7 @@ export default class Sprite {
       scale = null,
       subSprite = null,
       palOffset = this.palOffset,
+      fourBit = false,
     } = {}
   ) {
     if (w === null) {
@@ -258,7 +260,7 @@ export default class Sprite {
         .getContext('2d', { willReadFrequently: true });
       ctx.canvas.width = scale;
       ctx.canvas.height = scale;
-      this.render({ ctx, scale, subSprite, palOffset });
+      this.render({ ctx, scale, subSprite, palOffset, fourBit });
       source = ctx.canvas;
 
       if (cacheKey) {

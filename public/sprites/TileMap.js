@@ -474,6 +474,7 @@ export default class TileMap extends Hooks {
       y: y * this.size * this.scale,
       w: this.size * this.scale,
       palOffset,
+      fourBit: this.sprites.fourBit,
     });
   }
 

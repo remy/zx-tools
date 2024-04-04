@@ -298,6 +298,7 @@ export default class Exporter extends Hooks {
             ctx,
             subSprite: j,
             skipClear: true,
+            fourBit: this.fourBit,
           };
 
           sprite.render(opts);
