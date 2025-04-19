@@ -344,7 +344,7 @@ buttons.on('click', async (e) => {
 
   const id = ids[0];
   const block = explore.blocks[id];
-  let filename = explore.blocks[id].header.filename.trim();
+  let filename = explore.blocks[0].header.filename.trim();
 
   let ext = '';
 
