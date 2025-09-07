@@ -10,11 +10,18 @@ const bmpSig = [66, 77];
 const sprSig = encode('PLUS3DOS');
 const gifSig = encode('GIF89a');
 
+/**
+ * @param {Uint8Array} file
+ * @returns {Uint8Array}
+ */
 export function decode(file) {
   const { isPNG, isBMP, isSPR } = detect(file);
 
   if (isSPR) {
-    file.slice(128);
+    // remove the leading 128 bytes, then return the rest;
+    if (file.length > 128) {
+      file = file.slice(128);
+    }
     return file;
   }
 
