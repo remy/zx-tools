@@ -7,10 +7,16 @@ const p = 16; // 16x16 sprite
 const encode = (s) => new TextEncoder().encode(s);
 const pngSig = [137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82];
 const bmpSig = [66, 77];
+const sprSig = encode('PLUS3DOS');
 const gifSig = encode('GIF89a');
 
 export function decode(file) {
-  const { isPNG, isBMP } = detect(file);
+  const { isPNG, isBMP, isSPR } = detect(file);
+
+  if (isSPR) {
+    file.slice(128);
+    return file;
+  }
 
   if (file.length === 768 || file.length === 768 + 128) {
     if (confirm('Is this a binary font file?')) {
@@ -113,6 +119,15 @@ export function importable(data) {
 export function detect(file) {
   let isPNG = true;
   let isBMP = true;
+  let isSPR = true;
+
+  for (let i = 0; i < sprSig.length; i++) {
+    if (file[i] !== sprSig[i]) {
+      isSPR = false;
+      break;
+    }
+  }
+
   for (let i = 0; i < Math.max(pngSig.length, bmpSig.length); i++) {
     if (file[i] !== bmpSig[i]) {
       isBMP = false;
@@ -123,7 +138,7 @@ export function detect(file) {
     }
   }
 
-  return { isPNG, isBMP };
+  return { isPNG, isBMP, isSPR };
 }
 
 function font(file) {
